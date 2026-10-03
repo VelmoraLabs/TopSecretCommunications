@@ -47,9 +47,9 @@ En las notas especiales, el acceso conjunto requiere la participación de todos 
 | Calidad del frontend | ESLint, TypeScript y compilación con Vite. |
 | Integración continua | GitHub Actions. |
 
-La base implementada incluye la API de salud, la organización modular del backend, Shamir con división, reconstrucción y serialización de fragmentos, sus pruebas y una demostración local. El frontend incluye la base React/Vite con Tailwind CSS. Ambos componentes tienen comprobaciones automáticas de CI.
+La base implementada incluye la API de salud, la organización modular del backend, Shamir con división, reconstrucción y serialización de fragmentos, sus pruebas y una demostración local. El frontend incluye inicio, acceso, dashboard y documentos de ejemplo, organizados por páginas, componentes compartidos y módulos. Utiliza React/Vite, TypeScript y Tailwind CSS, con navegación y datos locales. Ambos componentes tienen comprobaciones automáticas de CI.
 
-La integración con Supabase, los demás algoritmos, los flujos documentales, los permisos y la interfaz funcional se incorporan en las siguientes tareas. Shamir funciona como módulo Python independiente; todavía no tiene endpoints HTTP. La aplicación completa y el despliegue siguen en desarrollo.
+La integración con Supabase, los demás algoritmos, los flujos documentales, los permisos, la autenticación real y las operaciones documentales conectadas se incorporan en las siguientes tareas. Shamir funciona como módulo Python independiente; todavía no tiene endpoints HTTP. La aplicación completa y el despliegue siguen en desarrollo.
 
 ## Arquitectura y organización del código
 
@@ -65,7 +65,7 @@ El frontend presenta las operaciones y consume la API. Los módulos funcionales 
 
 ### Estructura implementada
 
-Las rutas de esta tabla forman parte del repositorio con la incorporación del módulo Shamir:
+Estas rutas forman parte de la estructura implementada del proyecto:
 
 | Ruta | Uso |
 | --- | --- |
@@ -81,12 +81,19 @@ Las rutas de esta tabla forman parte del repositorio con la incorporación del m
 | `backend/requirements-dev.in` | Declara las dependencias de desarrollo. |
 | `backend/requirements-dev.txt` | Fija las versiones instaladas en desarrollo y CI. |
 | `backend/README.md` | Explica los comandos y el funcionamiento del backend. |
-| `frontend/src/` | Contiene el código React, los recursos y los estilos. |
+| `frontend/src/app/` | Registra las rutas y los efectos de navegación. |
+| `frontend/src/components/` | Controles de UI y layouts compartidos. |
+| `frontend/src/features/documents/` | Tipos, datos ficticios y componentes documentales. |
+| `frontend/src/pages/` | Inicio, acceso, dashboard, documentos y página 404. |
+| `frontend/src/styles/` | Tema visual, fuentes y estilos globales. |
 | `frontend/public/` | Contiene recursos públicos del frontend. |
 | `frontend/package.json` | Declara las dependencias y los scripts del frontend. |
 | `frontend/package-lock.json` | Fija las versiones de las dependencias npm. |
 | `docs/development/backend-architecture.md` | Define la organización modular y las responsabilidades. |
 | `docs/crypto/shamir.md` | Documenta el contrato, las validaciones y los límites de Shamir. |
+| `docs/development/frontend-design.md` | Conserva la identidad visual y sus reglas, tomando ITHERA develop como referencia. |
+| `docs/development/frontend-architecture.md` | Define la organización modular del frontend. |
+| `docs/development/frontend-setup.md` | Explica la incorporación y revisión de las pantallas iniciales. |
 | `.github/workflows/` | Contiene los workflows de CI de backend y frontend. |
 | `.github/pull_request_template.md` | Proporciona la plantilla de los Pull Requests. |
 
@@ -227,7 +234,7 @@ Estos comandos fijan las direcciones locales:
 
 Si un puerto está ocupado, detener el proceso que lo utiliza antes de iniciar el servicio. El frontend utiliza `--strictPort` para impedir que Vite cambie silenciosamente a otro puerto.
 
-Detener cada servicio con `Ctrl + C` en su terminal. El frontend muestra la base inicial de Vite; los flujos documentales y su conexión con la API se incorporan en las tareas de integración.
+Detener cada servicio con `Ctrl + C` en su terminal. El frontend muestra inicio (`/`), acceso (`/login`), dashboard (`/dashboard`) y documentos (`/documentos`). Los datos son ficticios y el login no autentica. La conexión con la API y Supabase se incorpora en las tareas de integración. Consultar el [README del frontend](frontend/README.md), su [arquitectura](docs/development/frontend-architecture.md) y la [referencia visual](docs/development/frontend-design.md).
 
 ## Pruebas y comprobaciones
 
