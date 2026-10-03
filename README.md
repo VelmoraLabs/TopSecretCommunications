@@ -1,101 +1,151 @@
 # Top Secret Communications
 
-Aplicación web para proteger, firmar y controlar el acceso a documentos de una oficina diplomática.
+Aplicación web para proteger, firmar y controlar el acceso a documentos de una oficina diplomática mediante criptografía y permisos de usuario.
 
-Proyecto académico de Criptografía — Ingeniería en Sistemas Computacionales, ESCOM, Instituto Politécnico Nacional.
+Proyecto académico de Criptografía de la Escuela Superior de Cómputo, Instituto Politécnico Nacional. Desarrollado por **VelmoraLabs**.
 
-Organización: **VelmoraLabs**.
+[Repositorio](https://github.com/VelmoraLabs/TopSecretCommunications) · [Guía del backend](backend/README.md) · [Arquitectura modular](docs/development/backend-architecture.md) · [Módulo Shamir](docs/crypto/shamir.md)
 
-## Objetivo del proyecto
+## Contenido
 
-Implementar un sistema de gestión documental que combine cifrado, firmas digitales y control de acceso. El tratamiento de cada documento dependerá de su categoría y de los permisos de los usuarios.
+- [Objetivo y flujos documentales](#objetivo-y-flujos-documentales)
+- [Tecnologías y alcance implementado](#tecnologías-y-alcance-implementado)
+- [Arquitectura y organización del código](#arquitectura-y-organización-del-código)
+- [Equipo y distribución del trabajo](#equipo-y-distribución-del-trabajo)
+- [Instalación inicial](#instalación-inicial)
+- [Ejecución local](#ejecución-local)
+- [Pruebas y comprobaciones](#pruebas-y-comprobaciones)
+- [Flujo de trabajo con Git y GitHub](#flujo-de-trabajo-con-git-y-github)
+- [Integración continua](#integración-continua)
+- [Dependencias y configuración](#dependencias-y-configuración)
+- [Reglas de colaboración](#reglas-de-colaboración)
 
-El proyecto contempla cuatro flujos:
+## Objetivo y flujos documentales
 
-| Tipo de documento | Protección prevista |
+El sistema combina firmas digitales, cifrado y control de acceso. Cada categoría documental tiene un flujo de protección definido:
+
+| Documento | Flujo de protección |
 | --- | --- |
-| Memorándum | Firma digital con RSA-PSS y SHA-256. |
-| Expediente de personal | Cifrado AES-256-GCM y distribución de la clave mediante RSA-OAEP. |
-| Nota diplomática o comunicado | Firma digital, cifrado y distribución de la clave a los destinatarios. |
-| Nota diplomática especial | Cifrado AES-256-GCM y acceso conjunto mediante Shamir's Secret Sharing. |
+| Memorándum | Firma y verificación con RSA-PSS y SHA-256. |
+| Expediente de personal | Cifrado con AES-256-GCM y protección de la clave para sus destinatarios mediante RSA-OAEP. |
+| Nota diplomática o comunicado | Firma digital, cifrado y distribución de la clave a los destinatarios autorizados. |
+| Nota diplomática especial | Cifrado con AES-256-GCM y reconstrucción conjunta de la clave mediante Shamir's Secret Sharing. |
 
-## Estado actual
+En las notas especiales, el acceso conjunto requiere la participación de todos los integrantes definidos para el documento: el umbral de Shamir es igual al número de fragmentos (`threshold = share_count`). El módulo criptográfico admite también otros umbrales para su reutilización y sus pruebas.
 
-La base de desarrollo incluye:
+## Tecnologías y alcance implementado
 
-- Backend FastAPI con endpoint `/health`.
-- Prueba automatizada del endpoint de salud.
-- Verificación de código Python con Ruff y mypy.
-- Frontend inicial con React, TypeScript y Vite.
-- Tailwind CSS integrado.
-- GitHub Actions para comprobar backend y frontend.
-- Flujo de Pull Requests hacia ramas protegidas.
-
-Pendiente de implementar:
-
-- Algoritmos y servicios criptográficos.
-- Autenticación e integración con Supabase.
-- Roles, permisos y gestión de documentos.
-- Interfaz funcional y comunicación entre frontend y backend.
-- Despliegue.
-
-La interfaz actual corresponde a la plantilla inicial de Vite. Las comprobaciones de CI validan la base del proyecto; todavía no verifican los flujos documentales completos.
-
-## Tecnologías
-
-| Capa | Tecnologías |
+| Capa | Tecnología |
 | --- | --- |
 | Frontend | React, TypeScript, Vite y Tailwind CSS. |
 | Backend | Python y FastAPI. |
-| Criptografía | Biblioteca `cryptography` e implementación propia de Shamir. |
-| Autenticación prevista | Supabase Auth. |
-| Base de datos prevista | PostgreSQL en Supabase. |
-| Almacenamiento previsto | Supabase Storage. |
+| Motor criptográfico | Biblioteca `cryptography` e implementación propia de Shamir. |
+| Autenticación | Supabase Auth. |
+| Persistencia | PostgreSQL y Storage de Supabase. |
 | Pruebas del backend | pytest y cliente de pruebas de FastAPI. |
 | Calidad del backend | Ruff y mypy. |
 | Calidad del frontend | ESLint, TypeScript y compilación con Vite. |
 | Integración continua | GitHub Actions. |
 
-## Arquitectura prevista
+La base implementada incluye la API de salud, la organización modular del backend, Shamir con división, reconstrucción y serialización de fragmentos, sus pruebas y una demostración local. El frontend incluye la base React/Vite con Tailwind CSS. Ambos componentes tienen comprobaciones automáticas de CI.
 
-El frontend presenta las operaciones disponibles y envía solicitudes al backend.
+La integración con Supabase, los demás algoritmos, los flujos documentales, los permisos y la interfaz funcional se incorporan en las siguientes tareas. Shamir funciona como módulo Python independiente; todavía no tiene endpoints HTTP. La aplicación completa y el despliegue siguen en desarrollo.
 
-El backend valida la identidad, los permisos y los datos recibidos. Después selecciona el flujo documental y utiliza el motor criptográfico para firmar, verificar, cifrar o descifrar.
+## Arquitectura y organización del código
 
-Supabase proporcionará autenticación, almacenamiento y persistencia de los datos necesarios. El material privado de los usuarios y los fragmentos de Shamir tendrán un tratamiento específico conforme a la arquitectura del proyecto.
+El frontend presenta las operaciones y consume la API. Los módulos funcionales del backend coordinan los permisos y los flujos documentales; utilizan el motor criptográfico y los adaptadores de persistencia.
 
-## Organización actual del código
-
-| Ruta | Propósito |
+| Componente | Responsabilidad |
 | --- | --- |
-| `backend/app/main.py` | Entrada de la API FastAPI y endpoint de salud. |
-| `backend/app/crypto/` | Base para los módulos criptográficos. |
-| `backend/tests/` | Pruebas automatizadas del backend. |
-| `backend/pyproject.toml` | Configuración de pytest, Ruff y mypy. |
-| `backend/requirements.in` | Dependencias directas del backend. |
-| `backend/requirements-dev.in` | Dependencias directas de desarrollo. |
-| `backend/requirements-dev.txt` | Versiones fijadas para instalar el entorno de desarrollo y CI. |
-| `frontend/src/` | Código React y estilos. |
-| `frontend/public/` | Recursos públicos del frontend. |
-| `frontend/package.json` | Dependencias y scripts del frontend. |
-| `frontend/package-lock.json` | Versiones de las dependencias npm. |
-| `.github/workflows/ci-backend.yml` | Comprobaciones automáticas del backend. |
-| `.github/workflows/ci-frontend.yml` | Comprobaciones automáticas del frontend. |
-| `.github/pull_request_template.md` | Guía para describir los Pull Requests. |
+| Frontend | Vistas, formularios, interacción y solicitudes HTTP. |
+| API | Contratos HTTP, validación de solicitudes y respuestas. |
+| Módulos funcionales | Políticas de acceso, casos de uso y coordinación de operaciones. |
+| Motor criptográfico | Firma, verificación, cifrado, protección de claves y compartición de secretos. |
+| Infraestructura | Integración con servicios externos, base de datos y almacenamiento. |
 
-## Requisitos de desarrollo
+### Estructura implementada
 
-- Git.
-- Python 3.14.5, utilizado por el CI del backend.
-- Node.js 24, utilizado por el CI del frontend.
-- npm.
-- Un editor de código, por ejemplo VS Code.
+Las rutas de esta tabla forman parte del repositorio con la incorporación del módulo Shamir:
 
-Para reducir diferencias entre equipos, utilizar las versiones de Python y Node.js empleadas por CI.
+| Ruta | Uso |
+| --- | --- |
+| `backend/app/main.py` | Crea la aplicación FastAPI y registra las rutas. |
+| `backend/app/api/router.py` | Reúne los routers de la API. |
+| `backend/app/modules/health/router.py` | Implementa `GET /health`. |
+| `backend/app/crypto/shamir/` | Implementa división, reconstrucción, validación y serialización de secretos de 32 bytes. |
+| `backend/tests/test_health.py` | Verifica el endpoint de salud. |
+| `backend/tests/crypto/shamir/` | Verifica el comportamiento del módulo Shamir y sus casos de error. |
+| `backend/demos/shamir_demo.py` | Demuestra Shamir con datos ficticios en memoria. |
+| `backend/pyproject.toml` | Configura pytest, Ruff y mypy. |
+| `backend/requirements.in` | Declara las dependencias directas del backend. |
+| `backend/requirements-dev.in` | Declara las dependencias de desarrollo. |
+| `backend/requirements-dev.txt` | Fija las versiones instaladas en desarrollo y CI. |
+| `backend/README.md` | Explica los comandos y el funcionamiento del backend. |
+| `frontend/src/` | Contiene el código React, los recursos y los estilos. |
+| `frontend/public/` | Contiene recursos públicos del frontend. |
+| `frontend/package.json` | Declara las dependencias y los scripts del frontend. |
+| `frontend/package-lock.json` | Fija las versiones de las dependencias npm. |
+| `docs/development/backend-architecture.md` | Define la organización modular y las responsabilidades. |
+| `docs/crypto/shamir.md` | Documenta el contrato, las validaciones y los límites de Shamir. |
+| `.github/workflows/` | Contiene los workflows de CI de backend y frontend. |
+| `.github/pull_request_template.md` | Proporciona la plantilla de los Pull Requests. |
 
-Actualmente, ejecutar la base del proyecto no requiere credenciales de Supabase.
+### Organización de los siguientes módulos
 
-## Clonar el repositorio
+Estas rutas se crean al implementar su funcionalidad; no representan módulos ya terminados:
+
+| Ruta en `backend/app/` | Responsabilidad |
+| --- | --- |
+| `crypto/signatures/` | SHA-256 y firmas RSA-PSS. |
+| `crypto/encryption/` | Cifrado y descifrado AES-256-GCM. |
+| `crypto/key_wrapping/` | Protección y recuperación de claves mediante RSA-OAEP. |
+| `modules/auth/` | Validación de identidad y sesiones de Supabase. |
+| `modules/access/` | Permisos y coordinación del acceso conjunto. |
+| `modules/documents/` | Gestión de documentos y sus casos de uso. |
+| `modules/documents/workflows/` | Coordinación de la protección según la categoría documental. |
+| `modules/keys/` | Gestión de claves públicas y sobres de claves. |
+| `infrastructure/` | Adaptadores de Supabase, PostgreSQL y Storage. |
+| `core/` | Configuración compartida y manejo general de errores. |
+
+Cada módulo funcional reúne los archivos que necesita: `router.py` para HTTP, `schemas.py` para los modelos de entrada y salida, `service.py` para los casos de uso y `repository.py` cuando utiliza persistencia. Cada paquete Python lleva su `__init__.py`.
+
+Las funciones de `app/crypto/` reciben datos mediante argumentos y devuelven resultados. No importan FastAPI, no consultan Supabase y no deciden permisos de usuario. Los flujos documentales llaman a estos algoritmos sin duplicar sus implementaciones.
+
+Las rutas funcionales que se incorporen utilizarán el prefijo `/api/v1`. El endpoint de salud conserva `/health`.
+
+## Equipo y distribución del trabajo
+
+| Integrante | Responsabilidad principal |
+| --- | --- |
+| Sangrador Curiel Yael Sebastian | Liderazgo e integración; Shamir; autenticación; permisos y acceso conjunto. |
+| Hernández Saucedo Axel Ariel | SHA-256 y firmas digitales RSA-PSS. |
+| Morales Hernández Roberto Carlos | AES-256-GCM y protección de claves RSA-OAEP. |
+
+La gestión documental, los adaptadores de Supabase y la conexión con el frontend requieren coordinación entre los integrantes. Los contratos de los módulos y sus cambios se documentan en cada Pull Request.
+
+El líder del repositorio es [Sangrador21](https://github.com/Sangrador21). Los integrantes trabajan con permisos de escritura en sus ramas; la integración a `develop` y `main` queda a cargo del líder.
+
+## Instalación inicial
+
+### Requisitos
+
+- Git y una cuenta de GitHub con acceso de escritura al repositorio para colaborar.
+- Python **3.14.5**, versión utilizada por el CI del backend.
+- Node.js **24** y npm, utilizados por el CI del frontend.
+- Un editor de código.
+
+Verificar las versiones antes de instalar:
+
+```bash
+git --version
+python3.14 --version
+node --version
+npm --version
+```
+
+En Windows, verificar Python con `py -3.14 --version`.
+
+### Clonar y seleccionar develop
 
 ```bash
 git clone https://github.com/VelmoraLabs/TopSecretCommunications.git
@@ -104,11 +154,11 @@ git switch develop
 git pull --ff-only origin develop
 ```
 
-## Configurar el backend
+La instalación se realiza desde `develop`. Antes de modificar archivos, crear una rama de trabajo siguiendo la sección de Git.
 
-Ejecutar desde la raíz del repositorio.
+### Instalar el backend
 
-### macOS o Linux
+Desde la raíz del repositorio, en macOS o Linux:
 
 ```bash
 python3.14 -m venv backend/.venv
@@ -117,7 +167,7 @@ python -m pip install -r backend/requirements-dev.txt
 python -m pip check
 ```
 
-### Windows — PowerShell
+Desde la raíz del repositorio, en Windows con PowerShell:
 
 ```powershell
 py -3.14 -m venv backend/.venv
@@ -126,49 +176,66 @@ python -m pip install -r backend/requirements-dev.txt
 python -m pip check
 ```
 
-### Iniciar la API
+Crear el entorno una sola vez. En una terminal nueva, activarlo con el comando correspondiente a tu sistema antes de ejecutar Python. Si cambian las dependencias al actualizar el repositorio, repetir la instalación desde `requirements-dev.txt`.
 
-Con el entorno virtual activo y desde la raíz:
+### Instalar el frontend
+
+En otra terminal, desde la raíz:
 
 ```bash
-python -m uvicorn app.main:app --app-dir backend --reload
+cd frontend
+npm ci
+cd ..
 ```
+
+`npm ci` instala las versiones del archivo `package-lock.json`. Repetirlo cuando una actualización cambie las dependencias del frontend.
+
+La base implementada y la demostración de Shamir se ejecutan sin credenciales de Supabase. No es necesario crear archivos `.env` para estos pasos.
+
+## Ejecución local
+
+### Backend
+
+Desde la raíz, con el entorno virtual activo:
+
+```bash
+python -m uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
+```
+
+### Frontend
+
+En otra terminal, desde la raíz:
+
+```bash
+cd frontend
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+Estos comandos fijan las direcciones locales:
 
 | Recurso | URL |
 | --- | --- |
-| API local | http://127.0.0.1:8000 |
-| Estado del backend | http://127.0.0.1:8000/health |
-| Documentación interactiva | http://127.0.0.1:8000/docs |
+| Frontend | [http://127.0.0.1:5173](http://127.0.0.1:5173) |
+| Salud del backend | [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health) |
+| Documentación interactiva de la API | [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) |
 
-La respuesta esperada de `/health` es:
+`GET /health` devuelve:
 
 ```json
 {"status":"ok"}
 ```
 
-## Configurar el frontend
+Si un puerto está ocupado, detener el proceso que lo utiliza antes de iniciar el servicio. El frontend utiliza `--strictPort` para impedir que Vite cambie silenciosamente a otro puerto.
 
-En otra terminal, desde la raíz del repositorio:
+Detener cada servicio con `Ctrl + C` en su terminal. El frontend muestra la base inicial de Vite; los flujos documentales y su conexión con la API se incorporan en las tareas de integración.
 
-```bash
-cd frontend
-npm ci
-npm run dev
-```
+## Pruebas y comprobaciones
 
-Abrir la dirección que indique Vite. Normalmente es:
-
-http://localhost:5173
-
-Backend y frontend se ejecutan en terminales independientes. Para detener cualquiera de los dos, utilizar `Ctrl + C` en su terminal.
-
-## Comprobaciones locales
-
-Antes de subir cambios, ejecutar las comprobaciones de la parte modificada.
+Ejecutar las comprobaciones de los componentes modificados antes de hacer push. Los Pull Requests ejecutan los checks de ambos componentes.
 
 ### Backend
 
-Con el entorno virtual activo, desde la raíz:
+Desde la raíz, con el entorno virtual activo:
 
 ```bash
 cd backend
@@ -177,181 +244,190 @@ python -m ruff check .
 python -m ruff format --check .
 python -m mypy
 python -m pytest
+cd ..
 ```
 
-Si Ruff indica diferencias de formato, aplicar:
+Si hay diferencias de formato, ejecutar `python -m ruff format ruta/del/archivo.py` desde `backend/`, indicando el archivo afectado. Revisar el cambio y repetir la comprobación de formato.
+
+### Demostración y pruebas de Shamir
+
+Desde la raíz, con el entorno virtual activo:
 
 ```bash
-python -m ruff format .
+cd backend
+python -m demos.shamir_demo
+python -m pytest tests/crypto/shamir -v
+cd ..
 ```
 
-Después, revisar los cambios y repetir las comprobaciones.
+La demo comprueba la reconstrucción 3 de 5, todas las combinaciones de ese umbral, el rechazo de fragmentos insuficientes, la serialización y el caso 4 de 4. Utiliza un secreto ficticio en memoria y no imprime claves ni fragmentos.
+
+Shamir divide y reconstruye secretos; la autenticación de los participantes y su vinculación al documento pertenecen a los módulos funcionales. Consultar [el diseño de Shamir](docs/crypto/shamir.md) para sus contratos y límites de integridad.
 
 ### Frontend
 
-Desde la carpeta `frontend`:
+Desde la raíz:
 
 ```bash
+cd frontend
 npm run lint
 npm run build
+cd ..
 ```
 
-`npm run build` comprueba TypeScript y genera la compilación de producción.
+`npm run build` verifica TypeScript y genera la compilación de producción. Las pruebas funcionales automatizadas del frontend se incorporarán con sus funcionalidades; revisar también en el navegador los cambios de interfaz.
 
-Actualmente no hay pruebas funcionales automatizadas del frontend. Además de pasar estos comandos, revisar en el navegador cualquier cambio de interfaz.
+## Flujo de trabajo con Git y GitHub
 
-## Flujo de colaboración
+**Todo cambio de desarrollo sale de una rama propia y entra mediante un Pull Request hacia `develop`. No hacer commits ni pushes directos a `main` o `develop`.**
 
-### Ramas permanentes
+### Ramas
 
-| Rama | Uso |
-| --- | --- |
-| `main` | Versiones estables aprobadas para entrega. |
-| `develop` | Integración del trabajo del equipo. |
-
-No realizar commits ni pushes directos a `main` o `develop`. Los cambios se integran mediante Pull Requests.
-
-### Ramas de trabajo
-
-Crear una rama por tarea a partir de `develop`.
-
-| Prefijo | Uso | Ejemplo |
+| Rama | Uso | Integración |
 | --- | --- | --- |
-| `feature/` | Nueva funcionalidad. | `feature/aes-gcm` |
-| `fix/` | Corrección de errores. | `fix/health-response` |
-| `docs/` | Documentación. | `docs/setup-guide` |
-| `chore/` | Configuración y mantenimiento. | `chore/contribution-guide` |
-| `ci/` | Automatización. | `ci/backend-checks` |
+| `main` | Versiones estables para entrega. | PR desde `develop`, integrado por el líder con **Create a merge commit**. |
+| `develop` | Integración del trabajo del equipo. | PR desde la rama de una tarea, integrado por el líder con **Squash and merge**. |
+| `feature/nombre` | Funcionalidad nueva. | PR hacia `develop`. |
+| `fix/nombre` | Corrección de un error. | PR hacia `develop`. |
+| `docs/nombre` | Documentación. | PR hacia `develop`. |
+| `chore/nombre` | Configuración o mantenimiento. | PR hacia `develop`. |
+| `ci/nombre` | Workflows y automatización. | PR hacia `develop`. |
 
-### Comenzar una tarea
+### 1. Comenzar una tarea
+
+Desde la raíz, revisar que no haya cambios pendientes con `git status`. Si hay trabajo sin guardar, resolverlo en su rama antes de cambiar de rama.
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c feature/backend-rsa-pss
+```
+
+`feature/backend-rsa-pss` es el ejemplo de esta guía. Sustituirlo por el nombre de tu tarea en todos los comandos siguientes. Cada tarea utiliza una rama propia; no reutilizar una rama cuyo PR ya se integró.
+
+### 2. Desarrollar y verificar
+
+Implementar la tarea en su módulo, añadir las pruebas correspondientes y actualizar la documentación afectada. Ejecutar las comprobaciones locales de backend o frontend.
+
+Antes de guardar cambios, confirmar la rama y revisar los archivos:
+
+```bash
+git branch --show-current
+git status
+git diff
+git diff --check
+```
+
+La rama activa tiene que ser la de la tarea. Si aparece `main` o `develop`, crear una rama de trabajo antes de hacer el commit.
+
+### 3. Crear el commit y subir la rama
+
+Agregar únicamente los archivos de la tarea. Sustituir la ruta del ejemplo por las rutas reales de los archivos modificados:
+
+```bash
+git add ruta/del/archivo
+git diff --cached
+git diff --cached --check
+git commit -m "feat: implement RSA-PSS signatures"
+git push -u origin feature/backend-rsa-pss
+```
+
+Revisar el contenido preparado con `git diff --cached` antes del commit. No agregar archivos de configuración personal, secretos ni cambios ajenos a la tarea.
+
+| Prefijo del commit | Uso |
+| --- | --- |
+| `feat:` | Funcionalidad nueva. |
+| `fix:` | Corrección. |
+| `test:` | Pruebas. |
+| `docs:` | Documentación. |
+| `chore:` | Mantenimiento o configuración. |
+| `ci:` | Automatización. |
+
+### 4. Abrir el Pull Request
+
+En GitHub, abrir **Pull requests → New pull request** y seleccionar:
+
+- **base:** `develop`.
+- **compare:** la rama de la tarea, por ejemplo `feature/backend-rsa-pss`.
+
+Completar la plantilla del PR con el problema resuelto, los cambios, los comandos de validación y la evidencia necesaria. Comprobar el destino antes de crearlo: los PR de tareas no apuntan a `main`.
+
+Esperar los checks obligatorios `backend-checks` y `frontend-checks`. Solicitar revisión al líder y atender los comentarios en la misma rama. Cada nuevo commit enviado a esa rama actualiza el PR y vuelve a ejecutar las comprobaciones.
+
+Los integrantes no integran sus propios PR. El líder **Sangrador21** revisa e integra los cambios del equipo; también puede integrar sus propios PR tras verificar el código y obtener los checks obligatorios en verde. Resolver las conversaciones de revisión antes del merge.
+
+### 5. Actualizar la rama cuando cambie develop
+
+La rama de la tarea debe incorporar los cambios de `develop` antes del merge. Con los cambios locales guardados y estando en la rama de la tarea:
+
+```bash
+git branch --show-current
+git fetch origin
+git merge origin/develop
+```
+
+Si aparecen conflictos, resolver los archivos, agregar los archivos resueltos con `git add` y completar el merge con `git commit`. Si no hay conflictos, Git puede completar el merge automáticamente.
+
+Repetir las comprobaciones de los componentes afectados y subir la actualización:
+
+```bash
+git push origin feature/backend-rsa-pss
+```
+
+No utilizar `--force` para resolver conflictos o errores de actualización. Si `git pull --ff-only` falla en una rama permanente, revisar la divergencia con el líder antes de continuar.
+
+### 6. Después del merge
 
 Con el directorio de trabajo limpio:
 
 ```bash
 git switch develop
 git pull --ff-only origin develop
-git switch -c feature/nombre-de-la-tarea
 ```
 
-### Guardar y subir el trabajo
+Crear la siguiente rama desde este `develop` actualizado. Los commits nuevos se realizan en la nueva rama de la tarea.
 
-Revisar primero qué archivos cambiaron:
+### Entregas a main
 
-```bash
-git status
-git diff
-```
-
-Agregar únicamente los archivos de la tarea y crear el commit. Sustituir la ruta del ejemplo por la del archivo correspondiente:
-
-```bash
-git add ruta/del/archivo
-git diff --cached
-git commit -m "feat: describe el cambio"
-git push -u origin feature/nombre-de-la-tarea
-```
-
-Prefijos habituales para los commits:
-
-- `feat:` nueva funcionalidad.
-- `fix:` corrección.
-- `docs:` documentación.
-- `test:` pruebas.
-- `chore:` mantenimiento.
-- `ci:` automatización.
-
-### Abrir un Pull Request
-
-1. Seleccionar `develop` como rama base.
-2. Seleccionar la rama de la tarea como origen.
-3. Describir el cambio y cómo se verifica.
-4. Añadir evidencia cuando sea útil.
-5. Esperar los resultados de CI Backend y CI Frontend.
-6. Solicitar revisión al líder.
-
-El líder, **Sangrador21**, revisa e integra los cambios. Puede integrar sus propios Pull Requests cuando haya verificado el trabajo y las comprobaciones obligatorias hayan pasado.
-
-Los merges hacia `develop` utilizan **Squash and merge**.
-
-Las entregas estables se integran desde `develop` hacia `main` mediante un Pull Request autorizado por el líder, utilizando **Merge**.
-
-### Actualizar una rama con cambios de develop
-
-Guardar o resolver primero los cambios locales pendientes. Después:
-
-```bash
-git fetch origin
-git merge origin/develop
-```
-
-Ejecutar estos comandos estando en la rama de la tarea. Si aparecen conflictos, resolverlos antes de continuar.
-
-Tras la actualización, repetir las comprobaciones locales y subir la rama.
-
-### Después de integrar el PR
-
-```bash
-git switch develop
-git pull --ff-only origin develop
-```
-
-Crear la siguiente rama a partir de esta versión actualizada.
+El líder prepara el PR con **base `main`** y **compare `develop`**, revisa el alcance de la entrega y espera los checks obligatorios. La integración utiliza **Create a merge commit** para conservar la relación entre las ramas permanentes.
 
 ## Integración continua
 
-Los workflows se ejecutan en Pull Requests hacia `main` y `develop`, y en pushes a esas ramas.
+GitHub Actions ejecuta los workflows en los Pull Requests hacia `develop` y `main`, y en los pushes a esas ramas. Ambos checks se ejecutan también cuando el cambio es de documentación.
 
-| Check obligatorio | Comprobaciones |
-| --- | --- |
-| `backend-checks` | Instalación de dependencias, `pip check`, lint, formato, tipos y pruebas. |
-| `frontend-checks` | Instalación con `npm ci`, lint y compilación con verificación de TypeScript. |
+| Workflow | Check obligatorio | Validaciones |
+| --- | --- | --- |
+| CI Backend | `backend-checks` | Instalación, `pip check`, Ruff lint, Ruff formato, mypy y pytest. |
+| CI Frontend | `frontend-checks` | Instalación con `npm ci`, ESLint y build con verificación de TypeScript. |
 
-Si un check falla:
+Las ramas protegidas requieren los checks en verde y la actualización con la rama base. El permiso de integración del líder no sustituye estas comprobaciones.
 
-1. Abrir el detalle del check y consultar el paso que falló.
-2. Corregir el problema en la misma rama.
-3. Ejecutar la comprobación local correspondiente.
-4. Crear un commit y hacer push.
+Si un check falla, abrir su detalle en **Checks**, identificar el paso que falló, corregirlo en la misma rama y ejecutar el comando local correspondiente. Crear un nuevo commit y hacer push para actualizar el PR.
 
-El Pull Request se actualiza automáticamente con los nuevos commits.
+CI comprueba lo que está implementado y cubierto por sus herramientas y pruebas. La revisión del código y las pruebas de los flujos completos forman parte del trabajo de integración. No hay despliegue automático configurado.
 
-Las ramas protegidas requieren los checks configurados y estar actualizadas con la rama base.
+## Dependencias y configuración
 
-Actualmente no hay despliegue automático configurado.
+- Instalar las dependencias Python desde `backend/requirements-dev.txt` y las del frontend con `npm ci`.
+- Versionar `frontend/package-lock.json` y el archivo de versiones fijadas de Python.
+- Si una tarea agrega o actualiza dependencias Python, mantener coherentes los archivos `.in` y `requirements-dev.txt` y explicar el cambio en el PR.
+- Si una tarea agrega o actualiza dependencias npm, incluir los cambios de `package.json` y `package-lock.json` y comprobar `npm ci`, lint y build.
+- No subir `node_modules`, entornos virtuales, cachés ni resultados de compilación.
+- Al incorporar variables de entorno, documentar su uso y crear los archivos `.env.example` necesarios con valores ficticios.
 
-## Manejo de dependencias
+Los archivos `.env` con valores reales, las credenciales privilegiadas de Supabase, las claves privadas, las claves AES, los fragmentos reales de Shamir y los documentos confidenciales no se suben al repositorio ni se incluyen en logs o evidencia de PR.
 
-- No modificar dependencias si la tarea no lo requiere.
-- Versionar `frontend/package-lock.json`.
-- Utilizar `npm ci` para instalar las dependencias existentes.
-- Si se agregan dependencias Python, mantener coherentes los archivos `.in` y el archivo de versiones fijadas.
-- No subir `node_modules` ni el entorno virtual.
-- Indicar en el PR cualquier cambio de dependencias.
+Las variables `VITE_` son visibles en el navegador. No colocar secretos ni credenciales privilegiadas en ellas. Las pruebas y demostraciones utilizan datos ficticios y material criptográfico generado para ese propósito.
 
-## Seguridad y configuración
+## Reglas de colaboración
 
-No subir al repositorio:
+1. Crear una rama desde `develop` actualizado para cada tarea.
+2. Abrir los PR de desarrollo hacia `develop` y dejar la integración al líder.
+3. Mantener cada PR centrado en una tarea y describir cómo se verifica.
+4. Respetar los módulos y sus responsabilidades; acordar los cambios de contratos compartidos.
+5. Añadir pruebas para los algoritmos, las validaciones y los casos de error relevantes.
+6. Revisar los archivos preparados antes de hacer commit y evitar material sensible.
+7. Resolver los comentarios, los conflictos y los checks fallidos en la misma rama.
+8. Actualizar el README y la documentación técnica cuando cambien los comandos, los módulos o los contratos.
 
-- Archivos `.env` con valores reales.
-- Contraseñas, tokens o credenciales.
-- Claves privadas o claves AES.
-- Fragmentos reales de Shamir.
-- Documentos confidenciales.
-- Registros que contengan material sensible.
-
-Cuando se incorporen variables de entorno, documentarlas mediante archivos `.env.example` con valores de ejemplo.
-
-Las variables del frontend con prefijo `VITE_` son visibles en el navegador. No colocar secretos ni credenciales privilegiadas de Supabase en ellas.
-
-Los ejemplos y las pruebas deben utilizar datos ficticios y material criptográfico generado exclusivamente para pruebas.
-
-## Convenciones del equipo
-
-1. Mantener cada PR centrado en una tarea.
-2. Usar nombres descriptivos para ramas, commits y funciones.
-3. Añadir pruebas para comportamientos nuevos y casos de error relevantes.
-4. Documentar los endpoints y cambios de configuración.
-5. Actualizar este README cuando cambie la instalación o el flujo de trabajo.
-6. Revisar los archivos antes de hacer commit.
-7. Resolver los comentarios de revisión antes del merge.
-8. Mantener las comprobaciones obligatorias en verde.
+Para ampliar la información técnica, consultar [la guía del backend](backend/README.md), [la organización modular](docs/development/backend-architecture.md) y [el diseño de Shamir](docs/crypto/shamir.md).
