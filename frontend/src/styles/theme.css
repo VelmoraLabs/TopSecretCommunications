@@ -1,0 +1,42 @@
+/* Local variable font files include the Latin characters used by Spanish. */
+@font-face {
+  font-family: 'Plus Jakarta Sans Variable';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2')
+    format('woff2');
+}
+@font-face {
+  font-family: 'DM Sans Variable';
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url('@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2')
+    format('woff2');
+}
+@theme {
+  --color-primary: #4b2fa3;
+  --color-primary-dark: #1e0a4e;
+  --color-accent-blue: #1e6fd9;
+  --color-accent-purple: #7a4fd6;
+  --color-accent-green: #35c56a;
+  --font-heading: 'Plus Jakarta Sans Variable', sans-serif;
+  --font-body: 'DM Sans Variable', sans-serif;
+}
+:root {
+  --primary: #4b2fa3;
+  --primary-dark: #1e0a4e;
+  --purple: #7a4fd6;
+  --blue: #1e6fd9;
+  --green: #35c56a;
+  --text: #202335;
+  --muted: #64748b;
+  --border: #e7e5ef;
+  --surface: #fff;
+  --surface-soft: #faf9fd;
+  --canvas: #f4f3f8;
+  --radius: 16px;
+  --header-height: 80px;
+  --sidebar-width: 256px;
+}
