@@ -218,3 +218,60 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Frontend
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Herramientas de Python
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Archivos locales
+.DS_Store
+*.log
+
+# Material criptográfico privado generado localmente
+/secrets/
+/backend/secrets/
+
+# Cobertura de pruebas
+coverage/
+.nyc_output/
+
+# Cachés del frontend
+.cache/
+.vite/
+.eslintcache
+.stylelintcache
+vite.config.ts.timestamp-*
+vite.config.*.timestamp-*
+
+# Editores
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Archivos de Windows y macOS
+Thumbs.db
+ehthumbs.db
+desktop.ini
+._*
+
+# Archivos temporales y cargas locales
+/backend/uploads/
+/backend/tmp/
+/backend/temp/
+/tmp/
+/temp/
