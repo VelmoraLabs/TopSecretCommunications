@@ -1,11 +1,6 @@
 from fastapi import FastAPI
 
-app = FastAPI(
-    title="Top Secret Communications API",
-    version="0.1.0",
-)
+from app.api.router import router
 
-
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+app = FastAPI(title="Top Secret Communications API", version="0.1.0")
+app.include_router(router)
