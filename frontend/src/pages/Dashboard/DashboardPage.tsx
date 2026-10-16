@@ -228,8 +228,8 @@ export default function DashboardPage() {
               Las notas especiales requieren reunir la participación prevista de
               sus destinatarios.
             </p>
-            <Link to="/documentos?tipo=especial" className="text-link">
-              Ver notas especiales <ArrowRight size={16} />
+            <Link to="/notas-especiales" className="text-link">
+              Proteger una nota especial <ArrowRight size={16} />
             </Link>
           </section>
           <p className="dashboard-example-note">

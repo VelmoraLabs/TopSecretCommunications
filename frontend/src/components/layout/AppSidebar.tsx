@@ -4,13 +4,16 @@ import {
   LayoutDashboard,
   LockKeyhole,
   ShieldCheck,
+  UsersRound,
 } from 'lucide-react'
 import { NavLink } from 'react-router'
+import { useAuth } from '../../features/auth/auth'
 export default function AppSidebar({
   onNavigate,
 }: {
   onNavigate?: () => void
 }) {
+  const auth = useAuth()
   return (
     <div className="sidebar-content">
       <div className="workspace">
@@ -19,7 +22,7 @@ export default function AppSidebar({
         </span>
         <div>
           <strong>Oficina diplomática</strong>
-          <span>Espacio de ejemplo</span>
+          <span>Acceso institucional</span>
         </div>
       </div>
       <p className="sidebar-label">ESPACIO DE TRABAJO</p>
@@ -27,6 +30,20 @@ export default function AppSidebar({
         {[
           { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
           { to: '/documentos', label: 'Documentos', icon: FolderLock },
+          {
+            to: '/notas-especiales',
+            label: 'Notas especiales',
+            icon: UsersRound,
+          },
+          ...(auth.hasPermission('profiles.manage')
+            ? [
+                {
+                  to: '/administracion',
+                  label: 'Perfiles y permisos',
+                  icon: ShieldCheck,
+                },
+              ]
+            : []),
         ].map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -46,11 +63,11 @@ export default function AppSidebar({
         <LockKeyhole size={22} />
         <h2>El acceso tiene un propósito.</h2>
         <p>Organiza la información según su protección y sus destinatarios.</p>
-        <span>Diseño de la plataforma</span>
+        <span>Información y acceso</span>
       </div>
       <div className="sidebar-footer">
         <span className="sidebar-status" />
-        Vista de ejemplo<span>VelmoraLabs · 2026</span>
+        Sesión activa<span>VelmoraLabs · 2026</span>
       </div>
     </div>
   )

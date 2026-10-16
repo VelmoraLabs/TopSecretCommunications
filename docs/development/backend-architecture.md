@@ -8,6 +8,13 @@
 | `app/api/router.py` | Reunir las rutas de la aplicación. |
 | `app/modules/health/router.py` | Mantener el endpoint `/health`. |
 | `app/crypto/shamir/` | Dividir, reconstruir y serializar secretos de 32 bytes. |
+| `app/crypto/encryption/` | Claves AES-256 y cifrado/descifrado GCM con nonce, ciphertext y tag. |
+| `app/modules/documents/` | Contratos, servicio y rutas de notas especiales. |
+| `app/core/request_limits.py` | Límite del cuerpo HTTP antes de procesar JSON/Base64. |
+| `app/core/config.py` y `errors.py` | Configuración y errores públicos de servicio. |
+| `app/modules/auth/` | Identidad, permisos y administración con contratos HTTP. |
+| `app/infrastructure/supabase.py` | Cliente de Auth y PostgREST con JWT de usuario. |
+| `../supabase/` | Migraciones de perfiles, roles, permisos, RLS y auditoría. |
 | `tests/crypto/shamir/` | Pruebas matemáticas, de validación y de formato. |
 | `demos/shamir_demo.py` | Demostración local con datos ficticios. |
 
@@ -16,14 +23,11 @@
 | Ruta futura | Responsable y función |
 | --- | --- |
 | `crypto/signatures/` | Axel: SHA-256 y RSA-PSS. |
-| `crypto/encryption/` | Roberto: AES-256-GCM. |
 | `crypto/key_wrapping/` | Roberto: RSA-OAEP. |
-| `modules/auth/` | Yael: sesiones y JWT de Supabase. |
 | `modules/access/` | Yael: permisos y coordinación del acceso conjunto. |
-| `modules/documents/` | Equipo: gestión y flujos según categoría documental. |
+| `modules/documents/` | Equipo: ampliar el flujo existente a las demás categorías. |
 | `modules/keys/` | Equipo: claves públicas y sobres de claves. |
-| `infrastructure/` | Equipo: adaptadores para PostgreSQL y Storage. |
-| `core/` | Configuración común y manejo general de errores cuando se necesiten. |
+| `infrastructure/storage.py` | Equipo: futuro adaptador de archivos cifrados en Storage. |
 
 No crear módulos vacíos para representar funcionalidad pendiente. Cada paquete
 Python implementado lleva `__init__.py`.
@@ -37,7 +41,7 @@ El router valida el contrato HTTP y llama al servicio. Los modelos Pydantic
 describen solicitudes y respuestas. El servicio coordina políticas, algoritmos
 y repositorios. El motor criptográfico recibe datos como argumentos y no conoce
 HTTP, usuarios, Supabase ni la interfaz. Los adaptadores concentran las llamadas
-a servicios externos. Las tablas de Supabase se definirán mediante migraciones.
+a servicios externos. Las tablas de Supabase se definen mediante migraciones versionadas.
 
 Las futuras rutas funcionales utilizarán `/api/v1`; `/health` conserva su URL.
 
@@ -46,8 +50,13 @@ notas diplomáticas y notas especiales. Los workflows llaman a los algoritmos;
 no copian sus implementaciones. Los fragmentos Shamir se identifican por índice
 y conjunto; la identidad del participante se resolverá en el módulo de acceso.
 
-## Alcance de esta rama
+## Alcance actual
 
-Preparación de Shamir, división, reconstrucción y pruebas iniciales. La
-reconstrucción y las pruebas adelantan tareas del calendario de octubre. AES,
-firmas, JWT, persistencia y el flujo documental completo siguen pendientes.
+AES-GCM y Shamir permanecen separados y sin dependencia de HTTP o usuarios. El
+servicio documental coordina su formato portable. Las rutas documentales exigen
+sesión y permisos aunque el flag de registro local esté habilitado.
+
+El módulo auth verifica el JWT con Supabase Auth, consulta permisos actuales por
+PostgREST y expone administración con las RPC de la BD. El frontend integra Google,
+sesión y perfiles. Grupos, distribución protegida de fragmentos, Storage y firmas
+siguen pendientes. Ver [autenticación](authentication.md) y [contrato documental](special-notes-backend.md).

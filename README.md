@@ -47,9 +47,9 @@ En las notas especiales, el acceso conjunto requiere la participación de todos 
 | Calidad del frontend | ESLint, TypeScript y compilación con Vite. |
 | Integración continua | GitHub Actions. |
 
-La base implementada incluye la API de salud, la organización modular del backend, Shamir con división, reconstrucción y serialización de fragmentos, sus pruebas y una demostración local. El frontend incluye inicio, acceso, dashboard y documentos de ejemplo, organizados por páginas, componentes compartidos y módulos. Utiliza React/Vite, TypeScript y Tailwind CSS, con navegación y datos locales. Ambos componentes tienen comprobaciones automáticas de CI.
+La implementación incluye Shamir, AES-256-GCM, protección y recuperación de notas especiales, login con Google mediante Supabase Auth y PKCE, sesión persistente y renovable, verificación del JWT en FastAPI y administración de perfiles con permisos vigentes en PostgreSQL. El frontend conserva la identidad visual y las pantallas documentales de ejemplo; las notas especiales y la administración utilizan operaciones reales.
 
-La integración con Supabase, los demás algoritmos, los flujos documentales, los permisos, la autenticación real y las operaciones documentales conectadas se incorporan en las siguientes tareas. Shamir funciona como módulo Python independiente; todavía no tiene endpoints HTTP. La aplicación completa y el despliegue siguen en desarrollo.
+Las firmas, RSA-OAEP, los demás flujos documentales, Storage y la entrega de fragmentos entre usuarios siguen pendientes. El flujo portable requiere sesión y permisos, pero todavía reúne los fragmentos en una misma cuenta. No representa una sesión colaborativa entre integrantes. Consultar la [integración de autenticación](docs/development/authentication.md) y la [base de permisos](supabase/README.md).
 
 ## Arquitectura y organización del código
 
@@ -73,6 +73,12 @@ Estas rutas forman parte de la estructura implementada del proyecto:
 | `backend/app/api/router.py` | Reúne los routers de la API. |
 | `backend/app/modules/health/router.py` | Implementa `GET /health`. |
 | `backend/app/crypto/shamir/` | Implementa división, reconstrucción, validación y serialización de secretos de 32 bytes. |
+| `backend/app/crypto/encryption/` | AES-256-GCM con clave, nonce, ciphertext, tag y AAD. |
+| `backend/app/modules/documents/` | Flujo portable de notas especiales con sesión y permisos. |
+| `backend/app/modules/auth/` | Identidad, permisos y administración de perfiles. |
+| `backend/app/infrastructure/supabase.py` | Auth y PostgREST con el JWT del usuario. |
+| `backend/app/core/` | Configuración, errores y límite del cuerpo HTTP. |
+| `supabase/` | Migración de perfiles, roles, permisos, RLS y auditoría. |
 | `backend/tests/test_health.py` | Verifica el endpoint de salud. |
 | `backend/tests/crypto/shamir/` | Verifica el comportamiento del módulo Shamir y sus casos de error. |
 | `backend/demos/shamir_demo.py` | Demuestra Shamir con datos ficticios en memoria. |
@@ -84,7 +90,10 @@ Estas rutas forman parte de la estructura implementada del proyecto:
 | `frontend/src/app/` | Registra las rutas y los efectos de navegación. |
 | `frontend/src/components/` | Controles de UI y layouts compartidos. |
 | `frontend/src/features/documents/` | Tipos, datos ficticios y componentes documentales. |
-| `frontend/src/pages/` | Inicio, acceso, dashboard, documentos y página 404. |
+| `frontend/src/pages/` | Inicio, login Google, callback, dashboard, documentos, notas especiales, administración y 404. |
+| `frontend/src/features/auth/` | Sesión y comprobaciones de acceso en la interfaz. |
+| `frontend/src/features/admin/` | Contratos y llamadas de administración. |
+| `frontend/src/lib/` | Cliente Supabase y peticiones autenticadas a FastAPI. |
 | `frontend/src/styles/` | Tema visual, fuentes y estilos globales. |
 | `frontend/public/` | Contiene recursos públicos del frontend. |
 | `frontend/package.json` | Declara las dependencias y los scripts del frontend. |
@@ -104,15 +113,10 @@ Estas rutas se crean al implementar su funcionalidad; no representan módulos ya
 | Ruta en `backend/app/` | Responsabilidad |
 | --- | --- |
 | `crypto/signatures/` | SHA-256 y firmas RSA-PSS. |
-| `crypto/encryption/` | Cifrado y descifrado AES-256-GCM. |
 | `crypto/key_wrapping/` | Protección y recuperación de claves mediante RSA-OAEP. |
-| `modules/auth/` | Validación de identidad y sesiones de Supabase. |
 | `modules/access/` | Permisos y coordinación del acceso conjunto. |
-| `modules/documents/` | Gestión de documentos y sus casos de uso. |
 | `modules/documents/workflows/` | Coordinación de la protección según la categoría documental. |
 | `modules/keys/` | Gestión de claves públicas y sobres de claves. |
-| `infrastructure/` | Adaptadores de Supabase, PostgreSQL y Storage. |
-| `core/` | Configuración compartida y manejo general de errores. |
 
 Cada módulo funcional reúne los archivos que necesita: `router.py` para HTTP, `schemas.py` para los modelos de entrada y salida, `service.py` para los casos de uso y `repository.py` cuando utiliza persistencia. Cada paquete Python lleva su `__init__.py`.
 
@@ -197,7 +201,7 @@ cd ..
 
 `npm ci` instala las versiones del archivo `package-lock.json`. Repetirlo cuando una actualización cambie las dependencias del frontend.
 
-La base implementada y la demostración de Shamir se ejecutan sin credenciales de Supabase. No es necesario crear archivos `.env` para estos pasos.
+Las demos criptográficas por terminal y las pruebas automatizadas no requieren credenciales reales. Para iniciar sesión y usar las operaciones de la aplicación, configura `backend/.env` y `frontend/.env.local` a partir de sus plantillas. La [guía de autenticación](docs/development/authentication.md) describe las variables y los requisitos de Supabase/Google.
 
 ## Ejecución local
 
@@ -206,7 +210,7 @@ La base implementada y la demostración de Shamir se ejecutan sin credenciales d
 Desde la raíz, con el entorno virtual activo:
 
 ```bash
-python -m uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
+python -m uvicorn app.main:app --app-dir backend --env-file backend/.env --reload --host 127.0.0.1 --port 8000
 ```
 
 ### Frontend
@@ -222,7 +226,7 @@ Estos comandos fijan las direcciones locales:
 
 | Recurso | URL |
 | --- | --- |
-| Frontend | [http://127.0.0.1:5173](http://127.0.0.1:5173) |
+| Frontend | [http://localhost:5173](http://localhost:5173) |
 | Salud del backend | [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health) |
 | Documentación interactiva de la API | [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) |
 
@@ -234,7 +238,7 @@ Estos comandos fijan las direcciones locales:
 
 Si un puerto está ocupado, detener el proceso que lo utiliza antes de iniciar el servicio. El frontend utiliza `--strictPort` para impedir que Vite cambie silenciosamente a otro puerto.
 
-Detener cada servicio con `Ctrl + C` en su terminal. El frontend muestra inicio (`/`), acceso (`/login`), dashboard (`/dashboard`) y documentos (`/documentos`). Los datos son ficticios y el login no autentica. La conexión con la API y Supabase se incorpora en las tareas de integración. Consultar el [README del frontend](frontend/README.md), su [arquitectura](docs/development/frontend-architecture.md) y la [referencia visual](docs/development/frontend-design.md).
+Detener cada servicio con `Ctrl + C` en su terminal. El inicio es público; el panel, los documentos, las notas especiales y la administración requieren una sesión autorizada. La administración exige `profiles.manage`. Abrir el frontend por `localhost` para coincidir con los callbacks configurados. Dashboard y Documentos conservan ejemplos identificados; las notas especiales y los perfiles usan la API. Consultar la [guía de autenticación](docs/development/authentication.md), la [arquitectura del frontend](docs/development/frontend-architecture.md) y la [referencia visual](docs/development/frontend-design.md).
 
 ## Pruebas y comprobaciones
 
@@ -438,3 +442,7 @@ Las variables `VITE_` son visibles en el navegador. No colocar secretos ni crede
 8. Actualizar el README y la documentación técnica cuando cambien los comandos, los módulos o los contratos.
 
 Para ampliar la información técnica, consultar [la guía del backend](backend/README.md), [la organización modular](docs/development/backend-architecture.md) y [el diseño de Shamir](docs/crypto/shamir.md).
+
+Para probar el backend de notas especiales sin conectar el frontend, consultar la [guía del flujo y su API](docs/development/special-notes-backend.md) y el [contrato AES-256-GCM](docs/crypto/aes-gcm.md).
+
+La [guía de notas especiales en el frontend](docs/development/special-notes-frontend.md) explica cómo iniciar ambos servicios y comprobar la protección y recuperación desde la interfaz.

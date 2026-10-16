@@ -586,3 +586,30 @@
     padding: 28px 24px;
   }
 }
+
+.account-dropdown button {
+  width: 100%;
+  display: block;
+  padding: 9px 14px;
+  background: transparent;
+  text-align: left;
+  font-size: 11px;
+  color: var(--text);
+}
+.account-dropdown button:hover {
+  background: #f5f1fb;
+  color: var(--primary);
+}
+.account-dropdown p[role='alert'] {
+  color: #a33b50;
+  white-space: normal;
+}
+.account-dropdown p {
+  overflow-wrap: anywhere;
+}
+.account-name {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

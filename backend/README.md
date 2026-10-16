@@ -1,79 +1,115 @@
-# Backend — Top Secret Communications
+# Backend de Top Secret Communications
 
-Python + FastAPI. El motor criptográfico se organiza en `app/crypto/` y los
-módulos funcionales en `app/modules/`. La configuración existente de pytest,
-Ruff y mypy permanece en `pyproject.toml`.
+FastAPI coordina el acceso y los flujos documentales. AES-256-GCM y Shamir están
+implementados en módulos independientes de la API y de Supabase.
 
-## Instalación
+## Preparación
 
-Desde la raíz del repositorio, en macOS/Linux:
+Desde la raíz del repositorio, con Python 3.14:
 
 ```bash
 python3.14 -m venv backend/.venv
 source backend/.venv/bin/activate
 python -m pip install -r backend/requirements-dev.txt
+cp -n backend/.env.example backend/.env
 ```
 
-En PowerShell:
+Si el entorno ya existe, actívalo y actualiza las dependencias. En Windows se
+puede usar `py -3.14` y `.\backend\.venv\Scripts\Activate.ps1`.
 
-```powershell
-py -3.14 -m venv backend/.venv
-.\backend\.venv\Scripts\Activate.ps1
-python -m pip install -r backend/requirements-dev.txt
-```
+Configura `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` y
+`STC_ENABLE_LOCAL_WORKFLOW=1` en `backend/.env`. La base debe tener aplicada la
+[migración de acceso](../supabase/README.md). No se usa una secret/service_role key
+ni se comparte el JWT Secret. La [guía de integración](../docs/development/authentication.md)
+describe los pasos de Google, las variables y la verificación.
 
-Si el entorno ya existe, solo activarlo. Shamir usa la biblioteca estándar y
-no incorpora dependencias. CI emplea Python 3.14.5.
-
-## Ejecutar la API
+## Ejecutar
 
 Desde la raíz y con el entorno activo:
 
 ```bash
-python -m uvicorn app.main:app --app-dir backend --reload
+python -m uvicorn app.main:app --app-dir backend --env-file backend/.env --host 127.0.0.1 --port 8000 --reload
 ```
 
-- Salud: http://127.0.0.1:8000/health
-- Documentación: http://127.0.0.1:8000/docs
+- Salud: `http://127.0.0.1:8000/health`.
+- OpenAPI: `http://127.0.0.1:8000/docs`.
+- `GET /health` es público y devuelve `{"status":"ok"}`.
+- Las rutas `/api/v1/auth`, `/api/v1/admin` y las operaciones documentales exigen
+  un access token de usuario de Supabase.
+- El flag documental controla el registro de rutas, no desactiva su autenticación.
 
-`/health` conserva la respuesta `{"status":"ok"}`. El módulo Shamir todavía
-no tiene rutas HTTP públicas. Tampoco requiere credenciales de Supabase.
+## Rutas y permisos
 
-## Verificar el backend
+| Ruta | Permiso |
+| --- | --- |
+| `GET /api/v1/auth/me` | Perfil activo vinculado al usuario. |
+| `GET /api/v1/admin/profiles` | `profiles.manage`. |
+| `GET /api/v1/admin/roles` | `profiles.manage`. |
+| `POST /api/v1/admin/profiles` | `profiles.manage`. |
+| `PATCH /api/v1/admin/profiles/{id}` | `profiles.manage`. |
+| `POST /api/v1/documents/special-notes/protect` | `documents.create`. |
+| `POST /api/v1/documents/special-notes/recover` | `recovery.request`. |
 
-Con el entorno activo, desde `backend/`:
+El backend verifica el token con `GET /auth/v1/user` del proyecto y consulta
+`current_access()` por PostgREST con ese JWT. Los cambios de perfil tienen efecto
+sin depender de claims de rol guardados en el cliente. Se rechazan sesiones
+anónimas, perfiles desactivados y permisos insuficientes. Un fallo de Supabase
+produce `503`; no se permite continuar sin autorización.
+
+Las altas y actualizaciones usan las RPC de la migración para conservar RLS,
+auditoría y la protección del último administrador. Los errores HTTP contienen
+`detail.code` y `detail.message`; no incluyen tokens ni detalles internos de la BD.
+
+## Organización
+
+| Ruta | Responsabilidad |
+| --- | --- |
+| `app/crypto/encryption/` | Clave AES-256, nonce, GCM, tag y autenticación. |
+| `app/crypto/shamir/` | División, reconstrucción y serialización de la clave. |
+| `app/modules/documents/` | Contratos y coordinación del flujo portable. |
+| `app/modules/auth/` | Sesión, permisos y administración de perfiles. |
+| `app/infrastructure/supabase.py` | HTTP hacia Auth/PostgREST con identidad de usuario. |
+| `app/core/config.py` | Configuración de conexión validada. |
+| `app/core/errors.py` | Errores públicos de servicio. |
+| `app/core/request_limits.py` | Límite del cuerpo antes de procesar archivos. |
+
+El motor criptográfico no importa FastAPI ni consulta usuarios. Los perfiles se
+persisten en Supabase, pero los documentos y fragmentos siguen en formato portable:
+aún no se asignan a cuentas distintas ni se guardan en Storage.
+
+## Pruebas y calidad
+
+Desde `backend/`, con el entorno activo:
 
 ```bash
 python -m pip check
+python -m pytest -q
 python -m ruff check .
 python -m ruff format --check .
-python -m mypy
-python -m pytest
+python -m mypy app
 ```
 
-## Ejecutar la demostración
+Las pruebas no necesitan credenciales reales. Las de autenticación usan transporte
+HTTP controlado para comprobar rechazos, permisos, RPC y respuestas del proveedor.
+Las del flujo documental aíslan esa dependencia; las del motor conservan sus
+validaciones matemáticas y criptográficas.
+
+## Demos criptográficas
 
 Desde `backend/`:
 
 ```bash
 python -m demos.shamir_demo
+python -m demos.special_notes_demo
 ```
 
-La demo crea un secreto ficticio en memoria, verifica todas las combinaciones
-de 3 fragmentos entre 5, prueba el rechazo de 2 fragmentos, serializa sin
-escribir archivos y verifica el caso 4 de 4. No imprime claves ni coordenadas y.
-
-Para ejecutar solamente las pruebas de Shamir:
-
-```bash
-python -m pytest tests/crypto/shamir -v
-```
+Estas demos funcionan sin Supabase y no son una ruta alternativa para autenticar
+usuarios de la aplicación.
 
 ## Documentación
 
-- [Organización modular](../docs/development/backend-architecture.md)
-- [Diseño de Shamir](../docs/crypto/shamir.md)
-
-Las funciones criptográficas no realizan consultas a Supabase ni importan
-FastAPI. Los routers reciben solicitudes; los servicios funcionales coordinan
-operaciones; los repositorios y adaptadores se añadirán al integrar persistencia.
+- [Shamir](../docs/crypto/shamir.md).
+- [AES-256-GCM](../docs/crypto/aes-gcm.md).
+- [Contrato documental](../docs/development/special-notes-backend.md).
+- [Sesión y administración](../docs/development/authentication.md).
+- [Organización del backend](../docs/development/backend-architecture.md).
