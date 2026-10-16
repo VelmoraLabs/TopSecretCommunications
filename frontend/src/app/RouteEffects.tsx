@@ -6,6 +6,9 @@ const titles: Record<string, string> = {
   '/login': 'Acceso',
   '/dashboard': 'Dashboard',
   '/documentos': 'Documentos',
+  '/notas-especiales': 'Notas especiales',
+  '/auth/callback': 'Verificando acceso',
+  '/administracion': 'Perfiles y permisos',
 }
 
 export default function RouteEffects() {

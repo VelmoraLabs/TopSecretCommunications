@@ -157,8 +157,9 @@ Las páginas de ITHERA utilizan una distribución de 45 % para el panel de marca
 y 55 % para el formulario en pantallas grandes. En tamaños pequeños muestran
 el formulario en una sola columna y ocultan el panel decorativo.
 
-Esta composición se reutilizará cuando se implemente autenticación. Los textos
-y los mecanismos de ingreso se ajustarán a los requisitos de este proyecto.
+El login actual reutiliza esa composición con un único botón de Google y explica
+que solo acceden cuentas autorizadas. El callback y los estados de sesión
+conservan los mismos tokens visuales, mensajes claros y acciones de recuperación.
 
 ### Documentos
 
@@ -218,30 +219,30 @@ Tailwind 4, las variables de tema permiten generar utilidades desde colores,
 fuentes y otros valores; consultar [Theme variables](https://tailwindcss.com/docs/theme)
 y [Tailwind con Vite](https://tailwindcss.com/docs/installation/using-vite).
 
-## 7. Primera entrega visual
+## 7. Pantallas implementadas
 
-La base inicial incluye cuatro vistas. Utiliza componentes originales y contenido
-propio de Top Secret Communications, con la identidad visual de ITHERA `develop`.
+La composición original se conserva al integrar sesión y permisos. El acceso
+utiliza Google; el panel de marca sigue ocupando 45 % en escritorio y se oculta en
+móvil. No hay formulario público de registro ni contraseña de la aplicación.
 
-| Ruta | Pantalla | Comportamiento actual |
+| Ruta | Pantalla | Comportamiento |
 | --- | --- | --- |
-| `/` | Inicio | Presentación del proyecto y sus categorías; navegación al acceso y dashboard. |
-| `/login` | Acceso | Validación nativa, visibilidad de contraseña y aviso de autenticación pendiente. |
-| `/dashboard` | Panel | Resumen documental, actividad ficticia y enlaces por categoría o pendientes. |
-| `/documentos` | Documentos | Búsqueda, filtros, orden, vistas de lista/tarjetas y detalle en ventana modal. |
+| `/` | Inicio | Presentación pública y navegación al acceso. |
+| `/login` | Acceso | Botón de Google y explicación de cuenta autorizada. |
+| `/auth/callback` | Retorno OAuth | Estado de verificación y error o navegación. |
+| `/dashboard` | Panel | Resumen y actividad ficticios identificados; sesión obligatoria. |
+| `/documentos` | Documentos | Filtros y detalle de ejemplos; sesión obligatoria. |
+| `/notas-especiales` | Flujo portable | Archivos reales, sesión y permisos. |
+| `/administracion` | Perfiles y permisos | Directorio, alta, edición, estados y catálogo reales. |
 
-Las rutas del panel son públicas durante esta revisión visual. No representan
-usuarios autenticados ni permisos concedidos. La navegación de ejemplo se ofrece
-mediante una acción separada del formulario de inicio de sesión.
+La administración reutiliza Card, TextField, Button, Badge y Modal; utiliza iconos
+Lucide y la misma paleta. En móvil, el formulario pasa arriba del directorio y la
+tabla permite desplazamiento dentro de su tarjeta. El header muestra el perfil
+real y ofrece cierre de sesión. Los permisos controlan la navegación y sus
+estados; el backend conserva la autoridad para permitir cada operación.
 
-No se envían credenciales ni se almacenan en `localStorage` o `sessionStorage`.
-El checkbox de recordar acceso solo permite revisar el control visual; no persiste
-una preferencia. El formulario no inicia sesión. Todos los documentos y estados
-son ficticios y están identificados como ejemplos.
-
-La pantalla de Shamir, las llamadas a FastAPI y Supabase quedan para una entrega
-posterior. Su diseño reutilizará estos layouts, botones, formularios y tarjetas;
-los contratos y estados de carga/error se definirán junto con la integración.
+El SDK mantiene la sesión en el navegador; los resultados criptográficos no se
+persisten allí. Ver [sesión y administración](authentication.md).
 
 ### Implementación del estilo
 
@@ -270,6 +271,17 @@ Los iconos provienen de Lucide React mediante imports explícitos.
 10. Documentar nuevas rutas y componentes al implementarlos.
 
 ## 9. Fuentes del repositorio
+
+### Evolución: notas especiales conectadas
+
+La ruta `/notas-especiales` incorpora formularios de protección y recuperación,
+tarjetas de fragmentos, descargas y estados de error/éxito del backend. Conserva
+paleta, fuentes, iconos Lucide, navegación oscura y superficies claras. La política
+requiere a todo el grupo. El paquete conserva el tag separado y el formato v1.
+Dashboard y documentos mantienen ejemplos identificados; las notas especiales
+procesan archivos reales. Google, sesión y administración ya están integrados.
+La entrega de fragmentos a destinatarios y recuperación entre cuentas es posterior.
+Ver [guía del flujo](special-notes-frontend.md).
 
 Enlaces fijados al commit de `develop` utilizado en la revisión:
 

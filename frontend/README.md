@@ -1,77 +1,133 @@
-# Frontend — Top Secret Communications
+# Frontend de Top Secret Communications
 
-Base visual modular con React, TypeScript, Vite y Tailwind CSS 4. La referencia de
-estilo es ITHERA `develop`: morados, navegación oscura, superficies claras, Plus
-Jakarta Sans y DM Sans. Los componentes y textos corresponden a este proyecto.
+React, TypeScript, Vite y Tailwind 4, con la identidad visual basada en ITHERA
+`develop`: navegación morada, superficies claras, Plus Jakarta Sans, DM Sans e
+iconos Lucide. La criptografía se ejecuta exclusivamente en el backend.
 
-## Ejecutar en local
+## Preparación
 
-Requisito: Node.js 24 y npm, igual que el CI. Desde la raíz del repositorio:
+Desde la raíz del repositorio:
 
 ```bash
+cp -n frontend/.env.example frontend/.env.local
 cd frontend
 npm ci
+```
+
+En `frontend/.env.local` coloca `VITE_SUPABASE_URL` y
+`VITE_SUPABASE_PUBLISHABLE_KEY` del mismo proyecto configurado en FastAPI.
+Las variables `VITE_` son públicas: no colocar secretos OAuth, secret keys,
+service_role, contraseñas ni claves criptográficas.
+
+La base de datos debe tener aplicada la [configuración de acceso](../supabase/README.md)
+y Google debe estar habilitado. Consultar la
+[guía de autenticación](../docs/development/authentication.md).
+
+## Ejecutar
+
+Desde `frontend/`:
+
+```bash
 npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 ```
 
-Abrir [http://127.0.0.1:5173](http://127.0.0.1:5173). Detener con `Ctrl + C`.
-No se requieren archivos `.env`, backend ni credenciales de Supabase para esta base.
+Abrir `http://localhost:5173` para coincidir con el origen OAuth configurado.
+FastAPI debe estar iniciado en `127.0.0.1:8000`. Vite reenvía las rutas `/api`
+a ese servidor, por lo que no se necesita abrir CORS en desarrollo. En producción
+se requiere un proxy equivalente y configurar el dominio HTTPS real de la app.
+Reiniciar Vite después de modificar variables de entorno.
 
-## Pantallas disponibles
+## Rutas
 
-| Ruta | Contenido |
+| Ruta | Comportamiento |
 | --- | --- |
-| `/` | Presentación de la plataforma y sus cuatro categorías documentales. |
-| `/login` | Diseño del acceso, validación nativa y visibilidad de contraseña. |
-| `/dashboard` | Indicadores, documentos recientes y actividad de ejemplo. |
-| `/documentos` | Búsqueda, filtros, orden, lista/tarjetas y detalle de documentos ficticios. |
-| Cualquier otra ruta | Página 404 con enlace al dashboard. |
+| `/` | Presentación pública del proyecto. |
+| `/login` | Acceso con la cuenta de Google autorizada. |
+| `/auth/callback` | Canje PKCE, verificación de acceso y retorno a una ruta interna. |
+| `/dashboard` | Resumen documental con ejemplos identificados. Requiere sesión. |
+| `/documentos` | Búsqueda, filtros, lista/tarjetas y detalle de documentos ficticios. |
+| `/notas-especiales` | Cifrado y recuperación reales, con sesión y permisos. |
+| `/administracion` | Perfiles, roles, alta y edición reales. Requiere `profiles.manage`. |
+| Otras | Página 404. |
 
-El formulario no autentica y no envía ni persiste credenciales. Los documentos son
-fixtures locales. Las rutas del panel son públicas para revisar el diseño; no se
-implementaron guards, permisos, cargas de archivos, criptografía ni llamadas HTTP.
-El control «Recordar mi acceso» solo presenta el estado visual del checkbox.
+El proveedor de sesión verifica el acceso antes de mostrar rutas internas. El
+header muestra nombre y rol del perfil real. El menú lateral muestra la
+administración únicamente a usuarios con permiso; FastAPI y PostgreSQL vuelven
+a comprobarlo al realizar operaciones.
 
-La búsqueda acepta títulos, folios y áreas; ignora mayúsculas y acentos. Los filtros
-por categoría se guardan en el parámetro `tipo` de la URL. `estado=pendiente` reúne
-los ejemplos de firma pendiente y acceso conjunto. Un tipo inválido muestra todos.
-El orden y el término de búsqueda son estado local y se restablecen al abandonar la
-ruta. El detalle es una ventana modal que cierra con el botón, Escape o el fondo.
+## Sesión
 
-## Organización
+El SDK de Supabase conserva y renueva la sesión en el navegador. Google utiliza
+OAuth con PKCE; el callback procesa el código una sola vez incluso con
+React StrictMode y limpia los parámetros de la URL. No hay formulario público
+de registro ni contraseña de aplicación.
 
-| Ruta dentro de `src/` | Responsabilidad |
+Los cambios de acceso se consultan al volver al foco y periódicamente. El cierre
+de sesión desmonta las rutas internas y descarta los resultados en memoria.
+Los errores de red muestran reintento; las cuentas no autorizadas muestran el
+estado de acceso restringido. Verificar el JWT solo en la interfaz sería
+insuficiente: la API es quien autoriza cada operación.
+
+## Administración
+
+El administrador puede buscar perfiles por correo, filtrar por estado, paginar,
+autorizar un correo de Google y editar nombre, rol y estado. El primer login
+vincula la identidad con el perfil previamente autorizado. La pantalla consulta
+el catálogo real de roles y sus permisos.
+
+Los mensajes de éxito solo aparecen después de una escritura confirmada por la
+API. La BD impide retirar el acceso al último administrador activo vinculado.
+Desactivar una persona conserva su historial. El rol general no concede acceso
+automático a documentos o fragmentos de otros grupos.
+
+## Documentos de ejemplo
+
+Dashboard y Documentos conservan fixtures locales claramente identificados.
+Búsqueda por título, folio o área; filtros `tipo` y `estado=pendiente` en la URL;
+orden y vista de lista/tarjetas; detalle en ventana modal. Su integración con
+documentos persistidos es una etapa posterior.
+
+## Notas especiales
+
+El flujo portable mantiene AES-GCM, Shamir n de n, límite de 5 MiB, descarga e
+importación del paquete y sus fragmentos. El tag permanece separado en el formato
+v1 y las coordenadas de Shamir se conservan como cadenas decimales.
+
+Para proteger se requiere `documents.create`; los miembros sin ese permiso
+acceden a recuperación. El backend verifica los permisos aunque se manipule un
+botón. Todavía no se entrega cada fragmento a una cuenta distinta ni existe una
+sesión de recuperación colaborativa. Los resultados permanecen en memoria hasta
+abandonar la página y se pueden guardar mediante las descargas.
+
+## Organización modular
+
+| Carpeta en `src/` | Uso |
 | --- | --- |
-| `app/` | Registro de rutas y título/desplazamiento al navegar. |
-| `components/ui/` | Controles visuales reutilizables, independientes del dominio. |
-| `components/layout/` | Marca, navegación pública, panel, sidebar y acceso. |
-| `features/documents/` | Tipos, fixtures, presentación y componentes documentales. |
-| `pages/` | Composición de las pantallas; una carpeta por página. |
-| `styles/` | Tokens visuales, fuentes, estilos globales y layouts. |
+| `app/` | Rutas, títulos y navegación. |
+| `components/ui/` | Controles compartidos sin lógica de Supabase. |
+| `components/layout/` | Marca, navegación, panel y layout de acceso. |
+| `features/auth/` | Contexto, sesión, PKCE y comprobaciones de acceso. |
+| `features/admin/` | Contratos y peticiones administrativas. |
+| `features/documents/` | Tipos, ejemplos, componentes y flujo portable. |
+| `lib/` | Cliente Supabase y HTTP autenticado de la aplicación. |
+| `pages/` | Composición de pantallas y estilos específicos. |
+| `styles/` | Tema, fuentes, layouts y primitivas globales. |
 
-Crear otros módulos cuando se implemente su funcionalidad. El estilo de una página
-queda junto a su componente; no concentrar todas las pantallas en `App.tsx`.
+Los tipos documentales de ejemplo no son modelos de autorización. Los componentes
+visuales reutilizables reciben datos y eventos; no deciden permisos ni duplican
+AES o Shamir.
 
-## Calidad
+## Comprobar
 
 ```bash
 npm run lint
 npm run build
-npm run preview -- --host 127.0.0.1 --port 4173 --strictPort
 ```
 
-`build` comprueba TypeScript y genera `dist/`. `preview` sirve esa compilación en
-[http://127.0.0.1:4173](http://127.0.0.1:4173); no es un servidor de producción.
-El CI conserva `npm ci`, lint y build. No se añadieron tests automatizados al
-repositorio para esta entrega visual. La revisión funcional se documenta en la guía.
+Probar además login, recarga, cierre de sesión, perfil sin permiso y operaciones
+de administración con otro perfil de navegador. Las pestañas del mismo perfil
+comparten la sesión. Revisar escritorio, móvil y navegación por teclado.
 
-## Trabajar con el equipo
-
-Crear una rama de tarea desde `develop`, hacer cambios y abrir un PR hacia
-`develop`. No enviar commits directamente a `main` o `develop`. El líder revisa y
-realiza el merge. El flujo completo y las comprobaciones obligatorias están en el
-[README principal](../README.md).
-
-- [Referencia visual](../docs/development/frontend-design.md)
-- [Arquitectura modular](../docs/development/frontend-architecture.md)
-- [Integración de esta entrega y revisión manual](../docs/development/frontend-setup.md)
+- [Guía de sesión y administración](../docs/development/authentication.md).
+- [Arquitectura del frontend](../docs/development/frontend-architecture.md).
+- [Referencia de estilo](../docs/development/frontend-design.md).

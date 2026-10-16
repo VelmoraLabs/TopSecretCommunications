@@ -1,0 +1,70 @@
+.access-status {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--canvas);
+}
+.access-status-card {
+  width: 100%;
+  max-width: 490px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 38px;
+  text-align: center;
+  box-shadow: 0 12px 42px #26144608;
+}
+.access-status-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  color: var(--primary);
+  background: #eee8f9;
+  margin-bottom: 20px;
+}
+.access-status-card h1 {
+  font-size: 23px;
+  line-height: 1.35;
+  letter-spacing: -0.035em;
+  margin-bottom: 12px;
+}
+.access-status-card p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.access-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+.access-forbidden {
+  margin: 55px auto;
+}
+.access-forbidden .button {
+  margin-top: 24px;
+}
+.access-spinner {
+  animation: access-spin 1s linear infinite;
+}
+@keyframes access-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .access-spinner {
+    animation: none;
+  }
+}
+@media (max-width: 480px) {
+  .access-status-card {
+    padding: 28px 20px;
+  }
+}

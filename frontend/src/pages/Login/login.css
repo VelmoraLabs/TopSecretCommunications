@@ -39,95 +39,61 @@
 .login-heading > p:last-child {
   color: var(--muted);
   font-size: 12px;
+  line-height: 1.8;
 }
-.login-form {
-  margin-top: 30px;
+.login-google-panel {
+  margin-top: 32px;
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
-.login-form .field-control {
-  min-height: 51px;
-}
-.login-form .field-control input {
-  padding: 15px 0;
-  font-size: 12px;
-}
-.login-options {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 9px;
-  font-size: 10px;
-  margin-top: -3px;
-}
-.login-options label {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #71647c;
-}
-.login-options input {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--primary);
-  margin: 0;
-}
-.login-options button {
-  background: none;
-  color: var(--primary);
-  font-weight: 600;
-  font-size: 10px;
-  padding: 4px 0;
-}
-.login-options button:hover {
-  text-decoration: underline;
-}
-.login-submit {
+.login-google-button {
   width: 100%;
-  min-height: 51px;
-  justify-content: space-between;
-  padding: 13px 20px;
+  min-height: 53px;
+  background: white;
+  justify-content: flex-start;
+  box-shadow: 0 3px 14px #30134505;
+}
+.login-google-button span {
+  flex: 1;
+  text-align: left;
+}
+.login-google-button > svg {
+  flex-shrink: 0;
+}
+.login-access-note {
+  display: flex;
+  gap: 12px;
+  padding: 18px;
+  background: #f5f2fb;
+  border: 1px solid #eae4f3;
+  border-radius: 13px;
+}
+.login-access-note > svg {
+  flex-shrink: 0;
+  color: var(--primary);
   margin-top: 2px;
+}
+.login-access-note p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.85;
+}
+.login-access-note strong {
+  display: block;
+  color: #44315e;
+  font-size: 12px;
+  margin-bottom: 3px;
 }
 .login-notice {
   margin-top: 18px;
-}
-.login-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 27px 0 18px;
-}
-.login-divider::before,
-.login-divider::after {
-  content: '';
-  height: 1px;
-  background: #e6e0ee;
-  flex: 1;
-}
-.login-divider span {
-  color: #897e97;
-  font-size: 7px;
-  letter-spacing: 0.12em;
-  white-space: nowrap;
-}
-.login-demo {
-  display: flex;
-  min-height: 47px;
-  font-size: 11px;
-  width: 100%;
-  background: transparent;
-}
-.diagonal-arrow {
-  transform: rotate(-45deg);
 }
 .login-footnote {
   text-align: center;
   font-size: 10px;
   color: #83778f;
-  line-height: 1.8;
-  margin-top: 16px;
-  padding: 0 22px;
+  line-height: 1.9;
+  margin-top: 25px;
+  padding: 0 15px;
 }
 .login-copyright {
   text-align: center;

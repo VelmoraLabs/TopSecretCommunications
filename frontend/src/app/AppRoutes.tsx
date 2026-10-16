@@ -6,6 +6,10 @@ import DashboardPage from '../pages/Dashboard/DashboardPage'
 import DocumentsPage from '../pages/Documents/DocumentsPage'
 import NotFoundPage from '../pages/NotFound/NotFoundPage'
 import RouteEffects from './RouteEffects'
+import SpecialNotesPage from '../pages/SpecialNotes/SpecialNotesPage'
+import AuthCallbackPage from '../pages/AuthCallback/AuthCallbackPage'
+import AdminPage from '../pages/Admin/AdminPage'
+import { RequirePermission, RequireSession } from '../features/auth/AccessGate'
 
 export default function AppRoutes() {
   return (
@@ -14,9 +18,16 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/documentos" element={<DocumentsPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route element={<RequireSession />}>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/documentos" element={<DocumentsPage />} />
+            <Route path="/notas-especiales" element={<SpecialNotesPage />} />
+            <Route element={<RequirePermission permission="profiles.manage" />}>
+              <Route path="/administracion" element={<AdminPage />} />
+            </Route>
+          </Route>
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

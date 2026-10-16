@@ -4,11 +4,35 @@ import { Link, Outlet, useLocation } from 'react-router'
 import Brand from './Brand'
 import AppSidebar from './AppSidebar'
 import Badge from '../ui/Badge'
+import { roleNames, useAuth } from '../../features/auth/auth'
 
 export default function AppLayout() {
+  const auth = useAuth()
+  const profile = auth.access!.profile
+  const initials = profile.display_name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+  const [signingOut, setSigningOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+  async function logout() {
+    setSigningOut(true)
+    setLogoutError('')
+    try {
+      await auth.signOut()
+    } catch (error) {
+      setLogoutError(
+        error instanceof Error ? error.message : 'No se pudo cerrar la sesión.',
+      )
+      setSigningOut(false)
+    }
+  }
   const [drawerOpen, setDrawerOpen] = useState(false)
   const drawer = useRef<HTMLDialogElement>(null)
   const { pathname } = useLocation()
+  const isSpecialNotes = pathname === '/notas-especiales'
   useEffect(() => {
     const dialog = drawer.current
     if (drawerOpen && !dialog?.open) dialog?.showModal()
@@ -45,22 +69,45 @@ export default function AppLayout() {
           <span>Espacio de trabajo</span>
           <span>/</span>
           <strong>
-            {pathname === '/documentos' ? 'Documentos' : 'Dashboard'}
+            {isSpecialNotes
+              ? 'Notas especiales'
+              : pathname === '/administracion'
+                ? 'Perfiles y permisos'
+                : pathname === '/documentos'
+                  ? 'Documentos'
+                  : 'Dashboard'}
           </strong>
         </div>
         <div className="header-actions">
-          <Badge tone="neutral">Datos de ejemplo</Badge>
+          <Badge tone="neutral">
+            {isSpecialNotes
+              ? 'Flujo portable'
+              : pathname === '/administracion'
+                ? 'Sesión activa'
+                : 'Datos de ejemplo'}
+          </Badge>
           <details className="account-menu">
-            <summary aria-label="Menú de usuario">
-              <span className="avatar">UE</span>
+            <summary aria-label={'Menú de ' + profile.display_name}>
+              <span className="avatar">{initials}</span>
               <span className="account-name">
-                Usuario de ejemplo<small>Personal autorizado · ejemplo</small>
+                {profile.display_name}
+                <small>{roleNames[profile.role_code]}</small>
               </span>
               <ChevronDown size={15} />
             </summary>
             <div className="account-dropdown">
-              <p>No hay una sesión iniciada.</p>
-              <Link to="/login">Ir al acceso</Link>
+              <p>{profile.email}</p>
+              {auth.hasPermission('profiles.manage') && (
+                <Link to="/administracion">Administrar perfiles</Link>
+              )}
+              <button
+                type="button"
+                disabled={signingOut}
+                onClick={() => void logout()}
+              >
+                {signingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
+              </button>
+              {logoutError && <p role="alert">{logoutError}</p>}
               <Link to="/">Volver al inicio</Link>
             </div>
           </details>
@@ -108,7 +155,13 @@ export default function AppLayout() {
           <Outlet />
           <footer className="app-footer">
             <span>Top Secret Communications</span>
-            <span>Datos de ejemplo para revisar la interfaz.</span>
+            <span>
+              {isSpecialNotes
+                ? 'Archivos reales · sesión autenticada.'
+                : pathname === '/administracion'
+                  ? 'Perfiles y permisos de tu oficina.'
+                  : 'Documentos de ejemplo · sesión autenticada.'}
+            </span>
           </footer>
         </div>
       </main>
