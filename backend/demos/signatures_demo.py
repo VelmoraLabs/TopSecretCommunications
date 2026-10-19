@@ -4,7 +4,7 @@ from app.crypto.signatures import generate_key_pair, sha256, sign, verify
 
 
 def main() -> None:
-    message = "Mensaje ficticio como documento de prueba.\n".encode()
+    message = b"Mensaje ficticio como documento de prueba.\n"
     private_key, public_key = generate_key_pair()
     _, other_public_key = generate_key_pair()
     signature = sign(message, private_key)
