@@ -159,12 +159,13 @@ todas las filas; eso no representa los permisos de un usuario de la aplicación.
 | Gestionar perfiles, rol y estado | Sí | No | No | No |
 | Crear documentos | Sí | Sí | Sí | No |
 | Leer documentos asignados | Sí | Sí | Sí | Sí |
-| Firmar cuando se implemente ese flujo | No | Sí | No | No |
+| Firmar emisión de documentos propios | Sí | Sí | Sí | No |
+| Aprobar institucionalmente documentos asignados | No | Sí | No | No |
 | Solicitar recuperación de una nota de su grupo | Sí | Sí | Sí | Sí |
 | Aportar su fragmento a una sesión de su grupo | Sí | Sí | Sí | Sí |
 
 Cada perfil tiene un rol general. La pertenencia a grupos y la asignación de
-documentos serán relaciones independientes. Ninguna capacidad general permite
+documentos son relaciones independientes. Ninguna capacidad general permite
 leer todos los documentos o fragmentos. Esta migración implementa la protección
 de perfiles; las capacidades documentales son el catálogo que los próximos
 endpoints deberán exigir, junto con la asignación al documento o al grupo.
@@ -231,9 +232,16 @@ Google/PKCE, sesión, verificación de JWT, permisos y administración están
 implementados. Las comprobaciones y comandos se describen en la
 [guía de autenticación](../docs/development/authentication.md).
 
-Siguen grupos, Storage privado, entrega protegida de fragmentos y sesiones de
-recuperación con eventos privados de Realtime. Los módulos AES-GCM y Shamir
-conservan sus responsabilidades actuales.
+La migración `20261019000000_groups.sql` añade grupos, integrantes, responsables,
+archivo, control de concurrencia y auditoría. Ejecutarla una sola vez después de
+la migración de acceso; la [guía de grupos](../docs/development/groups.md) describe
+su configuración, permisos y pruebas.
+
+La migración `20261019100000_memoranda_signatures.sql` integra memorándums, destinatarios individuales, claves públicas, versiones, firmas y auditoría; crea el bucket privado `stc-documents`. Aplicarla una sola vez después de acceso y grupos. Necesita `SUPABASE_SECRET_KEY` solo en el backend para RPC de escritura confiables y Storage, nunca en React. Las lecturas conservan el JWT y RLS. Consulta [instalación y permisos RSA-PSS](../docs/development/memoranda-signatures.md).
+
+La migración `20261021000000_document_delivery.sql` añade borrador privado, firma del emisor, aprobación opcional del Embajador y envío explícito. Solo se habilita el acceso a destinatarios finales al confirmar el envío. Conserva documentos anteriores como historial del flujo previo, sin inventar firmas ni fechas. Aplicarla una sola vez después de memorándums; no repetir las anteriores.
+
+Siguen la entrega protegida de fragmentos, la integración documental de RSA-OAEP y las sesiones de recuperación con Realtime. Los memorándums no exigen grupos.
 
 ## Referencias
 

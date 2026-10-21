@@ -7,11 +7,13 @@ export default function Modal({
   onClose,
   title,
   children,
+  busy = false,
 }: {
   open: boolean
   onClose: () => void
   title: string
   children: ReactNode
+  busy?: boolean
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
@@ -25,9 +27,10 @@ export default function Modal({
       ref={ref}
       className="modal"
       aria-labelledby={titleId}
+      aria-busy={busy}
       onCancel={(event) => {
         event.preventDefault()
-        onClose()
+        if (!busy) onClose()
       }}
       onClick={(event) => {
         if (event.target !== event.currentTarget) return
@@ -38,7 +41,7 @@ export default function Modal({
           event.clientY < rect.top ||
           event.clientY > rect.bottom
         )
-          onClose()
+          if (!busy) onClose()
       }}
     >
       <div className="modal-header">
@@ -47,6 +50,7 @@ export default function Modal({
           type="button"
           className="icon-button"
           aria-label="Cerrar detalle"
+          disabled={busy}
           onClick={onClose}
         >
           <X size={20} />

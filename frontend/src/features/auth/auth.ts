@@ -45,6 +45,8 @@ const destinations = new Set([
   '/documentos',
   '/notas-especiales',
   '/administracion',
+  '/grupos',
+  '/claves',
 ])
 const returnKey = 'stc.auth.returnTo'
 export function safeDestination(value: unknown): string {

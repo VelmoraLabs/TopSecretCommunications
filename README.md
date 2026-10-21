@@ -29,6 +29,7 @@ El sistema combina firmas digitales, cifrado y control de acceso. Cada categorí
 | Memorándum | Firma y verificación con RSA-PSS y SHA-256. |
 | Expediente de personal | Cifrado con AES-256-GCM y protección de la clave para sus destinatarios mediante RSA-OAEP. |
 | Nota diplomática o comunicado | Firma digital, cifrado y distribución de la clave a los destinatarios autorizados. |
+| Acuerdo | Categoría prevista; su flujo de protección se incorporará en una etapa posterior. |
 | Nota diplomática especial | Cifrado con AES-256-GCM y reconstrucción conjunta de la clave mediante Shamir's Secret Sharing. |
 
 En las notas especiales, el acceso conjunto requiere la participación de todos los integrantes definidos para el documento: el umbral de Shamir es igual al número de fragmentos (`threshold = share_count`). El módulo criptográfico admite también otros umbrales para su reutilización y sus pruebas.
@@ -47,9 +48,9 @@ En las notas especiales, el acceso conjunto requiere la participación de todos 
 | Calidad del frontend | ESLint, TypeScript y compilación con Vite. |
 | Integración continua | GitHub Actions. |
 
-La implementación incluye Shamir, AES-256-GCM, protección y recuperación de notas especiales, login con Google mediante Supabase Auth y PKCE, sesión persistente y renovable, verificación del JWT en FastAPI y administración de perfiles con permisos vigentes en PostgreSQL. El frontend conserva la identidad visual y las pantallas documentales de ejemplo; las notas especiales y la administración utilizan operaciones reales.
+La implementación incluye Shamir, AES-256-GCM, protección y recuperación de notas especiales, login con Google mediante Supabase Auth y PKCE, sesión persistente y renovable, verificación del JWT en FastAPI y administración de perfiles con permisos vigentes en PostgreSQL. El frontend conserva la identidad visual; Dashboard y Documentos consultan memorándums reales con destinatarios, firmas y archivos en Storage privado. Incluye grupos e integrantes con permisos propios. Los memorándums separan borrador privado, firma del emisor, aprobación institucional opcional y envío a destinatarios finales. Consulta la [integración RSA-PSS](docs/development/memoranda-signatures.md).
 
-Las firmas, RSA-OAEP, los demás flujos documentales, Storage y la entrega de fragmentos entre usuarios siguen pendientes. El flujo portable requiere sesión y permisos, pero todavía reúne los fragmentos en una misma cuenta. No representa una sesión colaborativa entre integrantes. Consultar la [integración de autenticación](docs/development/authentication.md) y la [base de permisos](supabase/README.md).
+RSA-PSS está integrado para memorándums. RSA-OAEP conserva su primitiva criptográfica; su integración documental, los demás flujos y la entrega de fragmentos entre usuarios siguen pendientes. El flujo portable requiere sesión y permisos, pero todavía reúne los fragmentos en una misma cuenta. No representa una sesión colaborativa entre integrantes. Consultar la [integración de autenticación](docs/development/authentication.md) y la [base de permisos](supabase/README.md).
 
 ## Arquitectura y organización del código
 
@@ -76,7 +77,8 @@ Estas rutas forman parte de la estructura implementada del proyecto:
 | `backend/app/crypto/encryption/` | AES-256-GCM con clave, nonce, ciphertext, tag y AAD. |
 | `backend/app/modules/documents/` | Flujo portable de notas especiales con sesión y permisos. |
 | `backend/app/modules/auth/` | Identidad, permisos y administración de perfiles. |
-| `backend/app/infrastructure/supabase.py` | Auth y PostgREST con el JWT del usuario. |
+| `backend/app/infrastructure/supabase.py` | Auth y lecturas PostgREST con JWT; canal privado para Storage y escrituras documentales confiables. |
+| `backend/app/modules/memoranda/` | Destinatarios, claves por perfil, firma y verificación de memorándums persistidos. |
 | `backend/app/core/` | Configuración, errores y límite del cuerpo HTTP. |
 | `supabase/` | Migración de perfiles, roles, permisos, RLS y auditoría. |
 | `backend/tests/test_health.py` | Verifica el endpoint de salud. |
@@ -89,7 +91,7 @@ Estas rutas forman parte de la estructura implementada del proyecto:
 | `backend/README.md` | Explica los comandos y el funcionamiento del backend. |
 | `frontend/src/app/` | Registra las rutas y los efectos de navegación. |
 | `frontend/src/components/` | Controles de UI y layouts compartidos. |
-| `frontend/src/features/documents/` | Tipos, datos ficticios y componentes documentales. |
+| `frontend/src/features/documents/` | Contratos, API, formularios y componentes documentales; flujo portable separado. |
 | `frontend/src/pages/` | Inicio, login Google, callback, dashboard, documentos, notas especiales, administración y 404. |
 | `frontend/src/features/auth/` | Sesión y comprobaciones de acceso en la interfaz. |
 | `frontend/src/features/admin/` | Contratos y llamadas de administración. |
@@ -108,12 +110,10 @@ Estas rutas forman parte de la estructura implementada del proyecto:
 
 ### Organización de los siguientes módulos
 
-Estas rutas se crean al implementar su funcionalidad; no representan módulos ya terminados:
+Las primitivas de firmas y RSA-OAEP ya existen. Las siguientes rutas son posibilidades para flujos futuros y se crearán únicamente si su funcionalidad las necesita:
 
 | Ruta en `backend/app/` | Responsabilidad |
 | --- | --- |
-| `crypto/signatures/` | SHA-256 y firmas RSA-PSS. |
-| `crypto/key_wrapping/` | Protección y recuperación de claves mediante RSA-OAEP. |
 | `modules/access/` | Permisos y coordinación del acceso conjunto. |
 | `modules/documents/workflows/` | Coordinación de la protección según la categoría documental. |
 | `modules/keys/` | Gestión de claves públicas y sobres de claves. |
@@ -238,7 +238,7 @@ Estos comandos fijan las direcciones locales:
 
 Si un puerto está ocupado, detener el proceso que lo utiliza antes de iniciar el servicio. El frontend utiliza `--strictPort` para impedir que Vite cambie silenciosamente a otro puerto.
 
-Detener cada servicio con `Ctrl + C` en su terminal. El inicio es público; el panel, los documentos, las notas especiales y la administración requieren una sesión autorizada. La administración exige `profiles.manage`. Abrir el frontend por `localhost` para coincidir con los callbacks configurados. Dashboard y Documentos conservan ejemplos identificados; las notas especiales y los perfiles usan la API. Consultar la [guía de autenticación](docs/development/authentication.md), la [arquitectura del frontend](docs/development/frontend-architecture.md) y la [referencia visual](docs/development/frontend-design.md).
+Detener cada servicio con `Ctrl + C` en su terminal. El inicio es público; el panel, los documentos, las notas especiales y la administración requieren una sesión autorizada. La administración exige `profiles.manage`. Abrir el frontend por `localhost` para coincidir con los callbacks configurados. Dashboard y Documentos consultan datos autorizados reales; las notas especiales y los perfiles también usan la API. Consultar la [guía de autenticación](docs/development/authentication.md), la [arquitectura del frontend](docs/development/frontend-architecture.md) y la [referencia visual](docs/development/frontend-design.md).
 
 ## Pruebas y comprobaciones
 

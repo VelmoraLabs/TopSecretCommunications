@@ -73,18 +73,18 @@ export default function AppLayout() {
               ? 'Notas especiales'
               : pathname === '/administracion'
                 ? 'Perfiles y permisos'
-                : pathname === '/documentos'
-                  ? 'Documentos'
-                  : 'Dashboard'}
+                : pathname === '/grupos'
+                  ? 'Grupos e integrantes'
+                  : pathname === '/claves'
+                    ? 'Mis claves de firma'
+                    : pathname === '/documentos'
+                      ? 'Documentos'
+                      : 'Dashboard'}
           </strong>
         </div>
         <div className="header-actions">
           <Badge tone="neutral">
-            {isSpecialNotes
-              ? 'Flujo portable'
-              : pathname === '/administracion'
-                ? 'Sesión activa'
-                : 'Datos de ejemplo'}
+            {isSpecialNotes ? 'Flujo portable' : 'Sesión activa'}
           </Badge>
           <details className="account-menu">
             <summary aria-label={'Menú de ' + profile.display_name}>
@@ -160,7 +160,9 @@ export default function AppLayout() {
                 ? 'Archivos reales · sesión autenticada.'
                 : pathname === '/administracion'
                   ? 'Perfiles y permisos de tu oficina.'
-                  : 'Documentos de ejemplo · sesión autenticada.'}
+                  : pathname === '/grupos'
+                    ? 'Grupos e integrantes de tu oficina.'
+                    : 'Documentos y firmas de tu cuenta.'}
             </span>
           </footer>
         </div>

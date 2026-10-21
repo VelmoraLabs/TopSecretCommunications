@@ -49,8 +49,12 @@ insert into public.profiles(email, display_name, role_code, is_active) values
     ('ambassador@example.test', 'STC TEST Ambassador', 'ambassador', true);
 
 select pg_temp.assert_true((select count(*) = 4 from public.roles), 'cuatro roles');
-select pg_temp.assert_true((select count(*) = 6 from public.permissions), 'seis permisos');
-select pg_temp.assert_true((select count(*) = 17 from public.role_permissions), 'matriz de permisos');
+select pg_temp.assert_true((select count(*) = 6 from public.permissions where code in (
+    'profiles.manage','documents.create','documents.read_assigned','documents.sign',
+    'recovery.request','recovery.contribute')), 'seis permisos originales');
+select pg_temp.assert_true((select count(*) = 17 + case when exists(select 1 from public.permissions where code='documents.approve') then 2 else 0 end from public.role_permissions where permission_code in (
+    'profiles.manage','documents.create','documents.read_assigned','documents.sign',
+    'recovery.request','recovery.contribute')), 'matriz de permisos original');
 select pg_temp.assert_true((select count(*) = 5 from pg_tables where schemaname = 'public'
     and tablename in ('roles','permissions','role_permissions','profiles','access_audit') and rowsecurity),
     'RLS en todas las tablas');

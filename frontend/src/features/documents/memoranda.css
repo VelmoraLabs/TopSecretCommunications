@@ -1,0 +1,441 @@
+.memo-intro {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 26px 28px;
+  border: 1px solid #e5def6;
+  border-radius: 20px;
+  background: linear-gradient(115deg, #f0eafa, #fcfbff 80%);
+  margin-bottom: 24px;
+}
+.memo-intro > span {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 65px;
+  min-height: 65px;
+  border-radius: 17px;
+  background: #e7def7;
+  color: var(--primary);
+}
+.memo-intro h2 {
+  font: 700 23px var(--font-heading);
+  letter-spacing: -0.6px;
+  margin: 6px 0 10px;
+}
+.memo-intro p:last-child {
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 0;
+  color: var(--muted);
+}
+.memo-form,
+.memo-detail {
+  display: grid;
+  gap: 19px;
+}
+.memo-form h3,
+.memo-detail h3:not(.detail-title) {
+  font: 700 15px var(--font-heading);
+  margin: 4px 0;
+}
+.memo-form input[type='file'],
+.memo-detail input[type='file'] {
+  display: block;
+  width: 100%;
+  border: 1px dashed #cfc3e6;
+  border-radius: 10px;
+  padding: 13px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface-soft);
+}
+.memo-select {
+  width: 100%;
+  min-height: 44px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+}
+.memo-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.memo-note > svg {
+  flex-shrink: 0;
+}
+.memo-note a {
+  color: var(--primary);
+  font-weight: 600;
+}
+.memo-note:has(strong) {
+  display: block;
+}
+.memo-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 13px 15px;
+  background: #fff2ec;
+  border: 1px solid #f1d9c9;
+  border-radius: 11px;
+  color: #95461e;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.memo-message > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.memo-message--success {
+  background: #f0faf4;
+  border-color: #d4e9dc;
+  color: #22633d;
+}
+.memo-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-top: 18px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.memo-actions--start {
+  justify-content: flex-start;
+  padding-top: 12px;
+  border: 0;
+}
+.memo-actions .button {
+  font-size: 12px;
+}
+.memo-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 25px 10px;
+}
+.memo-recipient-search {
+  padding-top: 10px;
+}
+.memo-candidate-list {
+  display: grid;
+  max-height: 260px;
+  overflow: auto;
+  margin-top: 10px;
+}
+.memo-candidate {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0edf5;
+}
+.memo-candidate > span,
+.memo-selected > div > span,
+.memo-participants > div > span {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+.memo-candidate strong,
+.memo-selected strong,
+.memo-participants strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.memo-candidate small,
+.memo-selected small,
+.memo-participants small {
+  font-size: 11px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.memo-candidate .button {
+  font-size: 11px;
+  min-height: 34px;
+  padding: 8px;
+}
+.memo-selected {
+  display: grid;
+  background: var(--surface-soft);
+  border-radius: 11px;
+  max-height: 240px;
+  overflow: auto;
+}
+.memo-selected:empty {
+  display: none;
+}
+.memo-selected > div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.memo-signer-choice {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--primary);
+}
+.memo-signer-choice input {
+  accent-color: var(--primary);
+}
+.memo-selected .icon-button {
+  width: 27px;
+  height: 27px;
+}
+.memo-detail .detail-title {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.memo-metadata {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 0;
+  padding: 18px;
+  border-radius: 13px;
+  background: var(--surface-soft);
+}
+.memo-metadata dt {
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+.memo-metadata dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.memo-wide {
+  grid-column: 1/-1;
+}
+.memo-fingerprint {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.memo-participants {
+  display: grid;
+  margin-top: 12px;
+}
+.memo-participants > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0edf5;
+}
+.memo-signatures {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0;
+}
+.memo-signatures > div {
+  display: grid;
+  gap: 9px;
+  padding: 16px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.memo-signatures strong {
+  font-size: 13px;
+}
+.memo-signatures small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.memo-signatures textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px;
+  font:
+    11px/1.6 ui-monospace,
+    monospace;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  background: #fff;
+}
+.memo-signatures .button {
+  justify-self: start;
+  font-size: 11px;
+}
+.memo-verification {
+  display: grid;
+  gap: 16px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.memo-verification h3 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.memo-verification .button {
+  justify-self: start;
+  font-size: 12px;
+}
+.memo-verification-result p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.memo-key-directory {
+  padding: 24px;
+}
+.memo-key {
+  padding: 22px 0;
+  border-bottom: 1px solid var(--border);
+}
+.memo-key:first-child {
+  padding-top: 0;
+}
+.memo-key:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.memo-key > div:first-child {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.memo-key h3 {
+  margin: 0;
+  font: 700 17px var(--font-heading);
+}
+.memo-key .memo-note {
+  margin: 10px 0;
+}
+.memo-key-downloads {
+  display: grid;
+  gap: 12px;
+}
+.memo-empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 48px 20px;
+}
+.memo-empty > svg {
+  color: var(--primary);
+}
+.memo-empty h2 {
+  font: 700 19px var(--font-heading);
+  color: var(--text);
+}
+.memo-empty p {
+  font-size: 13px;
+  line-height: 1.8;
+}
+@media (max-width: 600px) {
+  .memo-intro {
+    padding: 20px;
+    align-items: flex-start;
+    gap: 13px;
+  }
+  .memo-intro > span {
+    width: 48px;
+    min-height: 48px;
+  }
+  .memo-intro h2 {
+    font-size: 19px;
+  }
+  .memo-intro p:last-child {
+    font-size: 12px;
+  }
+  .memo-key-directory {
+    padding: 20px;
+  }
+  .memo-candidate .button {
+    font-size: 10px;
+  }
+  .memo-selected small {
+    display: none;
+  }
+  .memo-participants > div {
+    align-items: flex-start;
+  }
+  .memo-metadata {
+    padding: 14px;
+  }
+  .memo-key > div:first-child {
+    flex-wrap: wrap;
+  }
+  .memo-form .memo-actions .button {
+    flex: 1;
+  }
+}
+
+.memo-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.memo-pagination > div {
+  display: flex;
+  gap: 8px;
+}
+
+.memo-flow-note,
+.memo-approval-picker {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft, #f8f7fc);
+}
+.memo-flow-note p,
+.memo-approval-picker p {
+  margin: 6px 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.memo-approval-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+.memo-workflow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0;
+}
+.memo-workflow span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.memo-workflow-status {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.6;
+}

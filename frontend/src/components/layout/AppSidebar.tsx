@@ -2,6 +2,7 @@ import {
   ChevronRight,
   FolderLock,
   LayoutDashboard,
+  KeyRound,
   LockKeyhole,
   ShieldCheck,
   UsersRound,
@@ -30,6 +31,16 @@ export default function AppSidebar({
         {[
           { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
           { to: '/documentos', label: 'Documentos', icon: FolderLock },
+          { to: '/claves', label: 'Mis claves de firma', icon: KeyRound },
+          ...(auth.hasPermission('groups.read')
+            ? [
+                {
+                  to: '/grupos',
+                  label: 'Grupos e integrantes',
+                  icon: UsersRound,
+                },
+              ]
+            : []),
           {
             to: '/notas-especiales',
             label: 'Notas especiales',

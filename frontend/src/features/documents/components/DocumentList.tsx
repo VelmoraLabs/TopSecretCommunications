@@ -32,7 +32,7 @@ function DocumentIdentity({
           {document.title}
         </button>
         <p>
-          {document.id} <span>·</span> {category.label}
+          {document.folio ?? document.id} <span>·</span> {category.label}
         </p>
       </div>
     </div>
@@ -58,7 +58,7 @@ export default function DocumentList({
                 <Badge tone={status.tone} dot>
                   {status.label}
                 </Badge>
-                <span>{document.id}</span>
+                <span>{document.folio ?? document.id}</span>
               </div>
               <DocumentIdentity document={document} onSelect={onSelect} />
               <p className="document-summary">{document.description}</p>
@@ -84,7 +84,7 @@ export default function DocumentList({
     <div className="document-table-wrap">
       <table className="document-table">
         <caption className="sr-only">
-          Documentos de ejemplo y sus estados
+          Documentos y sus estados
         </caption>
         <thead>
           <tr>

@@ -53,12 +53,8 @@ PSS incompatibles.
 
 La demo utiliza datos ficticios y claves generadas en memoria.
 
-## Integración pendiente
+## Integración documental
 
-Este bloque todavía no incorpora endpoints, persistencia de claves
-ni interfaz web.
+`key_files.py` añade serialización sin dependencias HTTP: pública SPKI DER y privada PKCS8 DER cifrada, ambas en Base64. Reutiliza el perfil del módulo RSA-PSS aprobado.
 
-La siguiente etapa es integrar Internal Memos con la autenticación
-existente y el permiso `documents.sign`. La vinculación de la clave
-pública con la identidad del firmante debe resolverse en el flujo
-funcional.
+`modules/memoranda/` vincula las claves con el perfil autenticado, exige `documents.sign` y asignación como emisor o aprobador en la etapa correspondiente, persiste versiones inmutables y asocia la firma Base64 al documento. El módulo criptográfico original no cambia. Ver la [guía completa](../development/memoranda-signatures.md).

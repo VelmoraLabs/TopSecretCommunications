@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -15,45 +15,66 @@ import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import PageHeader from '../../components/ui/PageHeader'
 import { ButtonLink } from '../../components/ui/Button'
-import { exampleDocuments } from '../../features/documents/fixtures'
+import {
+  documentRecord,
+  errorMessage,
+  getDocuments,
+} from '../../features/documents/memoranda'
+import type { DocumentPage } from '../../features/documents/memoranda'
+import { DocumentMessage } from '../../features/documents/DocumentForms'
 import { categories } from '../../features/documents/documentPresentation'
-import type { DocumentRecord } from '../../features/documents/types'
 import DocumentList from '../../features/documents/components/DocumentList'
-import DocumentDetail from '../../features/documents/components/DocumentDetail'
+import MemorandumDetail from '../../features/documents/MemorandumDetail'
 import './dashboard.css'
 
 export default function DashboardPage() {
-  const [selected, setSelected] = useState<DocumentRecord | null>(null)
+  const [selected, setSelected] = useState<string | null>(null)
+  const [page, setPage] = useState<DocumentPage | null>(null),
+    [error, setError] = useState(''),
+    [revision, setRevision] = useState(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    void getDocuments('', 'all', 'all', 0, controller.signal)
+      .then((value) => {
+        if (!controller.signal.aborted) {
+          setPage(value)
+          setError('')
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) setError(errorMessage(error))
+      })
+    return () => controller.abort()
+  }, [revision])
+  const documents = (page?.items ?? []).map(documentRecord)
   const stats = [
     {
       label: 'Documentos',
-      count: exampleDocuments.length,
+      count: page?.total,
       icon: FolderClosed,
       tone: 'purple',
-      detail: 'En este espacio de ejemplo',
+      detail: 'Asignados a tu cuenta',
     },
     {
-      label: 'Con cifrado',
-      count: exampleDocuments.filter((d) => d.encrypted).length,
+      label: 'Memorándums',
+      count: page?.category_counts.memorandum,
       icon: FileLock2,
       tone: 'blue',
-      detail: 'Destinatarios designados',
+      detail: 'Con destinatarios propios',
     },
     {
-      label: 'Con firma verificada',
-      count: exampleDocuments.filter((d) => d.signatureVerified).length,
+      label: 'Firmados',
+      count: page?.signed_total,
       icon: FileCheck2,
       tone: 'green',
-      detail: 'Estado de ejemplo',
+      detail: 'Con todas las firmas previstas',
     },
     {
-      label: 'Por atender',
-      count: exampleDocuments.filter((d) =>
-        ['awaiting-signature', 'joint-access'].includes(d.status),
-      ).length,
+      label: 'Pendientes',
+      count: page?.pending_total,
       icon: FileClock,
       tone: 'amber',
-      detail: 'Firma o acceso conjunto',
+      detail: 'Preparación, aprobación o envío',
     },
   ]
   return (
@@ -103,6 +124,7 @@ export default function DashboardPage() {
           </span>
         </div>
       </section>
+      {error && <DocumentMessage text={error} />}
       <div className="stats-grid">
         {stats.map(({ label, count, icon: Icon, tone, detail }) => (
           <Card className="stat-card" key={label}>
@@ -112,7 +134,9 @@ export default function DashboardPage() {
                 <Icon size={20} />
               </span>
             </div>
-            <strong>{String(count).padStart(2, '0')}</strong>
+            <strong>
+              {count === undefined ? '—' : String(count).padStart(2, '0')}
+            </strong>
             <p>{detail}</p>
           </Card>
         ))}
@@ -130,8 +154,8 @@ export default function DashboardPage() {
               </Link>
             </div>
             <DocumentList
-              documents={exampleDocuments.slice(0, 4)}
-              onSelect={setSelected}
+              documents={documents.slice(0, 4)}
+              onSelect={(document) => setSelected(document.id)}
             />
           </Card>
           <Card className="category-section">
@@ -158,10 +182,9 @@ export default function DashboardPage() {
                     <div>
                       <strong>{category.shortLabel}</strong>
                       <span>
-                        {
-                          exampleDocuments.filter((d) => d.category === key)
-                            .length
-                        }{' '}
+                        {page?.category_counts[
+                          key as keyof DocumentPage['category_counts']
+                        ] ?? '—'}{' '}
                         documentos
                       </span>
                     </div>
@@ -176,46 +199,33 @@ export default function DashboardPage() {
           <Card className="activity-card">
             <div className="card-heading">
               <div>
-                <h2>Actividad reciente</h2>
-                <p>Movimientos de ejemplo.</p>
+                <h2>Últimas actualizaciones</h2>
+                <p>En tus documentos asignados.</p>
               </div>
-              <span className="activity-dot" />
             </div>
             <div className="activity-list">
-              {[
-                {
-                  icon: FileClock,
-                  title: 'Documento listo para revisión',
-                  text: 'Circular de protocolo institucional',
-                  time: '03 oct · 09:20',
-                  tone: 'amber',
-                },
-                {
-                  icon: UsersRound,
-                  title: 'Acceso conjunto pendiente',
-                  text: 'Nota de sesión reservada',
-                  time: '03 oct · 08:45',
-                  tone: 'purple',
-                },
-                {
-                  icon: FileCheck2,
-                  title: 'Firma digital verificada',
-                  text: 'Memorándum de coordinación',
-                  time: '02 oct · 16:30',
-                  tone: 'green',
-                },
-              ].map(({ icon: Icon, title, text, time, tone }) => (
-                <div className="activity-item" key={title}>
-                  <span className={`stat-icon stat-icon--${tone}`}>
-                    <Icon size={17} />
-                  </span>
-                  <div>
-                    <strong>{title}</strong>
-                    <p>{text}</p>
-                    <time>{time}</time>
+              {documents.length === 0 ? (
+                <p className="memo-note">
+                  Todavía no tienes documentos registrados.
+                </p>
+              ) : (
+                documents.slice(0, 3).map((document) => (
+                  <div className="activity-item" key={document.id}>
+                    <span className="stat-icon stat-icon--purple">
+                      <FileCheck2 size={17} />
+                    </span>
+                    <div>
+                      <strong>{document.title}</strong>
+                      <p>{document.description}</p>
+                      <time>
+                        {new Date(document.updatedAt).toLocaleDateString(
+                          'es-MX',
+                        )}
+                      </time>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </Card>
           <section className="joint-access-card">
@@ -234,11 +244,21 @@ export default function DashboardPage() {
           </section>
           <p className="dashboard-example-note">
             <Info size={15} />
-            <span>Los estados y movimientos de esta vista son ficticios.</span>
+            <span>
+              Los estados corresponden a los documentos autorizados para tu
+              cuenta.
+            </span>
           </p>
         </aside>
       </div>
-      <DocumentDetail document={selected} onClose={() => setSelected(null)} />
+      {selected && (
+        <MemorandumDetail
+          key={selected}
+          id={selected}
+          onClose={() => setSelected(null)}
+          onChanged={() => setRevision((n) => n + 1)}
+        />
+      )}
     </>
   )
 }

@@ -1,4 +1,4 @@
-"""Configuración de la conexión pública de Supabase; nunca una clave administrativa."""
+"""Conexión pública y credencial opcional reservada a operaciones del servidor."""
 
 import os
 import re
@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 class SupabaseSettings:
     url: str
     publishable_key: str = field(repr=False)
+    secret_key: str | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         parsed = urlsplit(self.url)
@@ -30,6 +31,13 @@ class SupabaseSettings:
         if re.fullmatch(r"sb_publishable_[A-Za-z0-9_-]+", self.publishable_key) is None:
             raise ValueError("Usa SUPABASE_PUBLISHABLE_KEY; no secret ni service_role.")
         object.__setattr__(self, "url", self.url.rstrip("/"))
+        if (
+            self.secret_key is not None
+            and re.fullmatch(r"sb_secret_[A-Za-z0-9_-]+", self.secret_key) is None
+        ):
+            raise ValueError(
+                "SUPABASE_SECRET_KEY debe ser una clave sb_secret_ del servidor."
+            )
 
     @classmethod
     def from_env(cls) -> Self | None:
@@ -37,4 +45,8 @@ class SupabaseSettings:
         key = os.getenv("SUPABASE_PUBLISHABLE_KEY", "").strip()
         if not url and not key:
             return None
-        return cls(url=url, publishable_key=key)
+        return cls(
+            url=url,
+            publishable_key=key,
+            secret_key=os.getenv("SUPABASE_SECRET_KEY", "").strip() or None,
+        )

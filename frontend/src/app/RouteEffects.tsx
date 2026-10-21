@@ -9,6 +9,8 @@ const titles: Record<string, string> = {
   '/notas-especiales': 'Notas especiales',
   '/auth/callback': 'Verificando acceso',
   '/administracion': 'Perfiles y permisos',
+  '/grupos': 'Grupos e integrantes',
+  '/claves': 'Mis claves de firma',
 }
 
 export default function RouteEffects() {
