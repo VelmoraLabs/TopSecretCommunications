@@ -113,3 +113,8 @@ usuarios de la aplicación.
 - [Contrato documental](../docs/development/special-notes-backend.md).
 - [Sesión y administración](../docs/development/authentication.md).
 - [Organización del backend](../docs/development/backend-architecture.md).
+- [Grupos, integrantes y permisos por grupo](../docs/development/groups.md).
+
+## Memorándums y RSA-PSS
+
+El flujo real está en `app/modules/memoranda/`; reutiliza `app/crypto/signatures/` sin modificar RSA-PSS. Consulta [configuración, endpoints y prueba completa](../docs/development/memoranda-signatures.md). Requiere la nueva migración y `SUPABASE_SECRET_KEY` solo en el backend. No hay nuevas dependencias.

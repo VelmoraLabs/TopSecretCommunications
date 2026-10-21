@@ -1,11 +1,13 @@
 import { useId } from 'react'
 import type { InputHTMLAttributes, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { FieldError } from './FormFeedback'
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
   label: string
   icon?: LucideIcon
   endAdornment?: ReactNode
+  error?: string
   hint?: string
   hideLabel?: boolean
 }
@@ -14,6 +16,7 @@ export default function TextField({
   icon: Icon,
   endAdornment,
   hint,
+  error,
   hideLabel = false,
   id,
   ...props
@@ -21,7 +24,7 @@ export default function TextField({
   const generatedId = useId()
   const inputId = id ?? generatedId
   return (
-    <div className="field">
+    <div className={`field ${error ? 'field--invalid' : ''}`}>
       <label
         className={hideLabel ? 'sr-only' : 'field-label'}
         htmlFor={inputId}
@@ -32,11 +35,21 @@ export default function TextField({
         {Icon && <Icon size={18} aria-hidden="true" />}
         <input
           id={inputId}
-          aria-describedby={hint ? `${inputId}-hint` : undefined}
           {...props}
+          aria-invalid={error ? true : props['aria-invalid']}
+          aria-describedby={
+            [
+              props['aria-describedby'],
+              hint && `${inputId}-hint`,
+              error && `${inputId}-error`,
+            ]
+              .filter(Boolean)
+              .join(' ') || undefined
+          }
         />
         {endAdornment}
       </div>
+      <FieldError id={inputId} error={error} />
       {hint && (
         <p className="field-hint" id={`${inputId}-hint`}>
           {hint}

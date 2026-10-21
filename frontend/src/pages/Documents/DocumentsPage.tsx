@@ -1,78 +1,116 @@
-import { useState } from 'react'
-import { Grid2X2, List, Search, SlidersHorizontal } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Grid2X2, List, Plus, RefreshCw, Search } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import PageHeader from '../../components/ui/PageHeader'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import TextField from '../../components/ui/TextField'
 import { Button } from '../../components/ui/Button'
-import EmptyState from '../../components/ui/EmptyState'
+import { useAuth } from '../../features/auth/auth'
 import { categories } from '../../features/documents/documentPresentation'
-import { exampleDocuments } from '../../features/documents/fixtures'
 import type {
   DocumentCategory,
   DocumentRecord,
 } from '../../features/documents/types'
 import DocumentList from '../../features/documents/components/DocumentList'
-import DocumentDetail from '../../features/documents/components/DocumentDetail'
+import {
+  DocumentMessage,
+  DocumentPagination,
+  MemoCreateForm,
+} from '../../features/documents/DocumentForms'
+import MemorandumDetail from '../../features/documents/MemorandumDetail'
+import {
+  documentRecord,
+  errorMessage,
+  getDocuments,
+} from '../../features/documents/memoranda'
+import type { DocumentPage } from '../../features/documents/memoranda'
 import './documents-page.css'
+import '../../features/documents/memoranda.css'
 
-const normalize = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
 export default function DocumentsPage() {
-  const [params, setParams] = useSearchParams()
-  const rawCategory = params.get('tipo')
-  const category =
-    rawCategory && Object.hasOwn(categories, rawCategory)
-      ? (rawCategory as DocumentCategory)
-      : 'all'
+  const auth = useAuth(),
+    [params, setParams] = useSearchParams()
+  const rawCategory = params.get('tipo'),
+    category =
+      rawCategory && Object.hasOwn(categories, rawCategory)
+        ? (rawCategory as DocumentCategory)
+        : 'all'
   const pending = params.get('estado') === 'pendiente'
-  const [query, setQuery] = useState('')
-  const [sort, setSort] = useState('recent')
-  const [view, setView] = useState<'list' | 'grid'>('list')
-  const [selected, setSelected] = useState<DocumentRecord | null>(null)
-  const documents = exampleDocuments
-    .filter(
-      (document) =>
-        (category === 'all' || document.category === category) &&
-        (!pending ||
-          ['awaiting-signature', 'joint-access'].includes(document.status)) &&
-        normalize(
-          `${document.title} ${document.id} ${document.office} ${categories[document.category].label}`,
-        ).includes(normalize(query)),
-    )
-    .sort((a, b) =>
-      sort === 'name'
-        ? a.title.localeCompare(b.title, 'es')
-        : b.updatedAt.localeCompare(a.updatedAt),
-    )
+  const [query, setQuery] = useState(''),
+    [view, setView] = useState<'list' | 'grid'>('list'),
+    [offset, setOffset] = useState(0)
+  const [page, setPage] = useState<DocumentPage | null>(null),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState('')
+  const [selected, setSelected] = useState<string | null>(null),
+    [creating, setCreating] = useState(false),
+    [revision, setRevision] = useState(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => {
+      setLoading(true)
+      setError('')
+      void getDocuments(
+        query.trim(),
+        category,
+        pending ? 'pending' : 'all',
+        offset,
+        controller.signal,
+      )
+        .then((value) => {
+          if (!controller.signal.aborted) setPage(value)
+        })
+        .catch((error) => {
+          if (!controller.signal.aborted) {
+            setError(errorMessage(error))
+            setPage(null)
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false)
+        })
+    }, 200)
+    return () => {
+      controller.abort()
+      window.clearTimeout(timer)
+    }
+  }, [query, category, pending, offset, revision])
+  const documents: DocumentRecord[] = (page?.items ?? []).map(documentRecord)
   function reset() {
     setParams({})
     setQuery('')
-    setSort('recent')
-  }
-  function setCategory(value: string) {
-    const next = new URLSearchParams(params)
-    if (value === 'all') next.delete('tipo')
-    else next.set('tipo', value)
-    setParams(next)
+    setOffset(0)
   }
   return (
     <>
       <PageHeader
         eyebrow="ESPACIO DE TRABAJO"
         title="Documentos"
-        description="Encuentra cada comunicación y conoce su estado de protección."
+        description="Consulta los documentos que creaste o que fueron asignados a tu cuenta."
         action={
-          <Badge tone="neutral">
-            {exampleDocuments.length} documentos de ejemplo
-          </Badge>
+          auth.hasPermission('documents.create') && (
+            <Button onClick={() => setCreating(true)}>
+              <Plus size={17} />
+              Nuevo memorándum
+            </Button>
+          )
         }
       />
+      <section className="memo-intro">
+        <span>
+          <Badge tone="purple">RSA-PSS</Badge>
+        </span>
+        <div>
+          <p className="eyebrow">DOCUMENTOS CON DESTINATARIOS PROPIOS</p>
+          <h2>Cada firma, sobre el archivo correcto.</h2>
+          <p>
+            Los memorándums se comparten con personas designadas. El emisor
+            firma antes de enviarlos y puede solicitar aprobación del Embajador,
+            sin exigir un grupo.
+          </p>
+        </div>
+      </section>
       <Card className="documents-card">
         <div className="documents-toolbar">
           <TextField
@@ -80,23 +118,23 @@ export default function DocumentsPage() {
             hideLabel
             icon={Search}
             type="search"
-            placeholder="Buscar por nombre, folio o área…"
+            maxLength={80}
+            placeholder="Buscar por título…"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              setOffset(0)
+            }}
           />
           <div className="documents-toolbar-actions">
-            <label className="sort-control">
-              <SlidersHorizontal size={16} />
-              <span className="sr-only">Ordenar documentos</span>
-              <select
-                aria-label="Ordenar documentos"
-                value={sort}
-                onChange={(event) => setSort(event.target.value)}
-              >
-                <option value="recent">Más recientes</option>
-                <option value="name">Nombre A–Z</option>
-              </select>
-            </label>
+            <Button
+              variant="ghost"
+              disabled={loading}
+              aria-label="Actualizar documentos"
+              onClick={() => setRevision((n) => n + 1)}
+            >
+              <RefreshCw size={18} />
+            </Button>
             <div
               className="view-switch"
               role="group"
@@ -130,32 +168,46 @@ export default function DocumentsPage() {
             type="button"
             aria-pressed={category === 'all'}
             className={category === 'all' ? 'is-active' : ''}
-            onClick={() => setCategory('all')}
+            onClick={() => {
+              const next = new URLSearchParams(params)
+              next.delete('tipo')
+              setParams(next)
+              setOffset(0)
+            }}
           >
-            Todos <span>{exampleDocuments.length}</span>
+            Todos
+            <span>
+              {page
+                ? Object.values(page.category_counts).reduce((a, b) => a + b, 0)
+                : '—'}
+            </span>
           </button>
           {Object.entries(categories).map(([key, item]) => (
             <button
-              key={key}
               type="button"
+              key={key}
               aria-pressed={category === key}
               className={category === key ? 'is-active' : ''}
-              onClick={() => setCategory(key)}
+              onClick={() => {
+                const next = new URLSearchParams(params)
+                next.set('tipo', key)
+                setParams(next)
+                setOffset(0)
+              }}
             >
               {item.shortLabel}
               <span>
-                {exampleDocuments.filter((d) => d.category === key).length}
+                {page?.category_counts[key as DocumentCategory] ?? '—'}
               </span>
             </button>
           ))}
         </div>
         <div className="documents-result-bar">
           <p role="status">
-            {documents.length}{' '}
-            {documents.length === 1
-              ? 'documento encontrado'
-              : 'documentos encontrados'}
-            {pending && <Badge tone="amber">Por atender</Badge>}
+            {loading
+              ? 'Consultando documentos…'
+              : `${page?.total ?? 0} documentos encontrados`}
+            {pending && <Badge tone="amber">Pendientes de completar</Badge>}
           </p>
           {(query || category !== 'all' || pending) && (
             <Button variant="ghost" onClick={reset}>
@@ -163,21 +215,59 @@ export default function DocumentsPage() {
             </Button>
           )}
         </div>
-        {documents.length ? (
+        {error ? (
+          <DocumentMessage text={error} />
+        ) : loading ? (
+          <p className="memo-loading">Preparando tu espacio documental…</p>
+        ) : documents.length ? (
           <DocumentList
             documents={documents}
-            onSelect={setSelected}
+            onSelect={(document) => setSelected(document.id)}
             view={view}
           />
         ) : (
-          <EmptyState onReset={reset} />
+          <div className="memo-empty">
+            <h2>No hay documentos en esta vista</h2>
+            <p>
+              {category !== 'all' && category !== 'memorandum'
+                ? 'Esta categoría está contemplada en el proyecto. Su flujo se integrará en la siguiente etapa.'
+                : 'Crea un memorándum o espera a que te asignen uno. También puedes ajustar los filtros.'}
+            </p>
+          </div>
         )}
+        <DocumentPagination
+          offset={offset}
+          total={page?.total ?? 0}
+          loading={loading}
+          onChange={setOffset}
+        />
       </Card>
       <p className="documents-help">
-        Los documentos, sus destinatarios y estados son datos de ejemplo para
-        revisar el diseño.
+        Archivo original, versiones y firmas conservan su asociación. Las
+        categorías aplican protecciones distintas; el acceso conjunto se reserva
+        a las notas especiales.
       </p>
-      <DocumentDetail document={selected} onClose={() => setSelected(null)} />
+      {creating && (
+        <MemoCreateForm
+          onClose={() => setCreating(false)}
+          onSaved={(document) => {
+            setCreating(false)
+            setSelected(document.document.id)
+            setOffset(0)
+            setParams({})
+            setQuery('')
+            setRevision((n) => n + 1)
+          }}
+        />
+      )}
+      {selected && (
+        <MemorandumDetail
+          key={selected}
+          id={selected}
+          onClose={() => setSelected(null)}
+          onChanged={() => setRevision((n) => n + 1)}
+        />
+      )}
     </>
   )
 }

@@ -44,10 +44,12 @@ Reiniciar Vite después de modificar variables de entorno.
 | `/` | Presentación pública del proyecto. |
 | `/login` | Acceso con la cuenta de Google autorizada. |
 | `/auth/callback` | Canje PKCE, verificación de acceso y retorno a una ruta interna. |
-| `/dashboard` | Resumen documental con ejemplos identificados. Requiere sesión. |
-| `/documentos` | Búsqueda, filtros, lista/tarjetas y detalle de documentos ficticios. |
+| `/dashboard` | Resumen real de documentos autorizados, contadores y últimas actualizaciones. |
+| `/documentos` | Catálogo real, destinatarios, firma y verificación de memorándums. |
 | `/notas-especiales` | Cifrado y recuperación reales, con sesión y permisos. |
 | `/administracion` | Perfiles, roles, alta y edición reales. Requiere `profiles.manage`. |
+| `/claves` | Claves de firma propias, generación/exportación y retirada. |
+| `/grupos` | Grupos e integrantes reales, responsables, archivo y permisos por grupo. Requiere `groups.read`. |
 | Otras | Página 404. |
 
 El proveedor de sesión verifica el acceso antes de mostrar rutas internas. El
@@ -80,12 +82,13 @@ API. La BD impide retirar el acceso al último administrador activo vinculado.
 Desactivar una persona conserva su historial. El rol general no concede acceso
 automático a documentos o fragmentos de otros grupos.
 
-## Documentos de ejemplo
+## Memorándums y claves
 
-Dashboard y Documentos conservan fixtures locales claramente identificados.
-Búsqueda por título, folio o área; filtros `tipo` y `estado=pendiente` en la URL;
-orden y vista de lista/tarjetas; detalle en ventana modal. Su integración con
-documentos persistidos es una etapa posterior.
+Dashboard y Documentos consumen FastAPI. Los memorándums tienen emisor autenticado, destinatarios propios y aprobación opcional del Embajador. Se guardan como borradores privados, se firman y se entregan solo mediante el envío explícito; no exigen grupos. Se almacenan versiones inmutables, firmas Base64 y claves públicas por perfil. La clave privada se descarga cifrada en un archivo separado y se usa únicamente durante la firma; no se conserva en el navegador ni en la base de datos.
+
+La verificación puede utilizar el archivo almacenado o una copia seleccionada. Los otros tipos documentales muestran el catálogo real vacío hasta incorporar sus flujos; no se crean ejemplos automáticamente.
+
+Consulta [configuración y prueba de RSA-PSS](../docs/development/memoranda-signatures.md), incluida la nueva migración y la clave exclusiva del backend.
 
 ## Notas especiales
 
@@ -108,12 +111,12 @@ abandonar la página y se pueden guardar mediante las descargas.
 | `components/layout/` | Marca, navegación, panel y layout de acceso. |
 | `features/auth/` | Contexto, sesión, PKCE y comprobaciones de acceso. |
 | `features/admin/` | Contratos y peticiones administrativas. |
-| `features/documents/` | Tipos, ejemplos, componentes y flujo portable. |
+| `features/documents/` | Contratos, API, formularios de memorándums y flujo portable separado. |
 | `lib/` | Cliente Supabase y HTTP autenticado de la aplicación. |
 | `pages/` | Composición de pantallas y estilos específicos. |
 | `styles/` | Tema, fuentes, layouts y primitivas globales. |
 
-Los tipos documentales de ejemplo no son modelos de autorización. Los componentes
+Los tipos visuales no son modelos de autorización. Los componentes
 visuales reutilizables reciben datos y eventos; no deciden permisos ni duplican
 AES o Shamir.
 
@@ -131,3 +134,11 @@ comparten la sesión. Revisar escritorio, móvil y navegación por teclado.
 - [Guía de sesión y administración](../docs/development/authentication.md).
 - [Arquitectura del frontend](../docs/development/frontend-architecture.md).
 - [Referencia de estilo](../docs/development/frontend-design.md).
+
+## Validación y orientación en formularios
+
+Los formularios muestran los requisitos pendientes, errores junto al campo y
+acciones visiblemente deshabilitadas hasta completar datos válidos. Consulta
+[las reglas y el recorrido de revisión](../docs/development/form-validation.md).
+Desde esta carpeta, `npm test` ejecuta las pruebas de validación sin instalar
+nuevas dependencias. FastAPI conserva la validación y autorización definitivas.

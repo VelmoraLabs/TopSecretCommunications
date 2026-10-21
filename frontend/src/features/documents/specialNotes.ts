@@ -121,6 +121,39 @@ export function shareIndex(payload: string): number {
   return data.x
 }
 
+/** Structural readiness, not authentication: AES-GCM still verifies on the server. */
+export function recoverySharesError(
+  note: NotePackage | null,
+  shares: string[],
+): string {
+  if (!note) return ''
+  if (shares.length < note.threshold)
+    return `Selecciona ${note.threshold} fragmentos de esta nota; faltan ${note.threshold - shares.length}.`
+  const seen = new Set<number>()
+  for (const text of shares) {
+    const share: unknown = parseJson(text, 'El fragmento')
+    if (
+      !isRecord(share) ||
+      share.set_id !== note.document_id ||
+      share.threshold !== note.threshold ||
+      share.share_count !== note.share_count ||
+      share.version !== 1 ||
+      share.secret_size !== 32
+    )
+      return 'Carga fragmentos que pertenezcan al paquete seleccionado.'
+    if (
+      typeof share.x !== 'number' ||
+      !Number.isInteger(share.x) ||
+      share.x < 1 ||
+      share.x > note.share_count ||
+      seen.has(share.x)
+    )
+      return 'Hay índices de fragmento repetidos o fuera del conjunto. Carga archivos distintos de esta nota.'
+    seen.add(share.x)
+  }
+  return ''
+}
+
 async function post(operation: string, body: unknown): Promise<unknown> {
   return apiRequest<unknown>(endpoint + '/' + operation, {
     method: 'POST',

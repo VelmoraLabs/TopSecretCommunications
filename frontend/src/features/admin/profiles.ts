@@ -29,10 +29,13 @@ export interface ProfileUpdate {
   is_active: boolean
 }
 export const permissionNames: Record<string, string> = {
+  'groups.read': 'Consultar sus grupos',
+  'groups.manage': 'Organizar y administrar grupos',
   'profiles.manage': 'Administrar perfiles',
   'documents.create': 'Crear documentos',
   'documents.read_assigned': 'Consultar documentos asignados',
-  'documents.sign': 'Firmar documentos',
+  'documents.sign': 'Firmar la emisión de documentos propios',
+  'documents.approve': 'Aprobar institucionalmente como Embajador',
   'recovery.request': 'Solicitar recuperación en su grupo',
   'recovery.contribute': 'Aportar su fragmento',
 }

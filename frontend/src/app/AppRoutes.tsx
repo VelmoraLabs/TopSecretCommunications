@@ -9,6 +9,8 @@ import RouteEffects from './RouteEffects'
 import SpecialNotesPage from '../pages/SpecialNotes/SpecialNotesPage'
 import AuthCallbackPage from '../pages/AuthCallback/AuthCallbackPage'
 import AdminPage from '../pages/Admin/AdminPage'
+import GroupsPage from '../pages/Groups/GroupsPage'
+import KeysPage from '../pages/Keys/KeysPage'
 import { RequirePermission, RequireSession } from '../features/auth/AccessGate'
 
 export default function AppRoutes() {
@@ -23,7 +25,11 @@ export default function AppRoutes() {
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/documentos" element={<DocumentsPage />} />
+            <Route path="/claves" element={<KeysPage />} />
             <Route path="/notas-especiales" element={<SpecialNotesPage />} />
+            <Route element={<RequirePermission permission="groups.read" />}>
+              <Route path="/grupos" element={<GroupsPage />} />
+            </Route>
             <Route element={<RequirePermission permission="profiles.manage" />}>
               <Route path="/administracion" element={<AdminPage />} />
             </Route>

@@ -15,6 +15,8 @@ from app.core.request_limits import RequestBodyLimit
 from app.infrastructure.supabase import SupabaseGateway
 from app.modules.auth.router import router as auth_router
 from app.modules.documents.router import router as documents_router
+from app.modules.groups.router import router as groups_router
+from app.modules.memoranda.router import router as memoranda_router
 
 
 def create_app(
@@ -37,10 +39,12 @@ def create_app(
     application.state.supabase = gateway
     application.include_router(router)
     application.include_router(auth_router)
+    application.include_router(groups_router)
     if enable_local_workflow is None:
         enable_local_workflow = os.getenv("STC_ENABLE_LOCAL_WORKFLOW", "0") == "1"
     if enable_local_workflow:
         application.include_router(documents_router)
+    application.include_router(memoranda_router)
     application.add_middleware(RequestBodyLimit)
 
     @application.middleware("http")

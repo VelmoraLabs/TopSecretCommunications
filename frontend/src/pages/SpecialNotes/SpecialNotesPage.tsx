@@ -22,7 +22,6 @@ import {
   downloadRecovered,
   downloadShare,
   formatBytes,
-  MAX_FILE_SIZE,
   MAX_PARTICIPANTS,
   protectNote,
   readPackage,
@@ -37,6 +36,11 @@ import type {
 } from '../../features/documents/specialNotes'
 import './special-notes.css'
 import { useAuth } from '../../features/auth/auth'
+import FormFeedback, { FieldError } from '../../components/ui/FormFeedback'
+import { useFormValidation } from '../../lib/useFormValidation'
+import { documentFileError } from '../../lib/validation'
+import { recoverySharesError } from '../../features/documents/specialNotes'
+import { ApiError } from '../../lib/api'
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'No se pudo completar la operación.'
@@ -60,13 +64,35 @@ export default function SpecialNotesPage() {
   const [error, setError] = useState('')
   const recoveryHeading = useRef<HTMLHeadingElement>(null)
 
+  const [packageError, setPackageError] = useState('')
+  const [sharesError, setSharesError] = useState('')
+  const protection = useFormValidation({
+    file: documentFileError(file),
+    count:
+      !Number.isInteger(count) || count < 2 || count > MAX_PARTICIPANTS
+        ? 'Elige un número entero entre 2 y 20 participantes.'
+        : '',
+  })
+  const recovery = useFormValidation({
+    package:
+      packageError ||
+      (!note ? 'Carga el paquete cifrado (.stcnote.json).' : ''),
+    shares:
+      sharesError ||
+      (shares.length === 0
+        ? 'Carga los archivos de fragmento (.json).'
+        : recoverySharesError(
+            note,
+            selected.map((i) => shares[i]),
+          )),
+  })
   function switchTab(next: 'protect' | 'recover') {
     setTab(next)
     setError('')
   }
   async function protect(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!file) return
+    if (busy || !protection.check() || !file) return
     setBusy(true)
     setError('')
     setProtectedNote(null)
@@ -80,6 +106,8 @@ export default function SpecialNotesPage() {
   }
   function useGenerated() {
     if (!protectedNote) return
+    setPackageError('')
+    setSharesError('')
     setNote(protectedNote.package)
     setShares(protectedNote.shares)
     setSelected(protectedNote.shares.map((_, i) => i))
@@ -88,6 +116,8 @@ export default function SpecialNotesPage() {
     window.setTimeout(() => recoveryHeading.current?.focus(), 0)
   }
   async function importPackage(file: File) {
+    if (busy) return
+    setPackageError('')
     setBusy(true)
     setError('')
     setRecovered(null)
@@ -95,12 +125,14 @@ export default function SpecialNotesPage() {
     try {
       setNote(await readPackage(file))
     } catch (error) {
-      setError(errorMessage(error))
+      setPackageError(errorMessage(error))
     } finally {
       setBusy(false)
     }
   }
   async function importShares(files: File[]) {
+    if (busy) return
+    setSharesError('')
     setBusy(true)
     setError('')
     setRecovered(null)
@@ -111,7 +143,7 @@ export default function SpecialNotesPage() {
       setShares(values)
       setSelected(values.map((_, i) => i))
     } catch (error) {
-      setError(errorMessage(error))
+      setSharesError(errorMessage(error))
     } finally {
       setBusy(false)
     }
@@ -126,7 +158,7 @@ export default function SpecialNotesPage() {
     )
   }
   async function recover() {
-    if (!note) return
+    if (busy || !recovery.check() || !note) return
     setBusy(true)
     setError('')
     setRecovered(null)
@@ -138,7 +170,22 @@ export default function SpecialNotesPage() {
         ),
       )
     } catch (error) {
-      setError(errorMessage(error))
+      const text = errorMessage(error)
+      if (
+        error instanceof ApiError &&
+        [
+          'invalid_shares',
+          'incompatible_shares',
+          'insufficient_shares',
+        ].includes(error.code)
+      )
+        setSharesError(text)
+      else if (
+        error instanceof ApiError &&
+        ['invalid_package', 'invalid_base64'].includes(error.code)
+      )
+        setPackageError(text)
+      else setError(text)
     } finally {
       setBusy(false)
     }
@@ -205,7 +252,12 @@ export default function SpecialNotesPage() {
                     </p>
                   </div>
                 </div>
-                <form onSubmit={protect} className="notes-form">
+                <form
+                  noValidate
+                  aria-busy={busy}
+                  onSubmit={protect}
+                  className="notes-form"
+                >
                   <label className="notes-upload">
                     <Upload size={27} />
                     <strong>
@@ -220,21 +272,32 @@ export default function SpecialNotesPage() {
                       type="file"
                       required={!file}
                       disabled={busy}
+                      id={protection.id('file')}
+                      aria-invalid={Boolean(
+                        (file && documentFileError(file)) ||
+                        protection.field('file').error,
+                      )}
+                      aria-describedby={`${protection.id('file')}-error`}
+                      onBlur={protection.field('file').onBlur}
                       aria-label="Archivo que deseas proteger"
                       onChange={(event) => {
                         const next = event.target.files?.[0] ?? null
                         setProtectedNote(null)
                         setError('')
-                        if (next && next.size > MAX_FILE_SIZE) {
-                          setFile(null)
-                          setError('El archivo supera el límite de 5 MiB.')
-                          event.target.value = ''
-                        } else setFile(next)
+                        setFile(next)
                       }}
                     />
                   </label>
+                  <FieldError
+                    id={protection.id('file')}
+                    error={
+                      (file && documentFileError(file)) ||
+                      protection.field('file').error
+                    }
+                  />
                   <div className="notes-policy">
                     <TextField
+                      {...protection.field('count')}
                       label="Número de participantes"
                       type="number"
                       min={2}
@@ -259,11 +322,12 @@ export default function SpecialNotesPage() {
                       </div>
                     </div>
                   </div>
+                  <FormFeedback issues={protection.issues} busy={busy} />
                   <div className="notes-form-footer">
                     <Badge tone="purple">
                       {count} de {count} requeridos
                     </Badge>
-                    <Button type="submit" disabled={busy || !file}>
+                    <Button type="submit" disabled={busy || !protection.valid}>
                       {busy ? (
                         <LoaderCircle className="notes-spinner" size={18} />
                       ) : (
@@ -353,6 +417,12 @@ export default function SpecialNotesPage() {
                     <span>Paquete cifrado (.stcnote.json)</span>
                     <input
                       type="file"
+                      id={recovery.id('package')}
+                      onBlur={recovery.field('package').onBlur}
+                      aria-invalid={Boolean(
+                        packageError || recovery.field('package').error,
+                      )}
+                      aria-describedby={`${recovery.id('package')}-error`}
                       accept=".json"
                       disabled={busy}
                       onChange={(event) => {
@@ -361,12 +431,22 @@ export default function SpecialNotesPage() {
                         event.target.value = ''
                       }}
                     />
+                    <FieldError
+                      id={recovery.id('package')}
+                      error={packageError || recovery.field('package').error}
+                    />
                   </label>
                   <label className="notes-file-field">
                     <span>Fragmentos (.json)</span>
                     <input
                       type="file"
                       accept=".json"
+                      id={recovery.id('shares')}
+                      onBlur={recovery.field('shares').onBlur}
+                      aria-invalid={Boolean(
+                        sharesError || recovery.field('shares').error,
+                      )}
+                      aria-describedby={`${recovery.id('shares')}-error`}
                       multiple
                       disabled={busy}
                       onChange={(event) => {
@@ -374,6 +454,10 @@ export default function SpecialNotesPage() {
                         if (chosen.length) void importShares(chosen)
                         event.target.value = ''
                       }}
+                    />
+                    <FieldError
+                      id={recovery.id('shares')}
+                      error={sharesError || recovery.field('shares').error}
                     />
                   </label>
                 </div>
@@ -418,12 +502,13 @@ export default function SpecialNotesPage() {
                     ))}
                   </fieldset>
                 )}
+                <FormFeedback issues={recovery.issues} busy={busy} />
                 <div className="notes-form-footer">
                   <span className="notes-count">
                     {selected.length} fragmentos seleccionados
                   </span>
                   <Button
-                    disabled={busy || !note || selected.length === 0}
+                    disabled={busy || !recovery.valid}
                     onClick={() => void recover()}
                   >
                     {busy ? (

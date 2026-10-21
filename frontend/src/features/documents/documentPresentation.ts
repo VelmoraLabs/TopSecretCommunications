@@ -1,4 +1,10 @@
-import { FileCheck2, FileLock2, Files, UsersRound } from 'lucide-react'
+import {
+  FileCheck2,
+  FileLock2,
+  Files,
+  UsersRound,
+  Handshake,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { BadgeTone } from '../../components/ui/Badge'
 import type { DocumentCategory, DocumentStatus } from './types'
@@ -13,6 +19,13 @@ export const categories: Record<
     protection: string
   }
 > = {
+  acuerdo: {
+    label: 'Acuerdo comercial',
+    shortLabel: 'Acuerdos comerciales',
+    icon: Handshake,
+    tone: 'blue',
+    protection: 'Firma y cifrado según su política',
+  },
   memorandum: {
     label: 'Memorándum',
     shortLabel: 'Memorándums',
@@ -46,6 +59,12 @@ export const documentStatuses: Record<
   DocumentStatus,
   { label: string; tone: BadgeTone }
 > = {
+  draft: { label: 'Borrador', tone: 'neutral' },
+  'pending-approval': { label: 'En aprobación', tone: 'amber' },
+  'ready-to-send': { label: 'Listo para enviar', tone: 'purple' },
+  sent: { label: 'Enviado', tone: 'green' },
+  legacy: { label: 'Flujo anterior', tone: 'neutral' },
+  'partially-signed': { label: 'Firmas pendientes', tone: 'amber' },
   signed: { label: 'Firmado', tone: 'green' },
   encrypted: { label: 'Cifrado', tone: 'blue' },
   'awaiting-signature': { label: 'Firma pendiente', tone: 'amber' },
@@ -57,5 +76,5 @@ export function formatDocumentDate(date: string) {
     month: 'short',
     year: 'numeric',
     timeZone: 'UTC',
-  }).format(new Date(`${date}T12:00:00Z`))
+  }).format(new Date(date.includes('T') ? date : `${date}T12:00:00Z`))
 }

@@ -13,7 +13,10 @@
 | `app/core/request_limits.py` | Límite del cuerpo HTTP antes de procesar JSON/Base64. |
 | `app/core/config.py` y `errors.py` | Configuración y errores públicos de servicio. |
 | `app/modules/auth/` | Identidad, permisos y administración con contratos HTTP. |
-| `app/infrastructure/supabase.py` | Cliente de Auth y PostgREST con JWT de usuario. |
+| `app/infrastructure/supabase.py` | Auth/PostgREST con JWT y canal privado para Storage/RPC confiables. |
+| `app/crypto/signatures/` | SHA-256, RSA-PSS y formatos de claves. |
+| `app/crypto/key_wrapping/` | Primitivas RSA-OAEP. |
+| `app/modules/memoranda/` | Documentos persistidos, destinatarios y firmas. |
 | `../supabase/` | Migraciones de perfiles, roles, permisos, RLS y auditoría. |
 | `tests/crypto/shamir/` | Pruebas matemáticas, de validación y de formato. |
 | `demos/shamir_demo.py` | Demostración local con datos ficticios. |
@@ -22,8 +25,6 @@
 
 | Ruta futura | Responsable y función |
 | --- | --- |
-| `crypto/signatures/` | Axel: SHA-256 y RSA-PSS. |
-| `crypto/key_wrapping/` | Roberto: RSA-OAEP. |
 | `modules/access/` | Yael: permisos y coordinación del acceso conjunto. |
 | `modules/documents/` | Equipo: ampliar el flujo existente a las demás categorías. |
 | `modules/keys/` | Equipo: claves públicas y sobres de claves. |
@@ -45,7 +46,7 @@ a servicios externos. Las tablas de Supabase se definen mediante migraciones ver
 
 Las futuras rutas funcionales utilizarán `/api/v1`; `/health` conserva su URL.
 
-`documents/workflows/` contendrá los procedimientos de memorandos, expedientes,
+Los nuevos flujos documentales coordinarán los procedimientos de expedientes,
 notas diplomáticas y notas especiales. Los workflows llaman a los algoritmos;
 no copian sus implementaciones. Los fragmentos Shamir se identifican por índice
 y conjunto; la identidad del participante se resolverá en el módulo de acceso.
@@ -58,5 +59,13 @@ sesión y permisos aunque el flag de registro local esté habilitado.
 
 El módulo auth verifica el JWT con Supabase Auth, consulta permisos actuales por
 PostgREST y expone administración con las RPC de la BD. El frontend integra Google,
-sesión y perfiles. Grupos, distribución protegida de fragmentos, Storage y firmas
-siguen pendientes. Ver [autenticación](authentication.md) y [contrato documental](special-notes-backend.md).
+sesión y perfiles. El módulo de [grupos](groups.md) añade organización, integrantes,
+responsables, RLS y auditoría, sin modificar las primitivas criptográficas.
+Los memorándums integran Storage privado y firmas con usuarios. Siguen pendientes la distribución de fragmentos y los otros flujos documentales. Ver [autenticación](authentication.md) y
+[contrato documental](special-notes-backend.md).
+
+## Integración de memorándums
+
+`modules/memoranda/` reúne contratos, router y servicio; coordina identidad, asignación individual, Storage y firma. `crypto/signatures/key_files.py` serializa claves sin acceder a HTTP ni BD. El gateway distingue el JWT del usuario de las operaciones confiables del servidor; no se admiten firmas verificadas declaradas por clientes. Consulta [contratos y arquitectura RSA-PSS](memoranda-signatures.md).
+
+La entrega se autoriza en PostgreSQL y en FastAPI: el documento cargado no se comparte con destinatarios finales hasta un envío explícito, verificado y auditado. Firma de emisión y aprobación institucional tienen permisos y etapas distintos.

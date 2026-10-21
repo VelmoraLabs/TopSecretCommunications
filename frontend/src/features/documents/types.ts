@@ -1,8 +1,19 @@
-export type DocumentCategory = 'memorandum' | 'expediente' | 'nota' | 'especial'
+export type DocumentCategory =
+  'memorandum' | 'expediente' | 'nota' | 'especial' | 'acuerdo'
 export type DocumentStatus =
-  'signed' | 'encrypted' | 'awaiting-signature' | 'joint-access'
+  | 'draft'
+  | 'pending-approval'
+  | 'ready-to-send'
+  | 'sent'
+  | 'legacy'
+  | 'signed'
+  | 'encrypted'
+  | 'awaiting-signature'
+  | 'joint-access'
+  | 'partially-signed'
 export interface DocumentRecord {
   id: string
+  folio?: string
   title: string
   category: DocumentCategory
   status: DocumentStatus

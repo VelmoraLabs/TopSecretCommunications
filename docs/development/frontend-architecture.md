@@ -32,8 +32,8 @@ criptográficas. `App.tsx` monta el proveedor de sesión y las rutas; no contien
 | `src/components/layout/AuthLayout.tsx` | Panel de marca 45 % y formulario 55 %; adaptación móvil. |
 | `src/components/layout/Brand.tsx` | Marca del proyecto, sin recursos de ITHERA. |
 | `src/components/ui/` | Button, Badge, Card, TextField, Modal, PageHeader y EmptyState. |
-| `src/features/documents/types.ts` | Modelo de presentación de los datos de ejemplo. |
-| `src/features/documents/fixtures.ts` | Seis documentos ficticios sin contenido privado. |
+| `src/features/documents/types.ts` | Modelo de presentación documental. |
+| `src/features/documents/fixtures.ts` | Fixtures originales conservados; Dashboard/Documentos ya no los consumen. |
 | `src/features/documents/specialNotes.ts` | Contratos, solicitudes al backend y archivos portables de notas especiales. |
 | `src/pages/SpecialNotes/` | Protección y recuperación portables mediante API autenticada. |
 | `src/features/documents/documentPresentation.ts` | Etiquetas, iconos, colores y fecha. |
@@ -44,7 +44,7 @@ criptográficas. `App.tsx` monta el proveedor de sesión y las rutas; no contien
 | `src/lib/` | SDK Supabase y HTTP con token Bearer. |
 | `src/styles/theme.css` | Variables y fuentes; punto de entrada para cambios de estilo. |
 
-Los tipos de documentos ficticios son modelos de presentación, no esquemas de autorización.
+Los tipos visuales son modelos de presentación, no esquemas de autorización.
 Los contratos de acceso y administración se mantienen en sus features y corresponden
 a la API de FastAPI y las RPC de Supabase.
 
@@ -65,8 +65,7 @@ Crear las carpetas cuando haya código que las utilice:
 | `assets/` | Recursos propios que requieran importarse desde el código. |
 
 La sesión y los guards están implementados. La API verifica identidad y permisos en
-cada operación. La UI no sustituye estas comprobaciones ni la futura política de
-asignación de documentos y acceso conjunto entre usuarios.
+cada operación. La UI no sustituye estas comprobaciones ni la política de asignación de documentos. El acceso conjunto colaborativo sigue pendiente.
 
 ## Añadir una pantalla
 
@@ -79,3 +78,9 @@ asignación de documentos y acceso conjunto entre usuarios.
 
 La interfaz de Shamir se utiliza dentro del dominio de notas especiales en
 `features/documents/`; no se necesita duplicar el algoritmo en un módulo frontend.
+
+## Documentos persistidos y claves
+
+`features/documents/memoranda.ts` concentra los contratos y peticiones; `DocumentForms.tsx` y `MemorandumDetail.tsx` componen los flujos. Dashboard y Documentos consultan datos reales; `pages/Keys/` gestiona exportación y retirada de claves propias. Las autorizaciones siguen en FastAPI y PostgreSQL. El flujo portable conserva sus componentes separados. Consulta [la guía RSA-PSS](memoranda-signatures.md).
+
+Los formularios distinguen destinatarios finales del aprobador opcional. El emisor es la cuenta autenticada. Detalle ofrece firma, solicitud de aprobación, actualización manual y confirmación de envío según las capacidades devueltas por la API; ocultar un botón no sustituye los permisos de BD.

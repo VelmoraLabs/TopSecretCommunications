@@ -35,6 +35,9 @@ import type {
   ProfileUpdate,
   Role,
 } from '../../features/admin/profiles'
+import FormFeedback from '../../components/ui/FormFeedback'
+import { useFormValidation } from '../../lib/useFormValidation'
+import { emailError, textError } from '../../lib/validation'
 import './admin.css'
 
 const message = (error: unknown) =>
@@ -87,8 +90,16 @@ export default function AdminPage() {
     }
   }, [search, state, offset, revision])
 
+  const validation = useFormValidation({
+    name: textError(name, 'el nombre completo', 120),
+    email: emailError(email),
+    role: !roles.some((item) => item.code === role)
+      ? 'Espera a que estén disponibles los roles de acceso.'
+      : '',
+  })
   async function authorize(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (creating || !validation.check()) return
     setCreating(true)
     setCreateError('')
     setNotice('')
@@ -358,8 +369,9 @@ export default function AdminPage() {
               Su correo será la identidad con la que podrá acceder a la
               plataforma.
             </p>
-            <form onSubmit={authorize}>
+            <form noValidate aria-busy={creating} onSubmit={authorize}>
               <TextField
+                {...validation.field('name')}
                 label="Nombre completo"
                 autoComplete="off"
                 required
@@ -370,6 +382,7 @@ export default function AdminPage() {
                 placeholder="Nombre de la persona"
               />
               <TextField
+                {...validation.field('email')}
                 label="Correo de Google"
                 type="email"
                 autoComplete="off"
@@ -381,18 +394,20 @@ export default function AdminPage() {
                 placeholder="nombre@gmail.com"
               />
               <RoleSelect
+                id={validation.id('role')}
                 value={role}
                 onChange={setRole}
                 roles={roles}
                 disabled={creating || !roles.length}
               />
+              <FormFeedback issues={validation.issues} busy={creating} />
               {createError && (
                 <div className="admin-feedback" role="alert">
                   <Info size={17} />
                   <span>{createError}</span>
                 </div>
               )}
-              <Button type="submit" disabled={creating || !roles.length}>
+              <Button type="submit" disabled={creating || !validation.valid}>
                 {creating ? (
                   <LoaderCircle className="access-spinner" size={17} />
                 ) : (
@@ -425,7 +440,9 @@ function RoleSelect({
   onChange,
   roles,
   disabled,
+  id,
 }: {
+  id?: string
   value: RoleCode
   onChange: (role: RoleCode) => void
   roles: Role[]
@@ -435,6 +452,7 @@ function RoleSelect({
     <label className="field">
       <span className="field-label">Rol de acceso</span>
       <select
+        id={id}
         className="admin-select"
         value={value}
         disabled={disabled}
@@ -479,8 +497,15 @@ function ProfileEditor({
   const [active, setActive] = useState(profile.is_active)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const validation = useFormValidation({
+    name: textError(name, 'el nombre completo', 120),
+    role: !roles.some((item) => item.code === role)
+      ? 'Selecciona un rol disponible.'
+      : '',
+  })
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (busy || !validation.check()) return
     setBusy(true)
     setError('')
     const update = {
@@ -499,14 +524,21 @@ function ProfileEditor({
   return (
     <Modal
       open
+      busy={busy}
       onClose={() => {
         if (!busy) onClose()
       }}
       title="Editar perfil"
     >
-      <form className="admin-edit-form" onSubmit={save}>
+      <form
+        noValidate
+        aria-busy={busy}
+        className="admin-edit-form"
+        onSubmit={save}
+      >
         <p className="admin-edit-email">{profile.email}</p>
         <TextField
+          {...validation.field('name')}
           label="Nombre completo"
           value={name}
           maxLength={120}
@@ -515,6 +547,7 @@ function ProfileEditor({
           onChange={(event) => setName(event.target.value)}
         />
         <RoleSelect
+          id={validation.id('role')}
           value={role}
           onChange={setRole}
           roles={roles}
@@ -538,6 +571,7 @@ function ProfileEditor({
             protegidas. Su perfil e historial se conservarán.
           </p>
         )}
+        <FormFeedback issues={validation.issues} busy={busy} />
         {error && (
           <div className="admin-feedback" role="alert">
             <Info size={18} />
@@ -548,7 +582,7 @@ function ProfileEditor({
           <Button variant="outline" disabled={busy} onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" disabled={busy || !validation.valid}>
             {busy && <LoaderCircle size={17} className="access-spinner" />}
             {busy ? 'Guardando…' : 'Guardar cambios'}
           </Button>
