@@ -124,6 +124,134 @@ class SupabaseGateway:
         except ValueError:
             data = {}
         code = data.get("code") if isinstance(data, dict) else None
+        if code == "DA403":
+            raise ServiceError(
+                403,
+                "dashboard_permission_denied",
+                "Tu perfil no puede consultar este resumen.",
+            )
+        notification_errors = {
+            "NT403": (
+                403,
+                "notification_permission_denied",
+                "Tu perfil no puede consultar esta bandeja.",
+            ),
+            "NT404": (
+                404,
+                "notification_not_found",
+                "El aviso no está disponible para tu cuenta.",
+            ),
+            "NT422": (
+                422,
+                "invalid_notification_request",
+                "Revisa los filtros o la fecha de lectura de los avisos.",
+            ),
+        }
+        if code in notification_errors:
+            status, error_code, message = notification_errors[code]
+            raise ServiceError(status, error_code, message)
+        recovery_errors = {
+            "PR403": (
+                403,
+                "recovery_permission_denied",
+                "Tu cuenta no puede realizar esta acción de recuperación.",
+            ),
+            "PR404": (
+                404,
+                "recovery_not_found",
+                "La nota o la solicitud no está disponible para tu cuenta.",
+            ),
+            "PR409": (
+                409,
+                "recovery_conflict",
+                "Ya existe una solicitud abierta o su estado cambió. "
+                "Actualiza las solicitudes.",
+            ),
+            "PR410": (
+                409,
+                "recovery_closed",
+                "La solicitud no está lista, se cerró o terminó su plazo de descarga. "
+                "Actualiza su estado.",
+            ),
+            "PR412": (
+                409,
+                "recovery_participant_blocked",
+                "Hay participantes desactivados o sin permiso para aportar. "
+                "Deben conservarse todos los participantes originales.",
+            ),
+            "PR422": (
+                422,
+                "invalid_recovery",
+                "Revisa el motivo, el plazo y la correspondencia de la aportación.",
+            ),
+            "PR428": (
+                409,
+                "recovery_key_required",
+                "Activa tu clave de protección de fragmentos en Mis claves "
+                "antes de solicitar la recuperación.",
+            ),
+        }
+        if code in recovery_errors:
+            status, error_code, message = recovery_errors[code]
+            raise ServiceError(status, error_code, message)
+        key_errors = {
+            "PK403": (
+                403,
+                "key_permission_denied",
+                "Tu perfil no puede administrar estas claves.",
+            ),
+            "PK404": (
+                404,
+                "encryption_key_not_found",
+                "La clave de cifrado no está disponible para tu cuenta.",
+            ),
+            "PK409": (
+                409,
+                "encryption_key_conflict",
+                "Revisa el estado de la clave y retira preparaciones pendientes. "
+                "Se permiten 3 pendientes y 100 históricas.",
+            ),
+            "PK422": (
+                422,
+                "invalid_encryption_key",
+                "Usa una clave de cifrado distinta de las claves de firma.",
+            ),
+            "PN428": (
+                409,
+                "participant_keys_required",
+                "Cada integrante debe iniciar sesión y activar su clave de cifrado "
+                "antes de crear la nota.",
+            ),
+        }
+        if code in key_errors:
+            status, error_code, message = key_errors[code]
+            raise ServiceError(status, error_code, message)
+        note_errors = {
+            "PN403": (
+                403,
+                "note_permission_denied",
+                "No tienes permiso para esta operación de nota especial.",
+            ),
+            "PN404": (
+                404,
+                "note_not_found",
+                "La nota o el grupo no está disponible para tu cuenta.",
+            ),
+            "PN409": (
+                409,
+                "note_conflict",
+                "El grupo o la nota cambió. "
+                "Actualiza su información antes de reintentar.",
+            ),
+            "PN422": (
+                422,
+                "invalid_group_note",
+                "Revisa los integrantes activos del grupo y el resguardo de esta nota.",
+            ),
+        }
+        if code in note_errors:
+            status, error_code, message = note_errors[code]
+            raise ServiceError(status, error_code, message)
         document_errors = {
             "PD403": (
                 403,

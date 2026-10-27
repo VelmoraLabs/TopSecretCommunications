@@ -50,7 +50,9 @@ En las notas especiales, el acceso conjunto requiere la participación de todos 
 
 La implementación incluye Shamir, AES-256-GCM, protección y recuperación de notas especiales, login con Google mediante Supabase Auth y PKCE, sesión persistente y renovable, verificación del JWT en FastAPI y administración de perfiles con permisos vigentes en PostgreSQL. El frontend conserva la identidad visual; Dashboard y Documentos consultan memorándums reales con destinatarios, firmas y archivos en Storage privado. Incluye grupos e integrantes con permisos propios. Los memorándums separan borrador privado, firma del emisor, aprobación institucional opcional y envío a destinatarios finales. Consulta la [integración RSA-PSS](docs/development/memoranda-signatures.md).
 
-RSA-PSS está integrado para memorándums. RSA-OAEP conserva su primitiva criptográfica; su integración documental, los demás flujos y la entrega de fragmentos entre usuarios siguen pendientes. El flujo portable requiere sesión y permisos, pero todavía reúne los fragmentos en una misma cuenta. No representa una sesión colaborativa entre integrantes. Consultar la [integración de autenticación](docs/development/authentication.md) y la [base de permisos](supabase/README.md).
+Las notas especiales de grupo ya conservan sus participantes originales y guardan únicamente el archivo cifrado en Storage privado. Antes de compartirlas se confirma un resguardo portable de los fragmentos. Consulta la [guía de notas de grupo](docs/development/group-notes-storage.md).
+
+RSA-PSS está integrado para memorándums. Las notas especiales de grupo integran AES-GCM, Shamir n de n, sobres RSA-OAEP por destinatario y recuperación autorizada entre cuentas. El flujo portable anterior conserva su recuperación manual separada. Consultar la [integración de autenticación](docs/development/authentication.md) y la [base de permisos](supabase/README.md).
 
 ## Arquitectura y organización del código
 
@@ -75,6 +77,7 @@ Estas rutas forman parte de la estructura implementada del proyecto:
 | `backend/app/modules/health/router.py` | Implementa `GET /health`. |
 | `backend/app/crypto/shamir/` | Implementa división, reconstrucción, validación y serialización de secretos de 32 bytes. |
 | `backend/app/crypto/encryption/` | AES-256-GCM con clave, nonce, ciphertext, tag y AAD. |
+| `backend/app/modules/group_notes/` | Snapshot de participantes, persistencia cifrada y confirmación de resguardo de notas de grupo. |
 | `backend/app/modules/documents/` | Flujo portable de notas especiales con sesión y permisos. |
 | `backend/app/modules/auth/` | Identidad, permisos y administración de perfiles. |
 | `backend/app/infrastructure/supabase.py` | Auth y lecturas PostgREST con JWT; canal privado para Storage y escrituras documentales confiables. |
@@ -409,7 +412,7 @@ GitHub Actions ejecuta los workflows en los Pull Requests hacia `develop` y `mai
 | Workflow | Check obligatorio | Validaciones |
 | --- | --- | --- |
 | CI Backend | `backend-checks` | Instalación, `pip check`, Ruff lint, Ruff formato, mypy y pytest. |
-| CI Frontend | `frontend-checks` | Instalación con `npm ci`, ESLint y build con verificación de TypeScript. |
+| CI Frontend | `frontend-checks` | Instalación con `npm ci`, pruebas de frontend, ESLint y build con verificación de TypeScript. |
 
 Las ramas protegidas requieren los checks en verde y la actualización con la rama base. El permiso de integración del líder no sustituye estas comprobaciones.
 
@@ -446,3 +449,33 @@ Para ampliar la información técnica, consultar [la guía del backend](backend/
 Para probar el backend de notas especiales sin conectar el frontend, consultar la [guía del flujo y su API](docs/development/special-notes-backend.md) y el [contrato AES-256-GCM](docs/crypto/aes-gcm.md).
 
 La [guía de notas especiales en el frontend](docs/development/special-notes-frontend.md) explica cómo iniciar ambos servicios y comprobar la protección y recuperación desde la interfaz.
+
+### Custodia individual de notas especiales
+
+Las notas de grupo nuevas entregan un sobre cifrado por integrante. Cada perfil
+activa una clave de cifrado separada de su firma en **Mis claves**. Las notas
+anteriores conservan el resguardo manual. Consulta
+[la guía de custodia individual](docs/development/recipient-share-custody.md) para
+instalación, permisos y rotación; la recuperación colaborativa se describe en la guía siguiente.
+
+### Recuperación colaborativa de notas
+
+Las notas con custodia individual permiten solicitar recuperación, aportar desde
+cada cuenta y reconstruir con todos los participantes originales. El resultado se
+entrega al solicitante, con vencimiento, rechazo/cancelación, limpieza temporal y
+progreso por Realtime con conciliación periódica. Consulta
+[flujo y configuración](docs/development/collaborative-note-recovery.md).
+
+## Notificaciones generales y recorrido simplificado
+
+Centro de avisos persistentes por destinatario, enlaces directos a las operaciones,
+recuperación con fragmentos cifrados de la base de datos y verificación de firmas
+antes de descargar. Conserva las claves y documentos existentes.
+
+Guía: [Notificaciones y flujo](docs/development/notifications-and-workflow.md).
+
+## Dashboard y avisos específicos
+
+Resumen autorizado de documentos/notas, tareas propias y contexto histórico de
+notificaciones. Los selectores de claves conservan el nombre del archivo válido.
+Guía: [Dashboard y contexto](docs/development/dashboard-and-notification-context.md).

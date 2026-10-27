@@ -65,7 +65,7 @@ Crear las carpetas cuando haya código que las utilice:
 | `assets/` | Recursos propios que requieran importarse desde el código. |
 
 La sesión y los guards están implementados. La API verifica identidad y permisos en
-cada operación. La UI no sustituye estas comprobaciones ni la política de asignación de documentos. El acceso conjunto colaborativo sigue pendiente.
+cada operación. La UI no sustituye estas comprobaciones ni la política de asignación de documentos. El detalle de notas con custodia individual integra la recuperación colaborativa entre cuentas.
 
 ## Añadir una pantalla
 
@@ -84,3 +84,49 @@ La interfaz de Shamir se utiliza dentro del dominio de notas especiales en
 `features/documents/memoranda.ts` concentra los contratos y peticiones; `DocumentForms.tsx` y `MemorandumDetail.tsx` componen los flujos. Dashboard y Documentos consultan datos reales; `pages/Keys/` gestiona exportación y retirada de claves propias. Las autorizaciones siguen en FastAPI y PostgreSQL. El flujo portable conserva sus componentes separados. Consulta [la guía RSA-PSS](memoranda-signatures.md).
 
 Los formularios distinguen destinatarios finales del aprobador opcional. El emisor es la cuenta autenticada. Detalle ofrece firma, solicitud de aprobación, actualización manual y confirmación de envío según las capacidades devueltas por la API; ocultar un botón no sustituye los permisos de BD.
+
+## Notas de grupo persistentes
+
+`features/group-notes/groupNotes.ts` define contratos, API e importación de
+resguardos; `GroupNotesPanel.tsx` compone archivo, creación y detalle con los
+controles compartidos. `group-notes.css` utiliza el tema existente. La página
+SpecialNotes conserva el flujo portable y permite preparar su recuperación con
+un resguardo válido. No hay criptografía nueva en JavaScript ni persistencia
+de fragmentos en claro en localStorage, IndexedDB o Supabase. Los sobres
+cifrados de las notas nuevas sí se guardan en Supabase.
+
+El selector consulta únicamente grupos propios; los participantes definitivos
+provienen de la transacción del servidor. Los errores se presentan junto al campo
+y las acciones incompletas se deshabilitan con los componentes de validación.
+
+## Custodia individual de fragmentos
+
+En `features/group-notes`, `encryptionKeys.ts` define API/formato del archivo
+privado y su lectura; `EncryptionKeysPanel.tsx` administra claves propias y
+`OwnSharePanel.tsx` permite descargar y comprobar el fragmento asignado.
+`GroupNotesPanel` conserva el listado y las notas portables históricas; la
+creación nueva devuelve solo detalle y no material secreto para el creador.
+Se usan `useFormValidation`, `FieldError`, `FormFeedback`, botones desactivados
+y los estilos existentes, sin dependencias de UI adicionales.
+
+## Recuperación entre cuentas
+
+`RecoveryPanel` compone solicitudes, autorizaciones, rechazos y recuperación dentro
+del detalle de nota. `recoveries.ts` conserva contratos y selección de claves;
+`useRecoveryUpdates` coordina avisos de metadatos y conciliación cada cinco segundos.
+Los sobres de aportación nunca se devuelven al cliente. Se reutilizan campos,
+validaciones, botones desactivados, mensajes accesibles y estilos del proyecto.
+
+## Notificaciones generales y recorrido simplificado
+
+Centro de avisos persistentes por destinatario, enlaces directos a las operaciones,
+recuperación con fragmentos cifrados de la base de datos y verificación de firmas
+antes de descargar. Conserva las claves y documentos existentes.
+
+Guía: [Notificaciones y flujo](notifications-and-workflow.md).
+
+## Dashboard y avisos específicos
+
+Resumen autorizado de documentos/notas, tareas propias y contexto histórico de
+notificaciones. Los selectores de claves conservan el nombre del archivo válido.
+Guía: [Dashboard y contexto](dashboard-and-notification-context.md).

@@ -192,10 +192,34 @@ async def download(
             "document_integrity_failed",
             "El archivo almacenado no coincide con la versión registrada.",
         )
+    if document.document.workflow_state == "sent":
+        required = {(document.document.issuer_id, "issuer")}
+        if document.document.approver_id not in (None, document.document.issuer_id):
+            required.add((document.document.approver_id, "approval"))
+        actual = {
+            (signature.signer_id, signature.purpose)
+            for signature in document.signatures
+        }
+        if not required.issubset(actual):
+            raise ServiceError(
+                422,
+                "document_integrity_failed",
+                "Faltan firmas requeridas. No se entregó el archivo.",
+            )
+    if document.signatures:
+        await check_signatures(document, data)
+    current = await detail(gateway, principal, document_id)
+    if current.version != document.version or current.signatures != document.signatures:
+        raise ServiceError(
+            409,
+            "document_conflict",
+            "La versión o sus firmas cambiaron. Vuelve a abrir el documento.",
+        )
     return Download(
         filename=document.version.filename,
         media_type=document.version.media_type,
         content_base64=base64.b64encode(data).decode("ascii"),
+        verification="signatures" if document.signatures else "integrity",
     )
 
 

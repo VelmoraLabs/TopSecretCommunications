@@ -25,12 +25,14 @@ import {
   getDocuments,
 } from '../../features/documents/memoranda'
 import type { DocumentPage } from '../../features/documents/memoranda'
+import { entityId } from '../../features/notifications/notifications'
 import './documents-page.css'
 import '../../features/documents/memoranda.css'
 
 export default function DocumentsPage() {
   const auth = useAuth(),
     [params, setParams] = useSearchParams()
+  const linkedDocument = entityId(params.get('documento'))
   const rawCategory = params.get('tipo'),
     category =
       rawCategory && Object.hasOwn(categories, rawCategory)
@@ -260,11 +262,16 @@ export default function DocumentsPage() {
           }}
         />
       )}
-      {selected && (
+      {(linkedDocument || selected) && (
         <MemorandumDetail
-          key={selected}
-          id={selected}
-          onClose={() => setSelected(null)}
+          key={linkedDocument || selected}
+          id={(linkedDocument || selected)!}
+          onClose={() => {
+            setSelected(null)
+            const next = new URLSearchParams(params)
+            next.delete('documento')
+            setParams(next, { replace: true })
+          }}
           onChanged={() => setRevision((n) => n + 1)}
         />
       )}

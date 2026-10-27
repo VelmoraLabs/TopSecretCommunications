@@ -61,7 +61,7 @@ El módulo auth verifica el JWT con Supabase Auth, consulta permisos actuales po
 PostgREST y expone administración con las RPC de la BD. El frontend integra Google,
 sesión y perfiles. El módulo de [grupos](groups.md) añade organización, integrantes,
 responsables, RLS y auditoría, sin modificar las primitivas criptográficas.
-Los memorándums integran Storage privado y firmas con usuarios. Siguen pendientes la distribución de fragmentos y los otros flujos documentales. Ver [autenticación](authentication.md) y
+Los memorándums integran Storage privado y firmas con usuarios. Las notas especiales distribuyen fragmentos cifrados por cuenta e integran solicitudes, aportaciones y recuperación colaborativa. Ver [autenticación](authentication.md) y
 [contrato documental](special-notes-backend.md).
 
 ## Integración de memorándums
@@ -69,3 +69,51 @@ Los memorándums integran Storage privado y firmas con usuarios. Siguen pendient
 `modules/memoranda/` reúne contratos, router y servicio; coordina identidad, asignación individual, Storage y firma. `crypto/signatures/key_files.py` serializa claves sin acceder a HTTP ni BD. El gateway distingue el JWT del usuario de las operaciones confiables del servidor; no se admiten firmas verificadas declaradas por clientes. Consulta [contratos y arquitectura RSA-PSS](memoranda-signatures.md).
 
 La entrega se autoriza en PostgreSQL y en FastAPI: el documento cargado no se comparte con destinatarios finales hasta un envío explícito, verificado y auditado. Firma de emisión y aprobación institucional tienen permisos y etapas distintos.
+
+## Notas especiales persistentes por grupo
+
+`modules/group_notes/` coordina snapshot y persistencia, conserva notas portables
+anteriores y usa custodia individual para las notas nuevas.
+Reutiliza `documents.service.protect_note`, los contratos v1 del paquete, las
+utilidades HTTP documentales y el gateway privado de Supabase. Las primitivas
+en `crypto/` no cambian. El router persistente no depende del flag del flujo
+portable; su recuperación manual utiliza los endpoints portables ya existentes.
+
+PostgreSQL fija participantes en una transacción y revalida identidad, permisos,
+versión del grupo y estado. Storage recibe solo ciphertext, bajo el prefijo
+`special-notes/`. En las notas portables anteriores la confirmación de resguardo publica la nota;
+no representa una aportación colaborativa. Las notas nuevas se publican tras
+guardar todos sus sobres individuales. Consulta `group-notes-storage.md` para las garantías,
+los fallos de red y el procedimiento de conciliación.
+
+## Custodia individual de Shamir
+
+`modules/encryption_keys` coordina generación, activación mediante PKCS8 cifrado y
+retiro por perfil. `crypto/key_wrapping/share_envelope.py` compone AES-GCM y
+RSA-OAEP existentes para proteger cada fragmento, autenticando su contexto.
+`modules/group_notes` persiste los sobres y publica la nota atómicamente; sus
+endpoints de lectura nunca exponen sobres ajenos. La comprobación individual no
+reconstruye documentos. Detalles: `recipient-share-custody.md`.
+
+## Solicitudes de recuperación
+
+`modules/note_recovery` coordina aportaciones cifradas para la clave del solicitante,
+autorización y reconstrucción n de n usando `documents.service.recover_note`.
+`recovery_envelope.py` amplía el contexto híbrido con solicitud/autor. El material
+temporal queda cifrado en un esquema privado; `main` gestiona su limpieza periódica.
+La autorización se revalida después de descifrar y antes de devolver el archivo.
+Consulta `collaborative-note-recovery.md`.
+
+## Notificaciones generales y recorrido simplificado
+
+Centro de avisos persistentes por destinatario, enlaces directos a las operaciones,
+recuperación con fragmentos cifrados de la base de datos y verificación de firmas
+antes de descargar. Conserva las claves y documentos existentes.
+
+Guía: [Notificaciones y flujo](notifications-and-workflow.md).
+
+## Dashboard y avisos específicos
+
+Resumen autorizado de documentos/notas, tareas propias y contexto histórico de
+notificaciones. Los selectores de claves conservan el nombre del archivo válido.
+Guía: [Dashboard y contexto](dashboard-and-notification-context.md).

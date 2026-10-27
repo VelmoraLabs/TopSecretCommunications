@@ -231,4 +231,5 @@ class Verification(Contract):
 
 
 class Download(FileInfo):
+    verification: Literal["integrity", "signatures"] = "integrity"
     content_base64: str = Field(repr=False)

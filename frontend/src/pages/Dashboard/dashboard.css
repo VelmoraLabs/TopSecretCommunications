@@ -463,3 +463,70 @@
     width: 17px;
   }
 }
+
+.dashboard-entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 22px 12px;
+}
+.dashboard-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 0;
+  color: var(--text);
+  border-top: 1px solid var(--border);
+}
+.dashboard-entry:hover {
+  color: var(--primary);
+}
+.dashboard-entry > .stat-icon {
+  flex-shrink: 0;
+}
+.dashboard-entry > svg {
+  flex-shrink: 0;
+}
+.dashboard-entry-copy {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dashboard-entry-copy strong {
+  font-size: 12px;
+}
+.dashboard-entry-copy small,
+.dashboard-entry-copy time {
+  font-size: 10px;
+  color: var(--muted);
+}
+.dashboard-entry-copy > span {
+  font-size: 11px;
+  color: var(--primary);
+}
+.dashboard-list-message {
+  padding: 0 22px 20px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.dashboard-module-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 0 22px 20px;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+#dashboard-pending {
+  scroll-margin-top: 100px;
+}
+@media (max-width: 640px) {
+  .dashboard-entry-list {
+    padding: 0 16px 12px;
+  }
+  .dashboard-entry {
+    gap: 9px;
+  }
+}

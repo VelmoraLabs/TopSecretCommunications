@@ -11,6 +11,7 @@ import AuthCallbackPage from '../pages/AuthCallback/AuthCallbackPage'
 import AdminPage from '../pages/Admin/AdminPage'
 import GroupsPage from '../pages/Groups/GroupsPage'
 import KeysPage from '../pages/Keys/KeysPage'
+import NotificationsPage from '../pages/Notifications/NotificationsPage'
 import { RequirePermission, RequireSession } from '../features/auth/AccessGate'
 
 export default function AppRoutes() {
@@ -24,6 +25,7 @@ export default function AppRoutes() {
         <Route element={<RequireSession />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/notificaciones" element={<NotificationsPage />} />
             <Route path="/documentos" element={<DocumentsPage />} />
             <Route path="/claves" element={<KeysPage />} />
             <Route path="/notas-especiales" element={<SpecialNotesPage />} />

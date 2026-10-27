@@ -10,7 +10,7 @@ const titles: Record<string, string> = {
   '/auth/callback': 'Verificando acceso',
   '/administracion': 'Perfiles y permisos',
   '/grupos': 'Grupos e integrantes',
-  '/claves': 'Mis claves de firma',
+  '/claves': 'Mis claves',
 }
 
 export default function RouteEffects() {

@@ -7,6 +7,7 @@ import {
   Plus,
   ShieldCheck,
 } from 'lucide-react'
+import EncryptionKeysPanel from '../../features/group-notes/EncryptionKeysPanel'
 import Badge from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
@@ -71,18 +72,42 @@ export default function KeysPage() {
   return (
     <>
       <PageHeader
-        eyebrow="IDENTIDAD Y FIRMA"
-        title="Mis claves de firma"
-        description="Administra las claves con las que autorizas tus documentos."
+        eyebrow="CLAVES PERSONALES"
+        title="Mis claves"
+        description="Prepara tus claves personales una vez y utilízalas según la operación."
         action={
           auth.hasPermission('documents.sign') && (
             <Button onClick={() => setCreating(true)}>
               <Plus size={17} />
-              Generar claves
+              Generar claves de firma
             </Button>
           )
         }
       />
+      <div className="key-purpose-grid">
+        <div>
+          <strong>Proteger mis fragmentos</strong>
+          <p>
+            Tu par RSA-OAEP permite abrir el fragmento cifrado asignado a tu
+            cuenta. Se utiliza para aportar y recuperar notas.
+          </p>
+        </div>
+        <div>
+          <strong>Firmar documentos</strong>
+          <p>
+            Tu par RSA-PSS identifica las firmas que realizas. Los destinatarios
+            las verifican con la pública registrada.
+          </p>
+        </div>
+        <div>
+          <strong>Cifrar cada documento</strong>
+          <p>
+            La aplicación genera una clave AES nueva por documento y la divide
+            con Shamir. Tú no tienes que crearla ni descargarla.
+          </p>
+        </div>
+      </div>
+      <EncryptionKeysPanel />
       <section className="memo-intro">
         <span>
           <KeyRound size={29} />
@@ -128,20 +153,25 @@ export default function KeysPage() {
                 RSA-2048 · SHA-256 · Creada el{' '}
                 {new Date(key.created_at).toLocaleDateString('es-MX')}
               </p>
-              <p className="memo-fingerprint">{key.fingerprint}</p>
+              <details className="flow-details">
+                <summary>Huella y clave pública de firma</summary>
+                <p className="memo-fingerprint">{key.fingerprint}</p>
+                <div className="memo-actions memo-actions--start">
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      saveFile(
+                        `clave-publica-${key.fingerprint.slice(0, 12)}.txt`,
+                        key.public_base64 + '\n',
+                      )
+                    }
+                  >
+                    <Download size={16} />
+                    Descargar pública
+                  </Button>
+                </div>
+              </details>
               <div className="memo-actions memo-actions--start">
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    saveFile(
-                      `clave-publica-${key.fingerprint.slice(0, 12)}.txt`,
-                      key.public_base64 + '\n',
-                    )
-                  }
-                >
-                  <Download size={16} />
-                  Descargar pública
-                </Button>
                 {key.is_active && (
                   <Button variant="ghost" onClick={() => setRetiring(key)}>
                     Retirar clave
@@ -270,8 +300,9 @@ function KeyForm({
             text="Tu clave pública quedó vinculada a tu perfil."
           />
           <p className="memo-note">
-            Descarga los dos archivos por separado. La plataforma no conserva
-            una copia de la clave privada ni de su contraseña.
+            Guarda tu clave privada cifrada: la necesitarás para firmar. La
+            pública ya está registrada y su descarga es opcional. La plataforma
+            no conserva la privada ni su contraseña.
           </p>
           <div className="memo-key-downloads">
             <Button
@@ -319,24 +350,27 @@ function KeyForm({
             disabled={busy}
             onChange={(event) => setLabel(event.target.value)}
           />
-          <TextField
-            {...validation.field('privateName')}
-            label="Nombre del archivo privado"
-            value={privateName}
-            required
-            maxLength={180}
-            disabled={busy}
-            onChange={(event) => setPrivateName(event.target.value)}
-          />
-          <TextField
-            {...validation.field('publicName')}
-            label="Nombre del archivo público"
-            value={publicName}
-            required
-            maxLength={180}
-            disabled={busy}
-            onChange={(event) => setPublicName(event.target.value)}
-          />
+          <details className="flow-details">
+            <summary>Personalizar nombres de archivos (opcional)</summary>
+            <TextField
+              {...validation.field('privateName')}
+              label="Nombre del archivo privado"
+              value={privateName}
+              required
+              maxLength={180}
+              disabled={busy}
+              onChange={(event) => setPrivateName(event.target.value)}
+            />
+            <TextField
+              {...validation.field('publicName')}
+              label="Nombre del archivo público"
+              value={publicName}
+              required
+              maxLength={180}
+              disabled={busy}
+              onChange={(event) => setPublicName(event.target.value)}
+            />
+          </details>
           <TextField
             {...validation.field('password')}
             label="Contraseña de la clave privada"

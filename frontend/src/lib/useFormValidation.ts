@@ -1,5 +1,18 @@
 import { useId, useState } from 'react'
 
+/** Hace visible el campo si está dentro de opciones avanzadas cerradas. */
+export function focusField(id: string) {
+  const field = document.getElementById(id)
+  for (
+    let parent = field?.parentElement;
+    parent;
+    parent = parent.parentElement
+  ) {
+    if (parent instanceof HTMLDetailsElement) parent.open = true
+  }
+  field?.focus()
+}
+
 /** Client guidance only: the API remains responsible for validation and access. */
 export function useFormValidation<T extends string>(errors: Record<T, string>) {
   const prefix = useId()
@@ -20,7 +33,7 @@ export function useFormValidation<T extends string>(errors: Record<T, string>) {
         Object.keys(errors).map((name) => [name, true]),
       ) as Record<T, boolean>,
     )
-    document.getElementById(issues[0].id)?.focus()
+    focusField(issues[0].id)
     return false
   }
   return { id, field, issues, valid: issues.length === 0, check }

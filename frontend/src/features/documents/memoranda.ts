@@ -217,9 +217,12 @@ export const verifyFile = (id: string, versionId: string, content: string) =>
     body: JSON.stringify({ version_id: versionId, content_base64: content }),
   })
 export const downloadDocument = (id: string) =>
-  apiRequest<{ filename: string; media_type: string; content_base64: string }>(
-    `/api/v1/documents/${id}/file`,
-  )
+  apiRequest<{
+    filename: string
+    media_type: string
+    content_base64: string
+    verification: 'integrity' | 'signatures'
+  }>(`/api/v1/documents/${id}/file`)
 
 export async function fileBase64(file: File) {
   if (file.size > 5 * 1024 * 1024)
