@@ -1,4 +1,5 @@
 import { CircleAlert, CircleCheck } from 'lucide-react'
+import { focusField } from '../../lib/useFormValidation'
 
 export function FieldError({ id, error }: { id: string; error?: string }) {
   return error ? (
@@ -37,7 +38,7 @@ export default function FormFeedback({
                   type="button"
                   aria-controls={issue.id}
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => document.getElementById(issue.id)?.focus()}
+                  onClick={() => focusField(issue.id)}
                 >
                   {issue.message}
                 </button>

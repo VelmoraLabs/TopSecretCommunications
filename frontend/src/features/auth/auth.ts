@@ -42,6 +42,7 @@ export function useAuth() {
 
 const destinations = new Set([
   '/dashboard',
+  '/notificaciones',
   '/documentos',
   '/notas-especiales',
   '/administracion',

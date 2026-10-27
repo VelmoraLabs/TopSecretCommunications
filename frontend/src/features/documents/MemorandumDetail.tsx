@@ -4,7 +4,6 @@ import {
   Download,
   FileSignature,
   LoaderCircle,
-  ShieldCheck,
   RefreshCw,
 } from 'lucide-react'
 import Badge from '../../components/ui/Badge'
@@ -47,6 +46,7 @@ export default function MemorandumDetail({
   const [confirmation, setConfirmation] = useState<'send' | 'review' | null>(
     null,
   )
+  const [downloadNotice, setDownloadNotice] = useState('')
   const [verification, setVerification] = useState<Verification | null>(null),
     [file, setFile] = useState<File | null>(null)
   useEffect(() => {
@@ -77,7 +77,13 @@ export default function MemorandumDetail({
     }
   }
   async function download() {
+    setDownloadNotice('')
     const result = await downloadDocument(id)
+    setDownloadNotice(
+      result.verification === 'signatures'
+        ? 'Integridad y firmas verificadas. Se inició la descarga.'
+        : 'Integridad verificada. Esta versión todavía no tiene firmas. Se inició la descarga.',
+    )
     saveBase64(result.filename, result.content_base64)
   }
   function exportSignatures() {
@@ -178,6 +184,9 @@ export default function MemorandumDetail({
               Creado por {detail.document.creator_name}. Destinatarios propios
               de este documento.
             </p>
+            {downloadNotice && (
+              <DocumentMessage success text={downloadNotice} />
+            )}
             <dl className="memo-metadata">
               <div>
                 <dt>Archivo</dt>
@@ -190,10 +199,6 @@ export default function MemorandumDetail({
                     ? `${detail.version.size} bytes`
                     : `${(detail.version.size / 1024).toFixed(1)} KiB`}
                 </dd>
-              </div>
-              <div className="memo-wide">
-                <dt>SHA-256 de la versión original</dt>
-                <dd className="memo-fingerprint">{detail.version.sha256}</dd>
               </div>
             </dl>
             <div className="memo-actions memo-actions--start">
@@ -272,7 +277,12 @@ export default function MemorandumDetail({
               </div>
             </section>
             <section>
-              <h3>Firmas registradas</h3>
+              <h3>Firmas del documento</h3>
+              <p className="memo-note">
+                Al descargar, la aplicación comprueba la integridad y las firmas
+                registradas. Las firmas pendientes se indican en el estado del
+                documento.
+              </p>
               {detail.signatures.length === 0 ? (
                 <p className="memo-note">
                   Todavía no hay firmas para esta versión.
@@ -293,45 +303,51 @@ export default function MemorandumDetail({
                           {!signature.key_is_active &&
                             ' · Clave retirada para nuevas firmas'}
                         </small>
-                        <span className="memo-fingerprint">
-                          {signature.fingerprint}
-                        </span>
-                        <label className="field">
-                          <span className="field-label">Firma en Base64</span>
-                          <textarea
-                            readOnly
-                            rows={3}
-                            value={signature.signature_base64}
-                            aria-label={`Firma de ${signature.signer_name} en Base64`}
-                          />
-                        </label>
-                        <Button
-                          variant="ghost"
-                          onClick={() =>
-                            saveFile(
-                              `clave-publica-${signature.fingerprint.slice(0, 12)}.txt`,
-                              signature.public_base64 + '\n',
-                            )
-                          }
-                        >
-                          <Download size={15} />
-                          Clave pública utilizada
-                        </Button>
+                        <details className="flow-details">
+                          <summary>Datos técnicos de esta firma</summary>
+                          <span className="memo-fingerprint">
+                            {signature.fingerprint}
+                          </span>
+                          <label className="field">
+                            <span className="field-label">Firma en Base64</span>
+                            <textarea
+                              readOnly
+                              rows={3}
+                              value={signature.signature_base64}
+                              aria-label={`Firma de ${signature.signer_name} en Base64`}
+                            />
+                          </label>
+                          <Button
+                            variant="ghost"
+                            onClick={() =>
+                              saveFile(
+                                `clave-publica-${signature.fingerprint.slice(0, 12)}.txt`,
+                                signature.public_base64 + '\n',
+                              )
+                            }
+                          >
+                            <Download size={15} />
+                            Clave pública utilizada
+                          </Button>
+                        </details>
                       </div>
                     ))}
                   </div>
-                  <Button variant="outline" onClick={exportSignatures}>
-                    <Download size={16} />
-                    Descargar firmas asociadas
-                  </Button>
+                  <details className="flow-details">
+                    <summary>Exportar evidencia de firmas (opcional)</summary>
+                    <Button variant="outline" onClick={exportSignatures}>
+                      <Download size={16} />
+                      Descargar firmas asociadas
+                    </Button>
+                  </details>
                 </>
               )}
             </section>
-            <section className="memo-verification">
-              <h3>
-                <ShieldCheck size={19} />
-                Comprobar integridad y firmas
-              </h3>
+            <details className="memo-verification flow-details">
+              <summary>Verificación adicional de archivos (opcional)</summary>
+              <p className="memo-fingerprint">
+                SHA-256 de referencia: {detail.version.sha256}
+              </p>
               <p className="memo-note">
                 Comprueba el archivo almacenado o compara un archivo de tu
                 equipo con esta versión y sus firmas.
@@ -428,7 +444,7 @@ export default function MemorandumDetail({
                     )}
                 </div>
               )}
-            </section>
+            </details>
           </div>
         )}
       </Modal>

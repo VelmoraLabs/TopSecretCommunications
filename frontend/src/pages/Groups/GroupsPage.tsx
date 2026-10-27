@@ -43,6 +43,8 @@ import {
   Loading,
   Pagination,
 } from '../../features/groups/GroupComponents'
+import { useSearchParams } from 'react-router'
+import { entityId } from '../../features/notifications/notifications'
 import './groups.css'
 
 const message = (error: unknown) =>
@@ -57,12 +59,15 @@ const initials = (name: string) =>
 
 export default function GroupsPage() {
   const auth = useAuth()
+  const [params, setParams] = useSearchParams()
+  const linkedGroup = entityId(params.get('grupo'))
   const administrator = auth.hasPermission('groups.manage')
   const [page, setPage] = useState<Page<Group> | null>(null)
   const [search, setSearch] = useState('')
   const [state, setState] = useState('active')
   const [offset, setOffset] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
+  const [localSelected, setLocalSelected] = useState<string | null>(null)
+  const selected = linkedGroup || localSelected
   const [detail, setDetail] = useState<GroupDetail | null>(null)
   const [revision, setRevision] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -120,7 +125,16 @@ export default function GroupsPage() {
     return () => controller.abort()
   }, [selected, revision])
 
+  function setSelected(id: string | null) {
+    setLocalSelected(id)
+    if (linkedGroup) {
+      const next = new URLSearchParams(params)
+      next.delete('grupo')
+      setParams(next, { replace: true })
+    }
+  }
   function choose(id: string) {
+    setSelected(id)
     if (id === selected) {
       reload()
       return

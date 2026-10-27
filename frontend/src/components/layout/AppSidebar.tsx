@@ -1,5 +1,6 @@
 import {
   ChevronRight,
+  Bell,
   FolderLock,
   LayoutDashboard,
   KeyRound,
@@ -30,8 +31,9 @@ export default function AppSidebar({
       <nav aria-label="Navegación del panel">
         {[
           { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { to: '/notificaciones', label: 'Notificaciones', icon: Bell },
           { to: '/documentos', label: 'Documentos', icon: FolderLock },
-          { to: '/claves', label: 'Mis claves de firma', icon: KeyRound },
+          { to: '/claves', label: 'Mis claves', icon: KeyRound },
           ...(auth.hasPermission('groups.read')
             ? [
                 {

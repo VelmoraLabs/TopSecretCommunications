@@ -241,7 +241,9 @@ La migración `20261019100000_memoranda_signatures.sql` integra memorándums, de
 
 La migración `20261021000000_document_delivery.sql` añade borrador privado, firma del emisor, aprobación opcional del Embajador y envío explícito. Solo se habilita el acceso a destinatarios finales al confirmar el envío. Conserva documentos anteriores como historial del flujo previo, sin inventar firmas ni fechas. Aplicarla una sola vez después de memorándums; no repetir las anteriores.
 
-Siguen la entrega protegida de fragmentos, la integración documental de RSA-OAEP y las sesiones de recuperación con Realtime. Los memorándums no exigen grupos.
+La migración `20261022000000_group_notes_storage.sql` añade notas especiales de grupo, participantes originales inmutables, auditoría y confirmación de resguardo. Reutiliza el bucket privado `stc-documents`: no crear otro ni volverlo público. Ejecutarla una sola vez después de las cuatro anteriores. No almacena el original, claves AES ni fragmentos. Consulta [instalación y alcance de notas de grupo](../docs/development/group-notes-storage.md).
+
+La migración de custodia individual siguiente incorpora RSA-OAEP y sobres por destinatario. La migración de recuperación colaborativa incorpora solicitudes, aportaciones protegidas y progreso con Realtime. Los memorándums no exigen grupos.
 
 ## Referencias
 
@@ -249,3 +251,39 @@ Siguen la entrega protegida de fragmentos, la integración documental de RSA-OAE
 - [Supabase: Auth Hooks y permisos](https://supabase.com/docs/guides/auth/auth-hooks)
 - [Supabase: RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)
 - [Supabase: datos de usuario y triggers](https://supabase.com/docs/guides/auth/managing-user-data)
+
+## Custodia individual de fragmentos
+
+Después de las cinco migraciones anteriores, ejecutar una sola vez
+`migrations/20261025000000_recipient_share_custody.sql`. Añade públicas de cifrado,
+auditoría y sobres individuales con RLS. No modifica los datos de notas portables,
+no crea otro bucket ni requiere secretos nuevos. Los archivos en `tests/` son solo
+para una BD local vacía; nunca ejecutarlos sobre el proyecto real.
+
+## Recuperación colaborativa de notas
+
+Ejecutar una sola vez `migrations/20261026000000_collaborative_note_recovery.sql`
+después de las seis anteriores. Añade solicitudes, progreso y auditoría con RLS;
+las aportaciones cifradas viven en `stc_private` sin acceso directo de clientes.
+Solo los metadatos de solicitudes se agregan a `supabase_realtime`. FastAPI limpia
+material vencido cada minuto mientras está en ejecución. No exige nuevos secretos,
+buckets ni extensiones. Consulta la guía de recuperación para estados y reintentos.
+
+## Notificaciones generales y recorrido simplificado
+
+Centro de avisos persistentes por destinatario, enlaces directos a las operaciones,
+recuperación con fragmentos cifrados de la base de datos y verificación de firmas
+antes de descargar. Conserva las claves y documentos existentes.
+
+Guía: [Notificaciones y flujo](../docs/development/notifications-and-workflow.md).
+
+Migración nueva: `20261026120000_notifications.sql`, después de las siete anteriores.
+Ejecutar una sola vez como postgres; no repetir migraciones ni ejecutar fixtures remotos.
+
+## Dashboard y avisos específicos
+
+Resumen autorizado de documentos/notas, tareas propias y contexto histórico de
+notificaciones. Los selectores de claves conservan el nombre del archivo válido.
+Guía: [Dashboard y contexto](../docs/development/dashboard-and-notification-context.md).
+
+Migración nueva: `20261026180000_dashboard_notification_context.sql`, después de las ocho anteriores.

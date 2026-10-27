@@ -98,8 +98,9 @@ v1 y las coordenadas de Shamir se conservan como cadenas decimales.
 
 Para proteger se requiere `documents.create`; los miembros sin ese permiso
 acceden a recuperación. El backend verifica los permisos aunque se manipule un
-botón. Todavía no se entrega cada fragmento a una cuenta distinta ni existe una
-sesión de recuperación colaborativa. Los resultados permanecen en memoria hasta
+botón. Este flujo portable conserva su manejo manual; las notas de grupo nuevas
+ya distribuyen un sobre por cuenta e incorporan solicitudes de recuperación
+colaborativa con aportaciones autorizadas. Los resultados portables permanecen en memoria hasta
 abandonar la página y se pueden guardar mediante las descargas.
 
 ## Organización modular
@@ -142,3 +143,44 @@ acciones visiblemente deshabilitadas hasta completar datos válidos. Consulta
 [las reglas y el recorrido de revisión](../docs/development/form-validation.md).
 Desde esta carpeta, `npm test` ejecuta las pruebas de validación sin instalar
 nuevas dependencias. FastAPI conserva la validación y autorización definitivas.
+
+## Notas especiales de grupo
+
+`/notas-especiales` abre el archivo de grupo, con búsqueda, selección de grupo,
+previsualización de participantes y persistencia cifrada. Las notas nuevas
+requieren claves activas y guardan un sobre cifrado por integrante antes de
+compartirse. Las notas portables anteriores conservan confirmación de resguardo
+e importación de su copia manual. Las notas y sus participantes persisten tras
+recargar; los fragmentos en claro no se guardan en el servidor.
+Consulta [la guía de esta etapa](../docs/development/group-notes-storage.md).
+
+## Claves de cifrado y fragmentos propios
+
+`/claves` muestra claves de cifrado y de firma por separado. Los componentes
+`EncryptionKeysPanel` y `OwnSharePanel` viven en `features/group-notes`, reutilizan
+las validaciones y estilos existentes y no guardan privadas/contraseñas en caché
+ni almacenamiento persistente del navegador. Las notas nuevas usan entrega
+individual; los resguardos anteriores siguen importándose. Consulta
+`docs/development/recipient-share-custody.md`.
+
+## Recuperación colaborativa
+
+El detalle de notas con custodia individual incorpora `RecoveryPanel`, contratos
+en `recoveries.ts` y actualizaciones en `useRecoveryUpdates.ts`. Cada persona
+autoriza explícitamente su aportación. La descarga solo se ofrece al solicitante
+cuando están todas; la UI distingue clave histórica del fragmento y clave fijada
+en la solicitud. No se guardan privadas ni contraseñas en el navegador.
+
+## Notificaciones generales y recorrido simplificado
+
+Centro de avisos persistentes por destinatario, enlaces directos a las operaciones,
+recuperación con fragmentos cifrados de la base de datos y verificación de firmas
+antes de descargar. Conserva las claves y documentos existentes.
+
+Guía: [Notificaciones y flujo](../docs/development/notifications-and-workflow.md).
+
+## Dashboard y avisos específicos
+
+Resumen autorizado de documentos/notas, tareas propias y contexto histórico de
+notificaciones. Los selectores de claves conservan el nombre del archivo válido.
+Guía: [Dashboard y contexto](../docs/development/dashboard-and-notification-context.md).

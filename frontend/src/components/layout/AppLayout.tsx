@@ -5,8 +5,19 @@ import Brand from './Brand'
 import AppSidebar from './AppSidebar'
 import Badge from '../ui/Badge'
 import { roleNames, useAuth } from '../../features/auth/auth'
+import NotificationProvider from '../../features/notifications/NotificationProvider'
+import NotificationBell from '../../features/notifications/NotificationBell'
 
 export default function AppLayout() {
+  const auth = useAuth()
+  return (
+    <NotificationProvider key={auth.access!.profile.id}>
+      <AppFrame />
+    </NotificationProvider>
+  )
+}
+
+function AppFrame() {
   const auth = useAuth()
   const profile = auth.access!.profile
   const initials = profile.display_name
@@ -76,16 +87,17 @@ export default function AppLayout() {
                 : pathname === '/grupos'
                   ? 'Grupos e integrantes'
                   : pathname === '/claves'
-                    ? 'Mis claves de firma'
+                    ? 'Mis claves'
                     : pathname === '/documentos'
                       ? 'Documentos'
-                      : 'Dashboard'}
+                      : pathname === '/notificaciones'
+                        ? 'Notificaciones'
+                        : 'Dashboard'}
           </strong>
         </div>
         <div className="header-actions">
-          <Badge tone="neutral">
-            {isSpecialNotes ? 'Flujo portable' : 'Sesión activa'}
-          </Badge>
+          <Badge tone="neutral">Sesión activa</Badge>
+          <NotificationBell />
           <details className="account-menu">
             <summary aria-label={'Menú de ' + profile.display_name}>
               <span className="avatar">{initials}</span>
