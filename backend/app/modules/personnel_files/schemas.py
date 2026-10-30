@@ -3,7 +3,7 @@
 from typing import Literal, Self
 from uuid import UUID
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import AwareDatetime, Field, field_validator, model_validator
 
 from app.modules.documents.schemas import (
     MAX_CONTENT_BASE64,
@@ -12,7 +12,7 @@ from app.modules.documents.schemas import (
     FileInfo,
 )
 from app.modules.documents.service import decode_base64
-from app.modules.encryption_keys.schemas import PrivateKeyInput
+from app.modules.encryption_keys.schemas import EncryptionKey, PrivateKeyInput
 from app.modules.memoranda.schemas import CreateMemo
 
 MAX_RECIPIENTS = 255
@@ -115,3 +115,69 @@ class ProtectedPersonnelFile(Contract):
 class OpenPersonnelFile(PrivateKeyInput):
     version_id: UUID
     key_id: UUID
+
+
+class PersonnelFile(FileInfo):
+    id: UUID = Field(strict=False)
+    version_id: UUID = Field(strict=False)
+    created_by: UUID = Field(strict=False)
+    title: str = Field(min_length=1, max_length=160)
+    size: int = Field(ge=0, le=MAX_FILE_SIZE)
+    state: Literal["staging", "ready", "cancelled"]
+    created_at: AwareDatetime = Field(strict=False)
+    ready_at: AwareDatetime | None = Field(strict=False)
+
+
+class PersonnelParticipant(Recipient):
+    display_name: str
+    email: str
+    key_id: UUID = Field(strict=False)
+    fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    is_active: bool
+
+
+class PersonnelDetail(Contract):
+    file: PersonnelFile
+    participants: tuple[PersonnelParticipant, ...] = Field(
+        min_length=1, max_length=MAX_RECIPIENTS + 1, strict=False
+    )
+
+
+class PersonnelPage(Contract):
+    items: tuple[PersonnelFile, ...] = Field(max_length=100, strict=False)
+    total: int = Field(ge=0)
+    limit: int = Field(ge=1, le=100)
+    offset: int = Field(ge=0, le=100000)
+
+
+class PersonnelReservation(Contract):
+    """Snapshot interno devuelto únicamente al servidor que prepara la carga."""
+
+    detail: PersonnelDetail
+    keys: tuple[EncryptionKey, ...] = Field(
+        min_length=1, max_length=MAX_RECIPIENTS + 1, strict=False
+    )
+
+
+class PersonnelMaterial(Contract):
+    """Cabecera y autenticadores privados; el ciphertext se obtiene de Storage."""
+
+    detail: PersonnelDetail
+    header: PersonnelFileHeader
+    nonce_base64: str = Field(min_length=16, max_length=16)
+    tag_base64: str = Field(min_length=24, max_length=24, repr=False)
+    ciphertext_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def valid_authenticators(self) -> Self:
+        if (
+            len(decode_base64(self.nonce_base64)) != 12
+            or len(decode_base64(self.tag_base64)) != 16
+        ):
+            raise ValueError("Autenticadores de longitud inválida.")
+        return self
+
+
+class PersonnelDownload(FileInfo):
+    size: int = Field(ge=0, le=MAX_FILE_SIZE)
+    content_base64: str = Field(max_length=MAX_CONTENT_BASE64, repr=False)
