@@ -2,10 +2,10 @@
 
 El módulo incluye servicio en memoria, integración SQL/Storage, rutas FastAPI e
 interfaz autenticada en `/expedientes`. Se accede desde el menú, la categoría
-Expedientes del listado documental y el dashboard. Este último consulta el total
-autorizado del módulo por separado: no convierte expedientes en memorándums sin firma.
-Todavía no se generan notificaciones de expedientes ni se incorporan sus eventos
-a las listas globales de recientes y pendientes.
+Expedientes del listado documental y el dashboard. El resumen integra expedientes
+disponibles en totales y recientes, y cargas incompletas como pendientes propios.
+La publicación emite un aviso transaccional a cada destinatario distinto del creador.
+Los expedientes cifrados no se cuentan como memorándums firmados ni sin firmar.
 
 ## Política
 
@@ -45,10 +45,10 @@ Las tablas de expedientes son independientes del flujo de firma/aprobación de
 memorándums. No se cambia el significado de sus estados ni se cuentan expedientes
 como memorándums sin firmar. La interfaz consulta cada módulo mediante su contrato.
 El filtro `/documentos?tipo=expediente` dirige a `/expedientes`; el listado de
-firmas no incluye expedientes en su filtro Todos. El dashboard muestra el total
-de expedientes y cargas propias junto al acceso a esa categoría. Los totales
-de firmas/notas y sus listas recientes/pendientes conservan su alcance anterior,
-indicado en pantalla.
+firmas no incluye expedientes en su filtro Todos. El total documental del dashboard
+suma documentos autorizados, notas listas y expedientes listos. La categoría
+Expedientes cuenta disponibles; las cargas pendientes solo aparecen para su creador
+si conserva permiso de creación. Las canceladas no aumentan totales ni pendientes.
 
 ## Persistencia
 
@@ -289,6 +289,126 @@ comprobación visual no utiliza la base compartida ni credenciales reales.
 6. Una cuenta no asignada no debe verlo; un enlace directo debe devolver 404.
    Una clave de firma, otra generación o contraseña incorrecta no entrega el original.
 
-El transporte de Supabase de las pruebas automatizadas es simulado. La validación
-con Google OAuth, Storage y la base compartida debe completarse con estas sesiones
-reales antes de declarar terminada la integración de extremo a extremo.
+El transporte de Supabase de las pruebas automatizadas es simulado. El recorrido
+real con las cuentas del equipo se registra a continuación; los avisos/dashboard
+del punto 7 requieren su propia comprobación después de instalar la nueva migración.
+
+
+## Evidencia funcional del flujo base
+
+El 30/10/2026 Roberto informó estos resultados usando dos cuentas distintas,
+Roberto (Administrador) y Moralitos (Miembro), sobre la aplicación local conectada
+al Supabase compartido. Son resultados reportados por el ejecutor; las capturas
+acompañan la conversación, no se incluyen privadas ni contraseñas en el repositorio.
+
+| Escenario | Resultado reportado |
+| --- | --- |
+| Recuperar `expediente02` desde Roberto y Moralitos con sus respectivas privadas | Ambos recuperan individualmente. |
+| Privada correcta de Moralitos con contraseña incorrecta y luego correcta | Se rechaza el primer intento y se permite el segundo. |
+| Roberto selecciona el JSON de Moralitos | Se rechaza por perfil o generación. |
+| Moralitos abre el enlace del expediente privado de Roberto | No se muestra el detalle. |
+| Moralitos activa un segundo par RSA | Nueva activa y anterior retirada. |
+| Nueva privada sobre `expediente02`, anterior al cambio | Se rechaza. |
+| Privada anterior retirada sobre `expediente02` | Se recupera. |
+| Nueva privada sobre `expediente03`, publicado después del cambio | Se recupera. |
+| Privada anterior sobre `expediente03` | Se rechaza. |
+| Moralitos cambia temporalmente a Administrador y abre el expediente ajeno | Sigue sin acceso; después vuelve al rol Miembro. |
+
+Estas verificaciones no equivalen a una auditoría de seguridad ni prueban por sí
+solas carreras simultáneas, interrupciones de Storage o alteraciones del ciphertext.
+Esos contratos tienen cobertura automatizada; no se alteró material real para simularlos.
+
+## Avisos y dashboard: punto 7
+
+Requiere la nueva migración
+`supabase/migrations/20261030120000_personnel_notifications_dashboard.sql`, aplicada
+una sola vez después de las diez anteriores. No repetir la migración inicial de
+expedientes ni las de otros módulos. Este bloque no cambia algoritmos, sobres,
+formatos de privadas, archivos existentes, configuración ni dependencias.
+
+### Comportamiento
+
+- Al publicar, un trigger de auditoría emite `personnel_file_shared` a cada
+  destinatario original distinto del creador. El aviso comparte la transacción de
+  publicación. Un fallo del aviso revierte esa publicación; el flujo existente
+  puede cancelar y limpiar la preparación. Repetir una publicación confirmada no
+  repite el evento ni el aviso. No se anuncian reservas, cancelaciones o descargas.
+- El nuevo destino es `personnel_file`; el enlace local es
+  `/expedientes?expediente=UUID`. Abrir el aviso marca su lectura y consulta el
+  detalle autorizado; no descifra ni descarga por sí solo. Leer un aviso no concede acceso.
+- La tabla publicada en Realtime guarda texto genérico. El título específico vive
+  en `stc_private.notification_context` y se incorpora al consultar la bandeja solo
+  si la cuenta conserva acceso al expediente. La retirada de una clave no revoca
+  acceso histórico. Una baja o pérdida de permiso impide exponer ese contexto.
+- No se reemiten avisos de expedientes anteriores a la instalación. Esos archivos
+  sí aparecen inmediatamente en los conteos y recientes autorizados del dashboard.
+- `personnel_total` cuenta expedientes disponibles. `pending_personnel` cuenta
+  cargas `staging` del creador con permiso actual para cancelarlas. Las canceladas
+  no se incluyen. El total documental suma disponibles de los tres módulos.
+- Recientes y pendientes se limitan a seis después de contar todos los registros.
+  Los expedientes conservan su tipo, icono y ruta propios; no suman firmas pendientes.
+- Frontend consume un único resumen de dashboard. Se elimina la consulta adicional
+  que contaba por separado expedientes y preparaciones en el punto 6.
+- Los mensajes futuros de activación y retirada de claves indican que sirven para
+  expedientes y notas. No se reescriben avisos históricos ni su estado de lectura.
+
+### Archivos nuevos del bloque
+
+| Archivo | Uso |
+| --- | --- |
+| `supabase/migrations/20261030120000_personnel_notifications_dashboard.sql` | Destino de avisos, trigger, contexto autorizado y resumen ampliado. |
+| `supabase/scripts/check_personnel_integration_setup.sql` | Ocho verificaciones de solo lectura. |
+| `supabase/tests/personnel_notifications_dashboard.sql` | Eventos, idempotencia, rollback, aislamiento, revocación y conteos. |
+| `backend/tests/dashboard/test_personnel_dashboard.py` | Nuevo contrato del resumen y rechazo de respuestas incompatibles. |
+| `backend/tests/notifications/test_personnel_notifications.py` | Contrato del destino de expediente y exclusión de material privado. |
+
+También se actualizan los DTO de dashboard/notificaciones, su fixture anterior,
+los helpers de navegación, la página del dashboard y sus pruebas. El contrato
+nuevo del backend exige `personnel_total` y `pending_personnel`: hasta instalar
+la migración puede devolver 503 ante el resumen antiguo. Instalar este bloque
+con los servidores detenidos y reiniciarlos después de verificar SQL.
+
+### Instalación y comprobación
+
+1. Incorporar el paquete en `feature/personnel-files` y ejecutar las comprobaciones.
+2. En Supabase SQL Editor, como postgres, ejecutar el archivo completo de la
+   migración nueva una vez. Usar texto UTF-8 al copiar desde Windows.
+3. Ejecutar `supabase/scripts/check_personnel_integration_setup.sql`: ocho filas `true`.
+4. Reiniciar backend y frontend; conservar las claves privadas históricas.
+5. Roberto crea un expediente nuevo asignando a Moralitos. Moralitos debe recibir
+   el aviso de la categoría Documentos con el título del expediente.
+6. Abrir ese aviso: dirige al detalle correcto y solo marca lectura. Recuperar
+   exige todavía la privada y contraseña originales de Moralitos.
+7. Ambos consultan el dashboard: el archivo entra al total, categoría y recientes
+   de cada cuenta autorizada, sin aumentar Firmados ni Pendientes por publicarse.
+8. Una cuenta ajena no obtiene aviso, título ni conteo del expediente. Las cargas
+   incompletas solo son pendientes del creador; no crear datos artificiales en
+   el proyecto compartido para esta comprobación.
+
+Para obtener UTF-8 en el portapapeles desde CMD en la raíz:
+
+```bat
+powershell -NoProfile -Command "Get-Content -LiteralPath 'supabase\migrations\20261030120000_personnel_notifications_dashboard.sql' -Raw -Encoding UTF8 | Set-Clipboard"
+```
+
+Los SQL en `supabase/tests/` son solo para una base de prueba vacía; no ejecutar
+fixtures en el proyecto compartido. El script de `supabase/scripts/` es de solo lectura.
+
+### Validación del bloque
+
+- 585 pruebas Python, Ruff, formato y mypy aprobados. Los 99 casos de
+  `tests/personnel_files` conservan su resultado; los 16 nuevos están en dashboard
+  y notificaciones. Entorno local Python 3.12.14 con requisitos fijados; equipo 3.14.5.
+- 51 pruebas de frontend, ESLint y compilación TypeScript/Vite aprobados.
+- 530 comprobaciones SQL en PostgreSQL 18.6/PGlite 0.5.13: 482 anteriores y 48 nuevas.
+  Se comprobaron además los inventarios de once y ocho filas.
+- Ensayo de actualización con un expediente publicado: conserva exactamente
+  metadatos, asignaciones, material privado, avisos, contexto y bucket; incorpora
+  ese expediente al resumen sin reemitir avisos.
+- Seis recorridos de navegador Chromium con HTTP simulado: resumen global sin
+  consulta adicional, enlace de reciente, aviso con lectura sin descarga,
+  preparación pendiente, cancelación y vista móvil de 390 píxeles sin desborde
+  horizontal. Se inspeccionaron las capturas de escritorio, aviso y móvil.
+- No se usaron credenciales reales ni se modificó el Supabase compartido desde
+  las comprobaciones locales de este bloque. Su verificación remota queda a cargo
+  del recorrido indicado arriba.

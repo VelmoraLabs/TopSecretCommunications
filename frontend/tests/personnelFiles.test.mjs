@@ -92,7 +92,7 @@ test('el listado codifica búsqueda Unicode y conserva paginación y cancelació
   assert.equal(url.searchParams.get('limit'), '20')
   assert.equal(calls[0].options.signal, controller.signal)
 })
-test('el conteo del dashboard consulta un solo elemento, sin inferir un total de la página', async () => {
+test('el listado devuelve su total global incluso al pedir un solo elemento', async () => {
   capture({ items: [], total: 125, offset: 0, limit: 1 })
   const result = await api.getPersonnelFiles('', 0, undefined, 1)
   assert.equal(

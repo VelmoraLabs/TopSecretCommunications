@@ -16,8 +16,6 @@ import Badge from '../../components/ui/Badge'
 import PageHeader from '../../components/ui/PageHeader'
 import { Button } from '../../components/ui/Button'
 import { errorMessage } from '../../features/documents/memoranda'
-import { useAuth } from '../../features/auth/auth'
-import { getPersonnelFiles } from '../../features/personnel-files/personnelFiles'
 import { DocumentMessage } from '../../features/documents/DocumentForms'
 import { categories } from '../../features/documents/documentPresentation'
 import { useNotifications } from '../../features/notifications/notificationContext'
@@ -32,32 +30,9 @@ import type {
 import './dashboard.css'
 
 export default function DashboardPage() {
-  const canReadPersonnel = useAuth().hasPermission(
-    'documents.read_assigned',
-  )
   const { revision, refresh } = useNotifications()
   const [page, setPage] = useState<Dashboard | null>(null),
     [error, setError] = useState('')
-  const [personnelTotal, setPersonnelTotal] = useState<number | null>(null)
-  const [personnelError, setPersonnelError] = useState('')
-  useEffect(() => {
-    if (!canReadPersonnel) return
-    const controller = new AbortController()
-    void getPersonnelFiles('', 0, controller.signal, 1)
-      .then((result) => {
-        if (!controller.signal.aborted) {
-          setPersonnelTotal(result.total)
-          setPersonnelError('')
-        }
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) {
-          setPersonnelTotal(null)
-          setPersonnelError(errorMessage(error))
-        }
-      })
-    return () => controller.abort()
-  }, [revision, canReadPersonnel])
   useEffect(() => {
     const controller = new AbortController()
     void getDashboard(controller.signal)
@@ -74,12 +49,11 @@ export default function DashboardPage() {
   }, [revision])
   const stats = [
     {
-      label: 'Listado y notas',
+      label: 'Documentos',
       count: page?.stats.documents_total,
       icon: FolderClosed,
       tone: 'purple',
-      detail:
-        'Listado de firmas y notas especiales; expedientes por separado',
+      detail: 'Documentos, expedientes y notas disponibles para ti',
     },
     {
       label: 'Notas especiales',
@@ -165,11 +139,6 @@ export default function DashboardPage() {
           }
         />
       )}
-      {personnelError && (
-        <DocumentMessage
-          text={`No se pudo actualizar el conteo de expedientes: ${personnelError}`}
-        />
-      )}
       <div className="stats-grid">
         {stats.map(({ label, count, icon: Icon, tone, detail }) => (
           <Card className="stat-card" key={label}>
@@ -191,10 +160,10 @@ export default function DashboardPage() {
           <Card className="recent-documents">
             <div className="card-heading">
               <div>
-                <h2>Listado documental y notas recientes</h2>
+                <h2>Documentos recientes</h2>
                 <p>
-                  Firmas y notas especiales. Los expedientes se consultan en
-                  su sección.
+                  Documentos, expedientes cifrados y notas especiales
+                  autorizados para tu cuenta.
                 </p>
               </div>
             </div>
@@ -226,17 +195,13 @@ export default function DashboardPage() {
                 const Icon = category.icon,
                   special = key === 'especial',
                   personnel = key === 'expediente',
-                  count = personnel
-                    ? canReadPersonnel
-                      ? (personnelTotal ?? undefined)
-                      : undefined
-                    : page
-                      ? special
-                        ? page.stats.notes_total
-                        : page.category_counts[
-                            key as keyof Dashboard['category_counts']
-                          ]
-                      : undefined
+                  count = page
+                    ? special
+                      ? page.stats.notes_total
+                      : page.category_counts[
+                          key as keyof Dashboard['category_counts']
+                        ]
+                    : undefined
                 return (
                   <Link
                     className="category-shortcut"
@@ -259,7 +224,9 @@ export default function DashboardPage() {
                       <span>
                         {count ?? '—'}{' '}
                         {personnel
-                          ? 'expedientes y cargas propias'
+                          ? count === 1
+                            ? 'expediente disponible'
+                            : 'expedientes disponibles'
                           : special
                             ? count === 1
                               ? 'nota'
@@ -299,7 +266,9 @@ export default function DashboardPage() {
             <div className="card-heading">
               <div>
                 <h2>Requieren tu atención</h2>
-                <p>Firmas, preparaciones y recuperación colaborativa.</p>
+                <p>
+                  Firmas, cargas incompletas y recuperación colaborativa.
+                </p>
               </div>
             </div>
             {page ? (
@@ -312,7 +281,8 @@ export default function DashboardPage() {
                 <p className="dashboard-list-message">
                   {page.stats.pending_documents} documentos ·{' '}
                   {page.stats.pending_recoveries} recuperaciones ·{' '}
-                  {page.stats.pending_notes} preparaciones.
+                  {page.stats.pending_notes} preparaciones de notas ·{' '}
+                  {page.stats.pending_personnel} cargas de expedientes.
                   {page.stats.pending_total > 6 &&
                     ' Se muestran las seis acciones más recientes.'}
                 </p>
@@ -326,9 +296,7 @@ export default function DashboardPage() {
             )}
             <div className="dashboard-module-links">
               <Link to="/documentos">Ver documentos</Link>
-              {canReadPersonnel && (
-                <Link to="/expedientes">Ver expedientes de personal</Link>
-              )}
+              <Link to="/expedientes">Ver expedientes de personal</Link>
               <Link to="/notas-especiales">Ver notas especiales</Link>
             </div>
           </Card>
@@ -350,8 +318,9 @@ export default function DashboardPage() {
             <Info size={15} />
             <span>
               Los totales respetan tus permisos. Las notas cifradas se
-              cuentan por separado de las firmas. Los expedientes tienen su
-              propio conteo y listado.{' '}
+              cuentan por separado de las firmas. El total incluye
+              expedientes disponibles; las cargas incompletas solo son
+              pendientes de su creador.{' '}
               {page &&
                 `Actualizado: ${new Date(page.updated_at).toLocaleTimeString('es-MX')}.`}
             </span>
@@ -377,7 +346,11 @@ function EntryList({
     <ul className={`dashboard-entry-list ${compact ? 'is-compact' : ''}`}>
       {items.map((item) => {
         const Icon =
-          item.target_kind === 'document' ? FileCheck2 : UsersRound
+          item.target_kind === 'personnel_file'
+            ? FileLock2
+            : item.target_kind === 'document'
+              ? FileCheck2
+              : UsersRound
         return (
           <li key={`${item.target_kind}-${item.id}`}>
             <Link to={dashboardTarget(item)} className="dashboard-entry">
