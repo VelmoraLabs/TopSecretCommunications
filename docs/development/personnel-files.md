@@ -1,9 +1,11 @@
-# Expedientes de personal: contratos, persistencia y API
+# Expedientes de personal: contratos, persistencia, API e interfaz
 
-El módulo incluye servicio en memoria, integración SQL/Storage y rutas FastAPI.
-La interfaz y la incorporación al catálogo/dashboard/notificaciones se implementarán
-en el siguiente bloque. Las rutas pueden consultarse en `/docs`; aún no hay
-pantalla de expedientes en el frontend.
+El módulo incluye servicio en memoria, integración SQL/Storage, rutas FastAPI e
+interfaz autenticada en `/expedientes`. Se accede desde el menú, la categoría
+Expedientes del listado documental y el dashboard. Este último consulta el total
+autorizado del módulo por separado: no convierte expedientes en memorándums sin firma.
+Todavía no se generan notificaciones de expedientes ni se incorporan sus eventos
+a las listas globales de recientes y pendientes.
 
 ## Política
 
@@ -33,11 +35,20 @@ pantalla de expedientes en el frontend.
 | `supabase/scripts/check_personnel_files_setup.sql` | Inventario de solo lectura para el proyecto compartido. |
 | `backend/tests/personnel_files/` | Contratos, criptografía real y contrato HTTP del gateway. |
 | `supabase/tests/personnel_files.sql` | Pruebas transaccionales para una base aislada vacía. |
+| `frontend/src/features/personnel-files/personnelFiles.ts` | Contratos HTTP, validación del respaldo original y solicitudes del navegador. |
+| `frontend/src/features/personnel-files/PersonnelCreateForm.tsx` | Archivo, título, selección paginada de destinatarios y comprobación de la clave propia. |
+| `frontend/src/features/personnel-files/PersonnelDetail.tsx` | Detalle autorizado, recuperación individual y cancelación de cargas incompletas. |
+| `frontend/src/pages/PersonnelFiles/PersonnelFilesPage.tsx` | Listado, búsqueda, paginación y detalle mediante `?expediente=UUID`. |
+| `frontend/tests/personnelFiles.test.mjs` | Pruebas de contratos del cliente y de selección de la privada original. |
 
 Las tablas de expedientes son independientes del flujo de firma/aprobación de
 memorándums. No se cambia el significado de sus estados ni se cuentan expedientes
-como memorándums sin firmar. La futura interfaz deberá integrar ambos módulos
-mediante sus contratos correspondientes.
+como memorándums sin firmar. La interfaz consulta cada módulo mediante su contrato.
+El filtro `/documentos?tipo=expediente` dirige a `/expedientes`; el listado de
+firmas no incluye expedientes en su filtro Todos. El dashboard muestra el total
+de expedientes y cargas propias junto al acceso a esa categoría. Los totales
+de firmas/notas y sus listas recientes/pendientes conservan su alcance anterior,
+indicado en pantalla.
 
 ## Persistencia
 
@@ -169,8 +180,8 @@ filas deben indicar `true`. Esto comprueba presencia y permisos principales;
 no sustituye la validación de las operaciones desde una sesión real.
 
 Se reutilizan `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_SECRET_KEY`.
-La secreta permanece exclusivamente en `backend/.env`; no se requieren nuevos
-secretos ni cambios en el frontend para este bloque.
+La secreta permanece exclusivamente en `backend/.env`. La interfaz utiliza las
+variables públicas ya configuradas; no se requieren nuevos secretos.
 
 ## Pruebas SQL aisladas
 
@@ -200,3 +211,84 @@ por un transporte HTTP de prueba, sin reemplazar dependencias de FastAPI. No se
 usaron credenciales reales ni se ejecutó Google OAuth o Storage remoto.
 Con la API, pasan 99 casos del módulo y 569 pruebas totales del backend, además
 de Ruff, formato y mypy. Este bloque no cambia SQL ni requiere repetir la migración.
+
+## Interfaz: punto 6
+
+- `/expedientes` requiere sesión y lectura de documentos asignados. El alta se
+  ofrece únicamente a perfiles con `documents.create`; la API mantiene la
+  autorización definitiva en todas las operaciones.
+- El formulario acepta cualquier tipo de archivo de hasta 5 MiB y de 1 a 255
+  destinatarios distintos. El creador se incluye automáticamente; seleccionarlo
+  como único destinatario permite un expediente propio sin sobres duplicados.
+- Se consulta la clave activa del creador. El directorio reutiliza
+  `/api/v1/documents/recipients`: muestra perfiles activos, no afirma que ya
+  tengan claves. La reserva/publicación comprueba vinculación, permisos y claves
+  actuales de todas las personas. No se crea un directorio público de claves.
+- La creación usa el JWT de la sesión; no envía actor, versión, claves públicas
+  elegidas por el cliente ni una AES. El servicio genera y resuelve ese material.
+- Ante un fallo de alta, el formulario obliga a cerrar y conciliar el listado
+  antes de iniciar otra carga. No reenvía automáticamente una publicación que
+  pudo completarse aunque su respuesta se perdiera.
+- El detalle muestra nombre, tamaño, fecha, estado y participantes autorizados.
+  Para abrir, selecciona el archivo privado de cifrado `.stckey.json` y escribe
+  su contraseña. La aplicación compara perfil, ID y huella con la asignación
+  original, y envía privada cifrada y contraseña mediante POST, nunca en la URL.
+- Se usa el lector de respaldos existente. El identificador histórico de
+  propósito `group-note-share-custody` se conserva por compatibilidad; el formato
+  y los archivos previamente descargados no cambian. Los mensajes de Mis claves
+  explican ahora que sirven para expedientes y fragmentos de notas especiales.
+- No se exige que la clave original siga activa para leer un expediente antiguo.
+  Generar otra no actualiza los sobres ya publicados. Guarda las privadas
+  históricas y sus contraseñas; una clave RSA-PSS de firma no las sustituye.
+- La descarga inicia el guardado del original tras la verificación del backend;
+  el cliente no muestra ni persiste una AES. No escribe las credenciales en
+  localStorage o sessionStorage; la contraseña se limpia al terminar cada
+  intento y los formularios se desmontan al cerrarse. El manejo temporal en el
+  navegador/backend no implica borrado seguro de memoria.
+- Una carga en preparación o cancelada no ofrece descarga. Su creador puede
+  confirmar la cancelación o reintentar la limpieza. Los expedientes publicados
+  no ofrecen borrado ni edición de destinatarios.
+
+Este bloque modifica frontend y documentación; no añade dependencias, no cambia
+el backend ni SQL y no requiere repetir migraciones o preparar nuevas variables.
+
+### Validación local del cliente
+
+Desde la raíz del repositorio:
+
+```bat
+npm --prefix frontend test
+npm --prefix frontend run lint
+npm --prefix frontend run build
+```
+
+Pasan 47 pruebas de frontend (33 anteriores y 14 nuevas), ESLint y la compilación
+TypeScript/Vite. Los casos nuevos comprueban bytes binarios, DTO sin identidades
+libres ni claves públicas, asignaciones inválidas, clave histórica, perfil/huella,
+credenciales en POST y ausencia de reintentos automáticos de creación/apertura.
+No sustituyen las comprobaciones criptográficas y de autorización del backend.
+
+También se verificaron 14 escenarios de interfaz en Chromium con un proveedor
+HTTP simulado: listado/búsqueda, creación, dos sesiones de participantes con
+respaldos distintos, descarga binaria exacta, clave ajena sin envío, limpieza de
+contraseña, vista móvil, cancelación, lectura sin alta, 404 ajeno, falta de clave,
+respuesta perdida, navegación desde Documentos y conteo del dashboard. Esta
+comprobación visual no utiliza la base compartida ni credenciales reales.
+
+### Prueba con las cuentas del equipo
+
+1. Mantener backend y frontend en ejecución, con las diez migraciones instaladas.
+2. Cada participante prepara y activa su clave de cifrado en Mis claves. Si ya
+   tiene una activa y su respaldo, reutilizarla; no generar otra para esta prueba.
+3. El creador abre Expedientes de personal, selecciona un archivo de prueba sin
+   datos reales y asigna otro perfil. Guarda y comprueba el estado Disponible.
+4. Recupera con el respaldo original del creador y su contraseña; compara el
+   contenido del archivo descargado con el original.
+5. En otra sesión de navegador, el destinatario abre el mismo expediente y lo
+   descarga con su propio respaldo y contraseña. No necesita al creador.
+6. Una cuenta no asignada no debe verlo; un enlace directo debe devolver 404.
+   Una clave de firma, otra generación o contraseña incorrecta no entrega el original.
+
+El transporte de Supabase de las pruebas automatizadas es simulado. La validación
+con Google OAuth, Storage y la base compartida debe completarse con estas sesiones
+reales antes de declarar terminada la integración de extremo a extremo.

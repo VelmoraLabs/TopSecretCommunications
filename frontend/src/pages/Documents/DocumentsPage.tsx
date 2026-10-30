@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Grid2X2, List, Plus, RefreshCw, Search } from 'lucide-react'
-import { useSearchParams } from 'react-router'
+import { Navigate, useSearchParams } from 'react-router'
 import PageHeader from '../../components/ui/PageHeader'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import TextField from '../../components/ui/TextField'
-import { Button } from '../../components/ui/Button'
+import { Button, ButtonLink } from '../../components/ui/Button'
 import { useAuth } from '../../features/auth/auth'
 import { categories } from '../../features/documents/documentPresentation'
 import type {
@@ -30,6 +30,20 @@ import './documents-page.css'
 import '../../features/documents/memoranda.css'
 
 export default function DocumentsPage() {
+  const [params] = useSearchParams()
+  if (params.get('tipo') === 'expediente') {
+    const id = entityId(params.get('documento'))
+    return (
+      <Navigate
+        to={id ? `/expedientes?expediente=${id}` : '/expedientes'}
+        replace
+      />
+    )
+  }
+  return <DocumentWorkspace />
+}
+
+function DocumentWorkspace() {
   const auth = useAuth(),
     [params, setParams] = useSearchParams()
   const linkedDocument = entityId(params.get('documento'))
@@ -78,7 +92,9 @@ export default function DocumentsPage() {
       window.clearTimeout(timer)
     }
   }, [query, category, pending, offset, revision])
-  const documents: DocumentRecord[] = (page?.items ?? []).map(documentRecord)
+  const documents: DocumentRecord[] = (page?.items ?? []).map(
+    documentRecord,
+  )
   function reset() {
     setParams({})
     setQuery('')
@@ -89,14 +105,19 @@ export default function DocumentsPage() {
       <PageHeader
         eyebrow="ESPACIO DE TRABAJO"
         title="Documentos"
-        description="Consulta los documentos que creaste o que fueron asignados a tu cuenta."
+        description="Consulta el listado documental de firmas. Los expedientes cifrados tienen su propia sección."
         action={
-          auth.hasPermission('documents.create') && (
-            <Button onClick={() => setCreating(true)}>
-              <Plus size={17} />
-              Nuevo memorándum
-            </Button>
-          )
+          <div className="memo-actions">
+            <ButtonLink to="/expedientes" variant="outline">
+              Ver expedientes
+            </ButtonLink>
+            {auth.hasPermission('documents.create') && (
+              <Button onClick={() => setCreating(true)}>
+                <Plus size={17} />
+                Nuevo memorándum
+              </Button>
+            )}
+          </div>
         }
       />
       <section className="memo-intro">
@@ -108,8 +129,8 @@ export default function DocumentsPage() {
           <h2>Cada firma, sobre el archivo correcto.</h2>
           <p>
             Los memorándums se comparten con personas designadas. El emisor
-            firma antes de enviarlos y puede solicitar aprobación del Embajador,
-            sin exigir un grupo.
+            firma antes de enviarlos y puede solicitar aprobación del
+            Embajador, sin exigir un grupo.
           </p>
         </div>
       </section>
@@ -180,7 +201,10 @@ export default function DocumentsPage() {
             Todos
             <span>
               {page
-                ? Object.values(page.category_counts).reduce((a, b) => a + b, 0)
+                ? Object.values(page.category_counts).reduce(
+                    (a, b) => a + b,
+                    0,
+                  )
                 : '—'}
             </span>
           </button>
@@ -199,7 +223,9 @@ export default function DocumentsPage() {
             >
               {item.shortLabel}
               <span>
-                {page?.category_counts[key as DocumentCategory] ?? '—'}
+                {key === 'expediente'
+                  ? 'Abrir'
+                  : (page?.category_counts[key as DocumentCategory] ?? '—')}
               </span>
             </button>
           ))}
@@ -245,9 +271,10 @@ export default function DocumentsPage() {
         />
       </Card>
       <p className="documents-help">
-        Archivo original, versiones y firmas conservan su asociación. Las
-        categorías aplican protecciones distintas; el acceso conjunto se reserva
-        a las notas especiales.
+        Los expedientes se consultan en su sección y no se cuentan en este
+        listado de firmas. Archivo original, versiones y firmas conservan su
+        asociación. Las categorías aplican protecciones distintas; el acceso
+        conjunto se reserva a las notas especiales.
       </p>
       {creating && (
         <MemoCreateForm

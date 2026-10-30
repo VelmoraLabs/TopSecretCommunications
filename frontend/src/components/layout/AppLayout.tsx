@@ -35,7 +35,9 @@ function AppFrame() {
       await auth.signOut()
     } catch (error) {
       setLogoutError(
-        error instanceof Error ? error.message : 'No se pudo cerrar la sesión.',
+        error instanceof Error
+          ? error.message
+          : 'No se pudo cerrar la sesión.',
       )
       setSigningOut(false)
     }
@@ -88,11 +90,13 @@ function AppFrame() {
                   ? 'Grupos e integrantes'
                   : pathname === '/claves'
                     ? 'Mis claves'
-                    : pathname === '/documentos'
-                      ? 'Documentos'
-                      : pathname === '/notificaciones'
-                        ? 'Notificaciones'
-                        : 'Dashboard'}
+                    : pathname === '/expedientes'
+                      ? 'Expedientes de personal'
+                      : pathname === '/documentos'
+                        ? 'Documentos'
+                        : pathname === '/notificaciones'
+                          ? 'Notificaciones'
+                          : 'Dashboard'}
           </strong>
         </div>
         <div className="header-actions">
@@ -174,7 +178,9 @@ function AppFrame() {
                   ? 'Perfiles y permisos de tu oficina.'
                   : pathname === '/grupos'
                     ? 'Grupos e integrantes de tu oficina.'
-                    : 'Documentos y firmas de tu cuenta.'}
+                    : pathname === '/expedientes'
+                      ? 'Archivos cifrados para sus destinatarios.'
+                      : 'Documentos y firmas de tu cuenta.'}
             </span>
           </footer>
         </div>

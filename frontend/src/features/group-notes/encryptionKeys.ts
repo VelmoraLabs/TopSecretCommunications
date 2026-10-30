@@ -85,7 +85,7 @@ export async function readPrivateKey(
     data.purpose !== 'group-note-share-custody'
   )
     throw new Error(
-      'Selecciona una clave de cifrado de notas, no una clave de firma.',
+      'Selecciona una clave de cifrado, no una clave de firma.',
     )
   if (
     data.profile_id !== expected.profile_id ||

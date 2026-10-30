@@ -12,7 +12,11 @@ import AdminPage from '../pages/Admin/AdminPage'
 import GroupsPage from '../pages/Groups/GroupsPage'
 import KeysPage from '../pages/Keys/KeysPage'
 import NotificationsPage from '../pages/Notifications/NotificationsPage'
-import { RequirePermission, RequireSession } from '../features/auth/AccessGate'
+import PersonnelFilesPage from '../pages/PersonnelFiles/PersonnelFilesPage'
+import {
+  RequirePermission,
+  RequireSession,
+} from '../features/auth/AccessGate'
 
 export default function AppRoutes() {
   return (
@@ -27,12 +31,18 @@ export default function AppRoutes() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notificaciones" element={<NotificationsPage />} />
             <Route path="/documentos" element={<DocumentsPage />} />
+            <Route path="/expedientes" element={<PersonnelFilesPage />} />
             <Route path="/claves" element={<KeysPage />} />
-            <Route path="/notas-especiales" element={<SpecialNotesPage />} />
+            <Route
+              path="/notas-especiales"
+              element={<SpecialNotesPage />}
+            />
             <Route element={<RequirePermission permission="groups.read" />}>
               <Route path="/grupos" element={<GroupsPage />} />
             </Route>
-            <Route element={<RequirePermission permission="profiles.manage" />}>
+            <Route
+              element={<RequirePermission permission="profiles.manage" />}
+            >
               <Route path="/administracion" element={<AdminPage />} />
             </Route>
           </Route>

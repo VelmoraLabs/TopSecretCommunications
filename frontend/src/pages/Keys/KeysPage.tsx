@@ -29,7 +29,11 @@ import type {
 } from '../../features/documents/memoranda'
 import FormFeedback from '../../components/ui/FormFeedback'
 import { useFormValidation } from '../../lib/useFormValidation'
-import { filenameError, passwordError, textError } from '../../lib/validation'
+import {
+  filenameError,
+  passwordError,
+  textError,
+} from '../../lib/validation'
 import '../../features/documents/memoranda.css'
 
 export default function KeysPage() {
@@ -86,24 +90,25 @@ export default function KeysPage() {
       />
       <div className="key-purpose-grid">
         <div>
-          <strong>Proteger mis fragmentos</strong>
+          <strong>Abrir mis archivos cifrados</strong>
           <p>
-            Tu par RSA-OAEP permite abrir el fragmento cifrado asignado a tu
-            cuenta. Se utiliza para aportar y recuperar notas.
+            Tu par RSA-OAEP permite recuperar la clave de tus expedientes y
+            abrir tus fragmentos de notas especiales.
           </p>
         </div>
         <div>
           <strong>Firmar documentos</strong>
           <p>
-            Tu par RSA-PSS identifica las firmas que realizas. Los destinatarios
-            las verifican con la pública registrada.
+            Tu par RSA-PSS identifica las firmas que realizas. Los
+            destinatarios las verifican con la pública registrada.
           </p>
         </div>
         <div>
           <strong>Cifrar cada documento</strong>
           <p>
-            La aplicación genera una clave AES nueva por documento y la divide
-            con Shamir. Tú no tienes que crearla ni descargarla.
+            La aplicación genera una clave AES nueva por archivo. En los
+            expedientes la protege para cada destinatario con RSA-OAEP; en
+            las notas especiales la divide con Shamir.
           </p>
         </div>
       </div>
@@ -123,8 +128,8 @@ export default function KeysPage() {
       </section>
       {!auth.hasPermission('documents.sign') && (
         <p className="memo-note">
-          Tu rol actual permite consultar tus claves anteriores, pero no generar
-          nuevas claves de firma.
+          Tu rol actual permite consultar tus claves anteriores, pero no
+          generar nuevas claves de firma.
         </p>
       )}
       {error && <DocumentMessage text={error} />}
@@ -138,7 +143,9 @@ export default function KeysPage() {
           <div className="memo-empty">
             <KeyRound size={35} />
             <h2>Todavía no tienes claves registradas</h2>
-            <p>Cuando tengas permiso de firma, genera un par para comenzar.</p>
+            <p>
+              Cuando tengas permiso de firma, genera un par para comenzar.
+            </p>
           </div>
         ) : (
           keys.map((key) => (
@@ -184,8 +191,8 @@ export default function KeysPage() {
       </Card>
       <p className="memo-note">
         <ShieldCheck size={18} />
-        Retirar una clave impide nuevas firmas con ella. Las firmas anteriores
-        conservan su clave pública y pueden seguir verificándose.
+        Retirar una clave impide nuevas firmas con ella. Las firmas
+        anteriores conservan su clave pública y pueden seguir verificándose.
       </p>
       {creating && (
         <KeyForm
@@ -301,8 +308,8 @@ function KeyForm({
           />
           <p className="memo-note">
             Guarda tu clave privada cifrada: la necesitarás para firmar. La
-            pública ya está registrada y su descarga es opcional. La plataforma
-            no conserva la privada ni su contraseña.
+            pública ya está registrada y su descarga es opcional. La
+            plataforma no conserva la privada ni su contraseña.
           </p>
           <div className="memo-key-downloads">
             <Button

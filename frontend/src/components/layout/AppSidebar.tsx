@@ -2,6 +2,7 @@ import {
   ChevronRight,
   Bell,
   FolderLock,
+  FileLock2,
   LayoutDashboard,
   KeyRound,
   LockKeyhole,
@@ -33,6 +34,15 @@ export default function AppSidebar({
           { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
           { to: '/notificaciones', label: 'Notificaciones', icon: Bell },
           { to: '/documentos', label: 'Documentos', icon: FolderLock },
+          ...(auth.hasPermission('documents.read_assigned')
+            ? [
+                {
+                  to: '/expedientes',
+                  label: 'Expedientes de personal',
+                  icon: FileLock2,
+                },
+              ]
+            : []),
           { to: '/claves', label: 'Mis claves', icon: KeyRound },
           ...(auth.hasPermission('groups.read')
             ? [
@@ -75,7 +85,9 @@ export default function AppSidebar({
       <div className="sidebar-note">
         <LockKeyhole size={22} />
         <h2>El acceso tiene un propósito.</h2>
-        <p>Organiza la información según su protección y sus destinatarios.</p>
+        <p>
+          Organiza la información según su protección y sus destinatarios.
+        </p>
         <span>Información y acceso</span>
       </div>
       <div className="sidebar-footer">
