@@ -1,9 +1,9 @@
-# Expedientes de personal: contratos y persistencia
+# Expedientes de personal: contratos, persistencia y API
 
-Este bloque añade el servicio en memoria y su integración SQL/Storage. Las rutas
-FastAPI, la interfaz y la incorporación al catálogo/dashboard/notificaciones
-se implementarán en los siguientes pasos. Copiar estos archivos o aplicar la
-migración todavía no habilita operaciones de expedientes desde la web.
+El módulo incluye servicio en memoria, integración SQL/Storage y rutas FastAPI.
+La interfaz y la incorporación al catálogo/dashboard/notificaciones se implementarán
+en el siguiente bloque. Las rutas pueden consultarse en `/docs`; aún no hay
+pantalla de expedientes en el frontend.
 
 ## Política
 
@@ -27,6 +27,8 @@ migración todavía no habilita operaciones de expedientes desde la web.
 | `backend/app/modules/personnel_files/schemas.py` | Contratos públicos e internos, límites y validaciones. |
 | `backend/app/modules/personnel_files/service.py` | Preparación y apertura síncronas en memoria. |
 | `backend/app/modules/personnel_files/persistence.py` | RPC, Storage, publicación y autorización final de descarga. |
+| `backend/app/modules/personnel_files/router.py` | Rutas autenticadas, validación HTTP y respuestas públicas. |
+| `backend/app/main.py` | Registro del router, errores públicos y cabeceras de no almacenamiento en caché. |
 | `supabase/migrations/20261030000000_personnel_files.sql` | Tablas, RLS, grants y RPC nuevas. |
 | `supabase/scripts/check_personnel_files_setup.sql` | Inventario de solo lectura para el proyecto compartido. |
 | `backend/tests/personnel_files/` | Contratos, criptografía real y contrato HTTP del gateway. |
@@ -84,7 +86,7 @@ publicar nunca provoca borrarla. Repetir la misma publicación es idempotente.
 Si falla la limpieza de Storage, queda un objeto privado asociado a un expediente
 cancelado; no vuelve a estar disponible. Se registra un mensaje fijo sin cuerpos,
 claves, contraseñas ni contenido. El creador puede reintentar `cancel()` para
-conciliar esa carga cuando exista la ruta correspondiente. No hay recolector
+conciliar esa carga desde la ruta de cancelación. No hay recolector
 automático de objetos huérfanos en este bloque.
 
 Un reintento nuevo de `create()` genera otros IDs; no hay clave de idempotencia
@@ -103,6 +105,44 @@ comprobar cuenta activa, permiso, asignación, estado, versión y digest. Una ba
 detectada en esa comprobación bloquea la entrega aunque el descifrado ya terminara.
 El evento `downloaded` registra autorización de entrega, no confirma que el
 navegador haya guardado el archivo. Ninguna revocación recupera copias ya entregadas.
+
+## API HTTP
+
+Prefijo: `/api/v1/personnel-files`. Todas las operaciones exigen un Bearer JWT
+de Supabase. La dependencia existente consulta Auth y los permisos actuales de
+PostgreSQL; no acepta un rol o actor proporcionado por el cliente.
+
+| Método y ruta | Resultado | Permiso |
+| --- | --- | --- |
+| `GET /api/v1/personnel-files` | Listado autorizado, 200. | `documents.read_assigned` |
+| `POST /api/v1/personnel-files` | Creación y publicación, 201. | `documents.create` y lectura |
+| `GET /api/v1/personnel-files/{document_id}` | Metadatos y participantes, 200. | Lectura y asignación |
+| `POST /api/v1/personnel-files/{document_id}/file` | Original autenticado en Base64, 200. | Lectura, asignación y privada original |
+| `POST /api/v1/personnel-files/{document_id}/cancel` | Preparación cancelada, 200. | Creación, lectura y ser el creador |
+
+El listado acepta `search` de hasta 80 caracteres, `limit` entre 1 y 100 y
+`offset` entre 0 y 100000. La creación recibe `CreatePersonnelFile`; el servidor
+resuelve las claves y genera IDs, no los recibe del navegador. La apertura recibe
+`version_id`, `key_id`, `private_key_base64` y `password` mediante JSON en el cuerpo,
+nunca en la URL. La cancelación no elimina expedientes publicados: devuelve 409.
+
+Se devuelven DTO públicos sin cabecera completa ni sobres. Las descargas sí
+contienen el original en Base64 después de autorizar y autenticar el documento.
+Las respuestas `/api/` usan `Cache-Control: no-store`. Los errores de validación
+no reproducen el cuerpo recibido, contraseñas ni claves privadas.
+
+Estados relevantes: 401 sin sesión válida; 403 sin permiso; 404 para un expediente
+ajeno o no disponible; 409 por conflicto de estado/cuentas/claves; 422 para datos
+o autenticación criptográfica inválidos; 413 si se supera el límite de archivo de
+5 MiB o el límite HTTP global de 8 MiB; 503 si falla la configuración o el proveedor.
+
+El router se registra también con `STC_ENABLE_LOCAL_WORKFLOW=0`: no depende de
+las herramientas manuales de notas especiales. Estas rutas no requieren nuevas
+migraciones después de `20261030000000_personnel_files.sql`.
+
+Para comprobar su registro, iniciar el backend y abrir `http://127.0.0.1:8000/docs`.
+Debe aparecer el grupo **Expedientes de personal** con cinco operaciones. Sin
+Bearer, consultar el listado devuelve 401; eso no indica que falte la ruta.
 
 ## Instalación
 
@@ -126,7 +166,7 @@ resolver el error antes de volver a intentarlo. No ejecutar parcialmente.
 
 Ejecutar después `supabase/scripts/check_personnel_files_setup.sql`: sus once
 filas deben indicar `true`. Esto comprueba presencia y permisos principales;
-no sustituye la validación de la futura API desde una sesión real.
+no sustituye la validación de las operaciones desde una sesión real.
 
 Se reutilizan `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_SECRET_KEY`.
 La secreta permanece exclusivamente en `backend/.env`; no se requieren nuevos
@@ -147,8 +187,16 @@ Supabase. Las SQL comprueban RLS, grants, snapshots, publicación y carreras de
 estado mediante cambios entre reserva y confirmación. No sustituyen una prueba
 contra el servicio remoto de Storage ni simulan dos transacciones simultáneas.
 
-Validación de este bloque: 64 casos de expedientes y 534 pruebas Python totales;
-Ruff, formato y mypy correctos. En PostgreSQL 18.6 embebido mediante PGlite 0.5.13
+Validación de contratos y persistencia: 64 casos de expedientes y 534 pruebas
+Python totales; Ruff, formato y mypy correctos. En PostgreSQL 18.6 mediante PGlite 0.5.13
 pasaron las 59 comprobaciones SQL nuevas, las 423 anteriores y las once del
 inventario. Python se ejecutó con 3.12.14 y las dependencias fijadas del proyecto;
-el entorno de referencia del equipo es 3.14.5. No se modificó el proyecto remoto.
+el entorno de referencia del equipo es 3.14.5. La validación local no modificó
+el proyecto remoto.
+
+El bloque HTTP añade 35 casos que atraviesan el router, la dependencia real de
+autenticación, persistencia y criptografía. El proveedor Supabase se sustituye
+por un transporte HTTP de prueba, sin reemplazar dependencias de FastAPI. No se
+usaron credenciales reales ni se ejecutó Google OAuth o Storage remoto.
+Con la API, pasan 99 casos del módulo y 569 pruebas totales del backend, además
+de Ruff, formato y mypy. Este bloque no cambia SQL ni requiere repetir la migración.

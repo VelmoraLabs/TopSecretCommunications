@@ -87,7 +87,11 @@ async def transport(registered, *, secret=True, **flags):
         state["calls"].append(req)
         body = json.loads(req.content) if req.url.path.startswith("/rest/") else {}
         if req.headers["apikey"] == "sb_publishable_personnel_test":
-            actor = UUID(req.headers["authorization"].removeprefix("Bearer "))
+            # Acepta el token por perfil del contrato de persistencia y el JWT
+            # de prueba usado por la suite HTTP, sin cambiar el header recibido.
+            actor = UUID(
+                req.headers["authorization"].removeprefix("Bearer ").split(".", 1)[0]
+            )
         else:
             assert req.headers["apikey"] == "sb_secret_personnel_test"
             assert "authorization" not in req.headers
