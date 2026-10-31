@@ -46,6 +46,7 @@ const destinations = new Set([
   '/notificaciones',
   '/documentos',
   '/expedientes',
+  '/notas-diplomaticas',
   '/notas-especiales',
   '/administracion',
   '/grupos',

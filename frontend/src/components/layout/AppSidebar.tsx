@@ -3,6 +3,7 @@ import {
   Bell,
   FolderLock,
   FileLock2,
+  FileSignature,
   LayoutDashboard,
   KeyRound,
   LockKeyhole,
@@ -40,6 +41,11 @@ export default function AppSidebar({
                   to: '/expedientes',
                   label: 'Expedientes de personal',
                   icon: FileLock2,
+                },
+                {
+                  to: '/notas-diplomaticas',
+                  label: 'Notas y comunicados',
+                  icon: FileSignature,
                 },
               ]
             : []),

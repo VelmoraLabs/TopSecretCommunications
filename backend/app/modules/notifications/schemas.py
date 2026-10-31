@@ -13,7 +13,14 @@ class Notification(Contract):
     category: Category
     event_type: str
     target_kind: Literal[
-        "group", "document", "note", "recovery", "keys", "account", "personnel_file"
+        "group",
+        "document",
+        "note",
+        "recovery",
+        "keys",
+        "account",
+        "personnel_file",
+        "diplomatic_note",
     ]
     target_id: UUID | None
     related_id: UUID | None
@@ -30,6 +37,15 @@ class Notification(Contract):
             or self.related_id is not None
         ):
             raise ValueError("La referencia del aviso de expediente no es válida.")
+        if self.target_kind == "diplomatic_note" and (
+            self.category != "documents"
+            or self.target_id is None
+            or self.related_id is not None
+            or self.event_type not in {"diplomatic_note_shared", "communique_shared"}
+        ):
+            raise ValueError(
+                "La referencia del aviso de nota o comunicado no es válida."
+            )
         return self
 
 

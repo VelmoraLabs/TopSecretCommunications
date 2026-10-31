@@ -92,8 +92,9 @@ export default function KeysPage() {
         <div>
           <strong>Abrir mis archivos cifrados</strong>
           <p>
-            Tu par RSA-OAEP permite recuperar la clave de tus expedientes y
-            abrir tus fragmentos de notas especiales.
+            Tu par RSA-OAEP permite abrir tus expedientes, notas
+            diplomáticas y comunicados, además de tus fragmentos de notas
+            especiales.
           </p>
         </div>
         <div>
@@ -106,9 +107,10 @@ export default function KeysPage() {
         <div>
           <strong>Cifrar cada documento</strong>
           <p>
-            La aplicación genera una clave AES nueva por archivo. En los
-            expedientes la protege para cada destinatario con RSA-OAEP; en
-            las notas especiales la divide con Shamir.
+            La aplicación genera una clave AES nueva por archivo. En
+            expedientes, notas y comunicados la protege para cada
+            destinatario con RSA-OAEP; en las notas especiales la divide con
+            Shamir.
           </p>
         </div>
       </div>

@@ -94,3 +94,27 @@ test('referencias de expedientes inválidas vuelven al listado sin parámetros a
       '/expedientes',
     )
 })
+
+test('notas y comunicados recientes y pendientes dirigen a su detalle, no a notas especiales', () => {
+  assert.equal(
+    dashboardTarget({
+      target_kind: 'diplomatic_note',
+      target_id: id,
+      related_id: null,
+    }),
+    `/notas-diplomaticas?nota=${id}`,
+  )
+})
+test('dashboard descarta URLs y parámetros extra en referencias de notas diplomáticas', () => {
+  for (const target_id of [
+    null,
+    'https://otro.test',
+    id + '&tipo=otro',
+    '../notas-especiales',
+    id + '#otro',
+  ])
+    assert.equal(
+      dashboardTarget({ target_kind: 'diplomatic_note', target_id }),
+      '/notas-diplomaticas',
+    )
+})

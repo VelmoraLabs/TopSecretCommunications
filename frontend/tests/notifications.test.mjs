@@ -160,3 +160,28 @@ test('el enlace de un error abre las opciones plegadas antes de enfocar el campo
     globalThis.HTMLDetailsElement = originalDetails
   }
 })
+
+test('avisos de notas y comunicados abren el documento exacto sin ejecutar su descarga', () => {
+  for (const event_type of ['diplomatic_note_shared', 'communique_shared'])
+    assert.equal(
+      notificationTarget({
+        target_kind: 'diplomatic_note',
+        target_id: id,
+        event_type,
+      }),
+      `/notas-diplomaticas?nota=${id}`,
+    )
+})
+test('avisos de notas diplomáticas no aceptan URLs externas ni inyección de parámetros', () => {
+  for (const target_id of [
+    null,
+    'https://otro.test',
+    id + '&solicitud=otra',
+    '../documentos',
+    id + '#otro',
+  ])
+    assert.equal(
+      notificationTarget({ target_kind: 'diplomatic_note', target_id }),
+      '/notas-diplomaticas',
+    )
+})

@@ -16,6 +16,7 @@ from app.core.request_limits import RequestBodyLimit
 from app.infrastructure.supabase import SupabaseGateway
 from app.modules.auth.router import router as auth_router
 from app.modules.dashboard.router import router as dashboard_router
+from app.modules.diplomatic_notes.router import router as diplomatic_notes_router
 from app.modules.documents.router import router as documents_router
 from app.modules.encryption_keys.router import router as encryption_keys_router
 from app.modules.group_notes.router import router as group_notes_router
@@ -65,6 +66,7 @@ def create_app(
     application.include_router(note_recovery_router)
     application.include_router(notifications_router)
     application.include_router(personnel_files_router)
+    application.include_router(diplomatic_notes_router)
     if enable_local_workflow is None:
         enable_local_workflow = os.getenv("STC_ENABLE_LOCAL_WORKFLOW", "0") == "1"
     if enable_local_workflow:

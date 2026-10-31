@@ -9,18 +9,22 @@ from app.modules.memoranda.schemas import Category, Contract
 class DashboardStats(Contract):
     documents_total: int = Field(ge=0)
     notes_total: int = Field(ge=0)
+    diplomatic_total: int = Field(ge=0, strict=True)
     personnel_total: int = Field(ge=0, strict=True)
     signed_total: int = Field(ge=0)
     pending_total: int = Field(ge=0)
     pending_documents: int = Field(ge=0)
     pending_recoveries: int = Field(ge=0)
     pending_notes: int = Field(ge=0)
+    pending_diplomatic: int = Field(ge=0, strict=True)
     pending_personnel: int = Field(ge=0, strict=True)
 
 
 class DashboardEntry(Contract):
     id: UUID
-    target_kind: Literal["document", "note", "recovery", "personnel_file"]
+    target_kind: Literal[
+        "document", "note", "recovery", "personnel_file", "diplomatic_note"
+    ]
     target_id: UUID
     related_id: UUID | None
     title: str
@@ -39,6 +43,12 @@ class DashboardEntry(Contract):
             or self.related_id is not None
         ):
             raise ValueError("La referencia del expediente no coincide.")
+        if self.target_kind == "diplomatic_note" and (
+            self.category != "nota"
+            or self.target_id != self.id
+            or self.related_id is not None
+        ):
+            raise ValueError("La referencia de la nota o comunicado no coincide.")
         return self
 
 

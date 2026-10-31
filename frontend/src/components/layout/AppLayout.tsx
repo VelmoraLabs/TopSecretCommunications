@@ -92,11 +92,13 @@ function AppFrame() {
                     ? 'Mis claves'
                     : pathname === '/expedientes'
                       ? 'Expedientes de personal'
-                      : pathname === '/documentos'
-                        ? 'Documentos'
-                        : pathname === '/notificaciones'
-                          ? 'Notificaciones'
-                          : 'Dashboard'}
+                      : pathname === '/notas-diplomaticas'
+                        ? 'Notas y comunicados'
+                        : pathname === '/documentos'
+                          ? 'Documentos'
+                          : pathname === '/notificaciones'
+                            ? 'Notificaciones'
+                            : 'Dashboard'}
           </strong>
         </div>
         <div className="header-actions">
@@ -180,7 +182,9 @@ function AppFrame() {
                     ? 'Grupos e integrantes de tu oficina.'
                     : pathname === '/expedientes'
                       ? 'Archivos cifrados para sus destinatarios.'
-                      : 'Documentos y firmas de tu cuenta.'}
+                      : pathname === '/notas-diplomaticas'
+                        ? 'Comunicaciones firmadas y cifradas.'
+                        : 'Documentos y firmas de tu cuenta.'}
             </span>
           </footer>
         </div>

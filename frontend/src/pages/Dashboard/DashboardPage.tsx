@@ -5,6 +5,7 @@ import {
   FileCheck2,
   FileClock,
   FileLock2,
+  FileSignature,
   FolderClosed,
   Info,
   RefreshCw,
@@ -162,8 +163,9 @@ export default function DashboardPage() {
               <div>
                 <h2>Documentos recientes</h2>
                 <p>
-                  Documentos, expedientes cifrados y notas especiales
-                  autorizados para tu cuenta.
+                  Documentos, expedientes, notas diplomáticas y comunicados
+                  autorizados para tu cuenta, además de tus notas
+                  especiales.
                 </p>
               </div>
             </div>
@@ -195,12 +197,15 @@ export default function DashboardPage() {
                 const Icon = category.icon,
                   special = key === 'especial',
                   personnel = key === 'expediente',
+                  diplomatic = key === 'nota',
                   count = page
                     ? special
                       ? page.stats.notes_total
-                      : page.category_counts[
-                          key as keyof Dashboard['category_counts']
-                        ]
+                      : diplomatic
+                        ? page.stats.diplomatic_total
+                        : page.category_counts[
+                            key as keyof Dashboard['category_counts']
+                          ]
                     : undefined
                 return (
                   <Link
@@ -211,7 +216,9 @@ export default function DashboardPage() {
                         ? '/expedientes'
                         : special
                           ? '/notas-especiales'
-                          : `/documentos?tipo=${key}`
+                          : diplomatic
+                            ? '/notas-diplomaticas'
+                            : `/documentos?tipo=${key}`
                     }
                   >
                     <span
@@ -220,7 +227,11 @@ export default function DashboardPage() {
                       <Icon size={21} />
                     </span>
                     <div>
-                      <strong>{category.shortLabel}</strong>
+                      <strong>
+                        {diplomatic
+                          ? 'Notas y comunicados'
+                          : category.shortLabel}
+                      </strong>
                       <span>
                         {count ?? '—'}{' '}
                         {personnel
@@ -240,6 +251,30 @@ export default function DashboardPage() {
                   </Link>
                 )
               })}
+              {page &&
+                page.category_counts.nota > page.stats.diplomatic_total && (
+                  <Link
+                    className="category-shortcut"
+                    to="/documentos?tipo=nota"
+                  >
+                    <span className="document-icon document-icon--purple">
+                      <FolderClosed size={21} />
+                    </span>
+                    <div>
+                      <strong>Notas del catálogo anterior</strong>
+                      <span>
+                        {page.category_counts.nota -
+                          page.stats.diplomatic_total}{' '}
+                        {page.category_counts.nota -
+                          page.stats.diplomatic_total ===
+                        1
+                          ? 'documento del listado documental'
+                          : 'documentos del listado documental'}
+                      </span>
+                    </div>
+                    <ArrowRight size={16} />
+                  </Link>
+                )}
               {Boolean(page?.category_counts.especial) && (
                 <Link
                   className="category-shortcut"
@@ -282,7 +317,9 @@ export default function DashboardPage() {
                   {page.stats.pending_documents} documentos ·{' '}
                   {page.stats.pending_recoveries} recuperaciones ·{' '}
                   {page.stats.pending_notes} preparaciones de notas ·{' '}
-                  {page.stats.pending_personnel} cargas de expedientes.
+                  {page.stats.pending_personnel} cargas de expedientes ·{' '}
+                  {page.stats.pending_diplomatic} cargas de notas y
+                  comunicados.
                   {page.stats.pending_total > 6 &&
                     ' Se muestran las seis acciones más recientes.'}
                 </p>
@@ -297,6 +334,7 @@ export default function DashboardPage() {
             <div className="dashboard-module-links">
               <Link to="/documentos">Ver documentos</Link>
               <Link to="/expedientes">Ver expedientes de personal</Link>
+              <Link to="/notas-diplomaticas">Ver notas y comunicados</Link>
               <Link to="/notas-especiales">Ver notas especiales</Link>
             </div>
           </Card>
@@ -317,10 +355,10 @@ export default function DashboardPage() {
           <p className="dashboard-example-note">
             <Info size={15} />
             <span>
-              Los totales respetan tus permisos. Las notas cifradas se
-              cuentan por separado de las firmas. El total incluye
-              expedientes disponibles; las cargas incompletas solo son
-              pendientes de su creador.{' '}
+              Los totales respetan tus permisos. Notas y comunicados
+              publicados cuentan como documentos y firmados. Las notas
+              especiales conservan su contador propio. Las cargas
+              incompletas solo son pendientes de su creador.{' '}
               {page &&
                 `Actualizado: ${new Date(page.updated_at).toLocaleTimeString('es-MX')}.`}
             </span>
@@ -348,9 +386,11 @@ function EntryList({
         const Icon =
           item.target_kind === 'personnel_file'
             ? FileLock2
-            : item.target_kind === 'document'
-              ? FileCheck2
-              : UsersRound
+            : item.target_kind === 'diplomatic_note'
+              ? FileSignature
+              : item.target_kind === 'document'
+                ? FileCheck2
+                : UsersRound
         return (
           <li key={`${item.target_kind}-${item.id}`}>
             <Link to={dashboardTarget(item)} className="dashboard-entry">
