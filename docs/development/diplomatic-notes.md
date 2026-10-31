@@ -15,9 +15,10 @@ para almacenar primero una nota en claro y cifrarla después.
 
 El bloque 1 incorporó contratos y un servicio síncrono en memoria. El bloque 2
 incorpora persistencia en Supabase y Storage, con una migración adicional y sus
-pruebas. Todavía no añade rutas, botones, avisos ni registros al dashboard.
-Después de instalarlo, la web y `/docs` conservan su funcionalidad anterior.
-Las pruebas Python no necesitan `.env`, conexión a Supabase ni cuentas reales.
+pruebas. El bloque 3 expone cinco operaciones mediante una API autenticada,
+registrada también cuando `STC_ENABLE_LOCAL_WORKFLOW=0`. Todavía no hay pantalla,
+avisos ni registros de notas ordinarias en el dashboard. Las pruebas Python no
+necesitan `.env`, conexión a Supabase ni cuentas reales.
 
 | Documento | Política del servicio |
 | --- | --- |
@@ -55,7 +56,7 @@ No admite un emisor elegido, clave pública, firma ya fabricada ni umbral Shamir
 `RegisteredSigningKey` es un snapshot interno, con identificador, perfil dueño,
 pública, huella e indicador de vigencia. No sustituye una consulta autorizada a
 `stc_signing_keys`. `EncryptionKey` también procede del servidor, por cada perfil
-original. Ningún endpoint futuro debe aceptar estos snapshots del navegador.
+original. Los endpoints no aceptan estos snapshots del navegador.
 
 `protect_note(principal, body, recipient_keys, signing_key, *, document_id,
 version_id)` devuelve `ProtectedDiplomaticNote`. Los identificadores de documento
@@ -134,7 +135,8 @@ incluyen ese intento y exigen el rechazo antes de entregar bytes.
 - El servicio criptográfico presupone snapshots confiables. El bloque de
   persistencia los obtiene mediante RPC de servidor, valida su correspondencia,
   usa RLS para el detalle y revalida el acceso al terminar la recuperación.
-  La autenticación HTTP del módulo se implementará en el bloque 3.
+  El bloque 3 exige sesión y permisos actuales en HTTP, con el mismo servicio de
+  autenticación Google/Supabase que los módulos existentes.
 - No se persisten originales, AES en claro, privadas ni contraseñas en el
   resultado. La operación procesa secretos temporalmente en el backend; no es
   cifrado de extremo a extremo frente al servidor ni garantiza borrado de memoria.
@@ -150,7 +152,7 @@ incluyen ese intento y exigen el rechazo antes de entregar bytes.
 | --- | --- |
 | 1. Contratos y servicio | Implementado en el primer paquete: firmar, cifrar y recuperar en memoria; rechazar alteraciones y claves ajenas. |
 | 2. Supabase y Storage | Implementado en este segundo paquete: reserva de versión y asignaciones, snapshot de firma confiable, material privado, RLS, carga solo cifrada, publicación y cancelación seguras. |
-| 3. API autenticada | Listado, detalle, creación, recuperación verificada y cancelación; threadpool y comprobación final antes de entregar. |
+| 3. API autenticada | Implementado en el tercer paquete: listado, detalle, creación, recuperación verificada y cancelación. |
 | 4. Frontend | Seleccionar nota/comunicado, destinatarios y privada de firma para crear; privada de cifrado para recuperar; mostrar verificación del emisor. |
 | 5. Avisos y resumen | Notificar publicación y dirigir al detalle; contar documentos firmados y cifrados sin duplicarlos con el catálogo anterior. |
 | 6. Integración y entrega | Dos cuentas, claves históricas, permisos, firma y GCM alterados, errores de carga, documentación y revisión del equipo. |
@@ -274,8 +276,8 @@ powershell -NoProfile -Command "Get-Content -LiteralPath 'supabase\scripts\check
 
 Deben aparecer trece filas con `correcto=true`. No repetir migraciones previas.
 No ejecutar `supabase/tests/diplomatic_notes.sql` en el proyecto compartido: sus
-fixtures exigen una base aislada y vacía y terminan en rollback. Todavía no hay
-pantalla ni rutas HTTP de notas para probar documentos reales desde la web.
+fixtures exigen una base aislada y vacía y terminan en rollback. La pantalla
+se incorpora en el bloque 4; las rutas HTTP están disponibles desde el bloque 3.
 No se modificó el Supabase compartido durante estas comprobaciones locales.
 
 ## Git y revisión
@@ -288,4 +290,106 @@ No abrir otro PR general hacia `develop` sin revisar esa base.
 Después de que Yael integre expedientes, revisar cómo se hizo el merge y actualizar
 la base de notas conservando solo sus commits nuevos. Si se usó squash, no asumir
 que un fast-forward incorporará la nueva base. Guardar cada bloque en un commit separado: cinco archivos del servicio y ocho
-archivos de persistencia. No mezclar estos cambios con el PR #16 de expedientes.
+archivos de persistencia. El bloque de API añade otro commit con cuatro archivos.
+No mezclar estos cambios con el PR #16 de expedientes.
+
+
+## API autenticada del bloque 3
+
+Requiere los bloques 1 y 2 y la migración de notas ya instalada. No necesita otra
+migración, nuevas variables de entorno ni nuevas dependencias. El paquete cambia
+cuatro archivos: `backend/app/main.py`, el nuevo `router.py` del módulo, sus pruebas
+`test_diplomatic_router.py` y esta documentación. El servicio, contratos, gateway,
+persistencia, SQL y frontend conservan el contenido del bloque anterior.
+
+| Método y ruta | Operación y permiso |
+| --- | --- |
+| `GET /api/v1/diplomatic-notes` | Listado autorizado; `documents.read_assigned`. |
+| `POST /api/v1/diplomatic-notes` | Crear y publicar una nota firmada y cifrada; `documents.create`, `documents.read_assigned` y `documents.sign`. |
+| `GET /api/v1/diplomatic-notes/{document_id}` | Detalle autorizado sin sobres, ciphertext ni firma binaria; `documents.read_assigned`. |
+| `POST /api/v1/diplomatic-notes/{document_id}/file` | Recuperar solo después de comprobar GCM, firma y acceso final; `documents.read_assigned`. |
+| `POST /api/v1/diplomatic-notes/{document_id}/cancel` | Cancelar una carga incompleta propia; `documents.create` y lectura del detalle. |
+
+El listado admite `search` (hasta 80 caracteres, se recorta en extremos), `kind`
+(`all`, `diplomatic_note` o `communique`), `limit` de 1 a 100 y `offset` de 0 a
+100000. No recibe un actor elegido por el cliente. Un parámetro adicional `actor`
+no modifica el principal ni se reenvía a SQL. Todos los identificadores de ruta
+son UUID. Creación y recuperación usan cuerpos JSON; una consulta GET no descarga.
+
+En creación se usa la privada cifrada **de firma** del emisor y su contraseña.
+En recuperación se usa la privada cifrada **de cifrado RSA-OAEP** original del
+lector y su contraseña; nunca la privada de firma del emisor. En ambos cuerpos
+`private_key_base64` contiene el PKCS8 cifrado en Base64, no un objeto JSON de
+respaldo completo. La pantalla futura leerá y validará los archivos correspondientes.
+No incluir claves, contraseñas ni tokens en URL, capturas o conversaciones.
+
+La recuperación devuelve los bytes como `content_base64`, nombre, tipo MIME,
+tamaño, documento, versión, emisor, clave y huella de firma originales, además de
+`verification="signature-and-integrity"`. Ese resultado solo se produce después
+de la RPC de autorización final. Abrir un detalle no descifra ni verifica todavía
+la firma del archivo; esa comprobación se realiza al recuperar el contenido.
+
+Las rutas reutilizan `get_principal` y el JWT Bearer del proyecto. Auth valida la
+sesión y `current_access` obtiene permisos actuales. Cuenta inactiva, sesión
+anónima, proveedor distinto de Google, identidad inconsistente y permisos
+insuficientes impiden las operaciones documentales. SQL vuelve a imponer sus
+reglas y el administrador no obtiene una excepción por su rol.
+
+Un miembro lector no requiere permiso de firma. El emisor sí lo necesita para
+crear. Si pierde solo `documents.sign`, puede cancelar una carga propia pendiente
+si conserva creación y lectura; la cancelación no crea otra firma. Un documento
+publicado no admite cancelación ni sustitución de su firma.
+
+Respuestas bajo `/api/` conservan `Cache-Control: no-store`, `Pragma: no-cache`
+y `Vary: Authorization`. Una solicitud de más de 8 MiB se rechaza antes de Auth;
+el archivo original mantiene su límite de 5 MiB. Los errores de validación no
+incluyen el cuerpo enviado, contraseñas, privadas ni trazas internas del proveedor.
+Los modelos internos no aparecen en OpenAPI como cuerpos aceptados o respuestas.
+
+### Comprobación del paquete API
+
+Sobre `feature/diplomatic-notes`, con el bloque 2 guardado y la carpeta limpia,
+extraer el ZIP del bloque 3 en la raíz. Ejecutar:
+
+```bat
+cd /d "%USERPROFILE%\Desktop\TopSecretCommunications"
+backend\.venv\Scripts\activate.bat
+cd backend
+python -m pytest tests/diplomatic_notes -q
+python -m ruff check .
+python -m ruff format --check .
+python -m mypy
+python -m pytest -q
+cd ..
+git --no-pager diff --check
+git --no-pager status --short --untracked-files=all
+```
+
+Resultados del bloque 3: 176 pruebas de notas (82 del servicio, 40 de persistencia
++ 54 de HTTP), 761 pruebas totales, Ruff correcto, 104 archivos con formato y mypy
+sin errores en 73 archivos fuente. Persiste el warning conocido de TestClient/httpx.
+La ejecución local usa Python 3.12.14 y los requisitos fijados; repetir en el equipo
+Windows de Roberto con Python 3.14.5.
+
+Las 54 pruebas HTTP ejecutan la aplicación ASGI y las dependencias de sesión y
+persistencia reales, con Auth/PostgREST/Storage simulados en el transporte HTTP.
+RSA-PSS, RSA-OAEP y AES-GCM son reales. Incluyen los dos tipos, recuperación por
+emisor y miembro, cuentas ajenas, permisos, errores de credenciales de firma,
+autenticadores alterados, referencias históricas, cancelación, respuesta de
+publicación perdida, límites de entrada, errores sin secretos, caché y OpenAPI.
+No constituyen una prueba de extremo a extremo contra el Supabase compartido.
+
+Después de aprobar, iniciar o reiniciar el backend:
+
+```bat
+cd /d "%USERPROFILE%\Desktop\TopSecretCommunications"
+backend\.venv\Scripts\activate.bat
+python -m uvicorn app.main:app --app-dir backend --env-file backend/.env --host 127.0.0.1 --port 8000 --reload
+```
+
+En `http://127.0.0.1:8000/docs` debe aparecer **Notas diplomáticas y comunicados**
+con cinco operaciones y el candado de autenticación. Sin usar **Authorize**, una
+petición de listado con **Try it out / Execute** debe devolver 401 si no hay una
+sesión Bearer autorizada. Esto comprueba registro y rechazo anónimo, no la conexión
+a SQL ni la creación real. No pegar aquí tokens o privadas para revisar la prueba.
+La prueba real con Roberto y Moralitos se hará desde la interfaz del bloque 4.
