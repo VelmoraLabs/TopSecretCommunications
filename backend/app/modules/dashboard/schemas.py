@@ -14,6 +14,8 @@ class DashboardStats(Contract):
     pending_documents: int = Field(ge=0)
     pending_recoveries: int = Field(ge=0)
     pending_notes: int = Field(ge=0)
+    personnel_total: int = Field(default=0, ge=0)
+    pending_personnel: int = Field(default=0, ge=0)
 
 
 class DashboardEntry(Contract):
