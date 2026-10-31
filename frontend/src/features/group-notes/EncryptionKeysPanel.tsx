@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Download, KeyRound, Plus, RefreshCw, ShieldCheck } from 'lucide-react'
+import {
+  Download,
+  KeyRound,
+  Plus,
+  RefreshCw,
+  ShieldCheck,
+} from 'lucide-react'
 import Badge from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
@@ -63,11 +69,12 @@ export default function EncryptionKeysPanel() {
     <section className="group-notes-panel encryption-keys-panel">
       <div className="group-notes-heading">
         <div>
-          <p className="eyebrow">CUSTODIA DE FRAGMENTOS</p>
-          <h2>Protección de fragmentos</h2>
+          <p className="eyebrow">CLAVES PERSONALES DE CIFRADO</p>
+          <h2>Protección de expedientes y fragmentos</h2>
           <p>
-            Prepárala una vez para recibir y aportar fragmentos. Se reutiliza
-            mientras esté vigente; no necesitas generar otra por cada nota.
+            Prepárala una vez para recibir expedientes y aportar fragmentos
+            de notas. Se reutiliza mientras esté vigente; no necesitas otra
+            por cada archivo.
           </p>
         </div>
         <div className="memo-actions">
@@ -98,15 +105,16 @@ export default function EncryptionKeysPanel() {
         <ShieldCheck size={20} />
         <p>
           Guarda el archivo privado cifrado y su contraseña por separado. La
-          plataforma conserva únicamente la clave pública. Si pierdes una clave
-          privada, sus fragmentos anteriores no pueden regenerarse.
+          plataforma conserva únicamente la clave pública. Si pierdes una
+          clave privada, no podrás abrir los expedientes ni fragmentos
+          protegidos con ella.
         </p>
       </div>
       {error && <DocumentMessage text={error} />}
       {notice && <DocumentMessage success text={notice} />}
       <p className="memo-note">
-        Si la generación se interrumpe, actualiza la lista. Una preparación sin
-        archivo privado debe retirarse; después puedes generar otra.
+        Si la generación se interrumpe, actualiza la lista. Una preparación
+        sin archivo privado debe retirarse; después puedes generar otra.
       </p>
       {keys.filter((k) => k.state === 'pending').length >= 3 && (
         <p className="memo-note">
@@ -119,7 +127,7 @@ export default function EncryptionKeysPanel() {
         ) : !keys.length ? (
           <div className="memo-empty">
             <KeyRound size={32} />
-            <h3>Aún no puedes recibir fragmentos individuales</h3>
+            <h3>Prepara tu clave para recibir archivos cifrados</h3>
             <p>
               Prepara tu clave privada y guarda su archivo. La activación
               comprueba una sola vez que puedes abrir la copia guardada.
@@ -181,9 +189,10 @@ export default function EncryptionKeysPanel() {
         )}
       </Card>
       <p className="memo-note">
-        Solo una clave activa por perfil. Activar otra retira la anterior para
-        notas nuevas; conserva todos tus archivos privados para las notas
-        anteriores. Retirar una clave no revoca los fragmentos que ya recibiste.
+        Solo una clave activa por perfil. Activar otra retira la anterior
+        para expedientes y notas nuevos; conserva todos tus archivos
+        privados para los anteriores. Retirarla no revoca los accesos que ya
+        recibiste.
       </p>
       {setup && (
         <KeySetup
@@ -193,7 +202,7 @@ export default function EncryptionKeysPanel() {
           onActivated={() => {
             setSetup(null)
             setNotice(
-              'Clave activada. Ya puedes recibir fragmentos de notas nuevas.',
+              'Clave activada. Ya puedes recibir expedientes y fragmentos nuevos.',
             )
             setRevision((n) => n + 1)
           }}
@@ -208,11 +217,13 @@ export default function EncryptionKeysPanel() {
         >
           <div className="memo-form">
             <p>
-              ¿Retirar <strong>{retiring.label}</strong> para notas nuevas?
+              ¿Retirar <strong>{retiring.label}</strong> para expedientes y
+              notas nuevos?
             </p>
             <p>
-              Los fragmentos anteriores conservarán esta clave. Guarda su
-              archivo privado y contraseña; generar otra no los reemplaza.
+              Los expedientes y fragmentos anteriores conservarán esta
+              clave. Guarda su archivo privado y contraseña; generar otra no
+              los reemplaza.
             </p>
             {error && <DocumentMessage text={error} />}
             <div className="memo-actions">
@@ -233,7 +244,7 @@ export default function EncryptionKeysPanel() {
                       setRetiring(null)
                       setRevision((n) => n + 1)
                       setNotice(
-                        'Clave retirada para notas nuevas. Conserva su respaldo histórico.',
+                        'Clave retirada para archivos nuevos. Conserva su respaldo histórico.',
                       )
                     })
                     .catch((error) => setError(errorMessage(error)))
@@ -265,10 +276,12 @@ function KeySetup({
     null,
   )
   const key = generated?.key ?? initial
-  const [label, setLabel] = useState('Mi clave de protección de fragmentos'),
+  const [label, setLabel] = useState('Mi clave de cifrado'),
     [password, setPassword] = useState(''),
     [confirmation, setConfirmation] = useState('')
-  const [privateFile, setPrivateFile] = useState<PrivateKeyFile | null>(null),
+  const [privateFile, setPrivateFile] = useState<PrivateKeyFile | null>(
+      null,
+    ),
     [privateFilename, setPrivateFilename] = useState(''),
     [fileError, setFileError] = useState('')
   const [busy, setBusy] = useState(false),
@@ -354,8 +367,8 @@ function KeySetup({
         {!key ? (
           <>
             <p>
-              Esta clave se utiliza para recibir fragmentos de Shamir. Es
-              independiente de tus claves de firma.
+              Esta clave se utiliza para abrir expedientes y fragmentos de
+              notas especiales. Es independiente de tus claves de firma.
             </p>
             <TextField
               {...validation.field('label')}
@@ -467,8 +480,8 @@ function KeySetup({
             </label>
             {privateFile && (
               <p className="memo-note selected-key-file" role="status">
-                Archivo seleccionado: <strong>{privateFilename}</strong>. Falta
-                comprobar la contraseña.
+                Archivo seleccionado: <strong>{privateFilename}</strong>.
+                Falta comprobar la contraseña.
               </p>
             )}
             <TextField
@@ -486,8 +499,8 @@ function KeySetup({
             />
             <p className="info-note">
               Activar comprueba que puedes abrir el archivo. Si tienes otra
-              clave activa, se retirará para las notas nuevas; conserva también
-              su respaldo.
+              clave activa, se retirará para archivos nuevos; conserva
+              también su respaldo.
             </p>
           </>
         )}
@@ -501,7 +514,10 @@ function KeySetup({
           >
             {key ? 'Cerrar' : 'Cancelar'}
           </Button>
-          <Button type="submit" disabled={busy || reading || !validation.valid}>
+          <Button
+            type="submit"
+            disabled={busy || reading || !validation.valid}
+          >
             {busy
               ? 'Procesando…'
               : key

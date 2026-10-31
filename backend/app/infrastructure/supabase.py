@@ -124,6 +124,37 @@ class SupabaseGateway:
         except ValueError:
             data = {}
         code = data.get("code") if isinstance(data, dict) else None
+        personnel_errors = {
+            "PF403": (
+                403,
+                "personnel_permission_denied",
+                "Sin permiso para expedientes.",
+            ),
+            "PF404": (
+                404,
+                "personnel_file_not_found",
+                "El expediente no está disponible.",
+            ),
+            "PF409": (
+                409,
+                "personnel_conflict",
+                "Cambió el expediente, una cuenta o su clave. "
+                "Actualiza su información.",
+            ),
+            "PF422": (
+                422,
+                "invalid_personnel_request",
+                "Revisa los datos del expediente.",
+            ),
+            "PF428": (
+                409,
+                "personnel_keys_required",
+                "El creador y cada destinatario deben activar una clave de protección.",
+            ),
+        }
+        if code in personnel_errors:
+            status, error_code, message = personnel_errors[code]
+            raise ServiceError(status, error_code, message)
         if code == "DA403":
             raise ServiceError(
                 403,

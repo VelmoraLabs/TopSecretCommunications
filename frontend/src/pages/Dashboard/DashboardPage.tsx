@@ -53,7 +53,7 @@ export default function DashboardPage() {
       count: page?.stats.documents_total,
       icon: FolderClosed,
       tone: 'purple',
-      detail: 'Documentos y notas disponibles para ti',
+      detail: 'Documentos, expedientes y notas disponibles para ti',
     },
     {
       label: 'Notas especiales',
@@ -106,8 +106,8 @@ export default function DashboardPage() {
             <span>El acceso, en manos correctas.</span>
           </h2>
           <p>
-            Un espacio para organizar, proteger y compartir cada documento con
-            sus destinatarios.
+            Un espacio para organizar, proteger y compartir cada documento
+            con sus destinatarios.
           </p>
           <a href="#dashboard-pending" className="button button--light">
             Revisar pendientes <ArrowRight size={16} />
@@ -133,7 +133,9 @@ export default function DashboardPage() {
       {error && (
         <DocumentMessage
           text={
-            page ? `${error} Se conserva el último resumen recibido.` : error
+            page
+              ? `${error} Se conserva el último resumen recibido.`
+              : error
           }
         />
       )}
@@ -159,7 +161,10 @@ export default function DashboardPage() {
             <div className="card-heading">
               <div>
                 <h2>Documentos recientes</h2>
-                <p>Documentos y notas especiales disponibles para tu cuenta.</p>
+                <p>
+                  Documentos, expedientes cifrados y notas especiales
+                  autorizados para tu cuenta.
+                </p>
               </div>
             </div>
             {!page ? (
@@ -180,7 +185,8 @@ export default function DashboardPage() {
               <div>
                 <h2>Explorar por categoría</h2>
                 <p>
-                  Los conteos corresponden a todos tus registros autorizados.
+                  Los conteos corresponden a todos tus registros
+                  autorizados.
                 </p>
               </div>
             </div>
@@ -188,6 +194,7 @@ export default function DashboardPage() {
               {Object.entries(categories).map(([key, category]) => {
                 const Icon = category.icon,
                   special = key === 'especial',
+                  personnel = key === 'expediente',
                   count = page
                     ? special
                       ? page.stats.notes_total
@@ -200,7 +207,11 @@ export default function DashboardPage() {
                     className="category-shortcut"
                     key={key}
                     to={
-                      special ? '/notas-especiales' : `/documentos?tipo=${key}`
+                      personnel
+                        ? '/expedientes'
+                        : special
+                          ? '/notas-especiales'
+                          : `/documentos?tipo=${key}`
                     }
                   >
                     <span
@@ -212,13 +223,17 @@ export default function DashboardPage() {
                       <strong>{category.shortLabel}</strong>
                       <span>
                         {count ?? '—'}{' '}
-                        {special
+                        {personnel
                           ? count === 1
-                            ? 'nota'
-                            : 'notas'
-                          : count === 1
-                            ? 'documento'
-                            : 'documentos'}
+                            ? 'expediente disponible'
+                            : 'expedientes disponibles'
+                          : special
+                            ? count === 1
+                              ? 'nota'
+                              : 'notas'
+                            : count === 1
+                              ? 'documento'
+                              : 'documentos'}
                       </span>
                     </div>
                     <ArrowRight size={16} />
@@ -236,8 +251,8 @@ export default function DashboardPage() {
                   <div>
                     <strong>Documentos especiales anteriores</strong>
                     <span>
-                      {page?.category_counts.especial} documentos del listado
-                      documental
+                      {page?.category_counts.especial} documentos del
+                      listado documental
                     </span>
                   </div>
                   <ArrowRight size={16} />
@@ -251,7 +266,9 @@ export default function DashboardPage() {
             <div className="card-heading">
               <div>
                 <h2>Requieren tu atención</h2>
-                <p>Firmas, preparaciones y recuperación colaborativa.</p>
+                <p>
+                  Firmas, cargas incompletas y recuperación colaborativa.
+                </p>
               </div>
             </div>
             {page ? (
@@ -264,18 +281,22 @@ export default function DashboardPage() {
                 <p className="dashboard-list-message">
                   {page.stats.pending_documents} documentos ·{' '}
                   {page.stats.pending_recoveries} recuperaciones ·{' '}
-                  {page.stats.pending_notes} preparaciones.
+                  {page.stats.pending_notes} preparaciones de notas ·{' '}
+                  {page.stats.pending_personnel} cargas de expedientes.
                   {page.stats.pending_total > 6 &&
                     ' Se muestran las seis acciones más recientes.'}
                 </p>
               </>
             ) : (
               <p className="dashboard-list-message">
-                {error ? 'Resumen no disponible.' : 'Consultando pendientes…'}
+                {error
+                  ? 'Resumen no disponible.'
+                  : 'Consultando pendientes…'}
               </p>
             )}
             <div className="dashboard-module-links">
               <Link to="/documentos">Ver documentos</Link>
+              <Link to="/expedientes">Ver expedientes de personal</Link>
               <Link to="/notas-especiales">Ver notas especiales</Link>
             </div>
           </Card>
@@ -286,8 +307,8 @@ export default function DashboardPage() {
             <Badge tone="purple">ACCESO CONJUNTO</Badge>
             <h2>La colaboración también protege.</h2>
             <p>
-              Consulta tus notas cifradas y las solicitudes que requieren a sus
-              participantes originales.
+              Consulta tus notas cifradas y las solicitudes que requieren a
+              sus participantes originales.
             </p>
             <Link to="/notas-especiales" className="text-link">
               Abrir notas especiales <ArrowRight size={16} />
@@ -296,8 +317,10 @@ export default function DashboardPage() {
           <p className="dashboard-example-note">
             <Info size={15} />
             <span>
-              Los totales respetan tus permisos. Las notas cifradas se cuentan
-              por separado de las firmas.{' '}
+              Los totales respetan tus permisos. Las notas cifradas se
+              cuentan por separado de las firmas. El total incluye
+              expedientes disponibles; las cargas incompletas solo son
+              pendientes de su creador.{' '}
               {page &&
                 `Actualizado: ${new Date(page.updated_at).toLocaleTimeString('es-MX')}.`}
             </span>
@@ -317,11 +340,17 @@ function EntryList({
   empty: string
   compact?: boolean
 }) {
-  if (!items.length) return <p className="dashboard-list-message">{empty}</p>
+  if (!items.length)
+    return <p className="dashboard-list-message">{empty}</p>
   return (
     <ul className={`dashboard-entry-list ${compact ? 'is-compact' : ''}`}>
       {items.map((item) => {
-        const Icon = item.target_kind === 'document' ? FileCheck2 : UsersRound
+        const Icon =
+          item.target_kind === 'personnel_file'
+            ? FileLock2
+            : item.target_kind === 'document'
+              ? FileCheck2
+              : UsersRound
         return (
           <li key={`${item.target_kind}-${item.id}`}>
             <Link to={dashboardTarget(item)} className="dashboard-entry">

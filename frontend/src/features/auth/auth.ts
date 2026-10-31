@@ -21,7 +21,8 @@ export interface Access {
   profile: AccessProfile
   permissions: string[]
 }
-export type AuthStatus = 'loading' | 'signed-out' | 'ready' | 'denied' | 'error'
+export type AuthStatus =
+  'loading' | 'signed-out' | 'ready' | 'denied' | 'error'
 export interface AuthState {
   status: AuthStatus
   session: Session | null
@@ -44,6 +45,7 @@ const destinations = new Set([
   '/dashboard',
   '/notificaciones',
   '/documentos',
+  '/expedientes',
   '/notas-especiales',
   '/administracion',
   '/grupos',

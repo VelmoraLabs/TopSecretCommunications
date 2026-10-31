@@ -6,6 +6,7 @@ const titles: Record<string, string> = {
   '/login': 'Acceso',
   '/dashboard': 'Dashboard',
   '/documentos': 'Documentos',
+  '/expedientes': 'Expedientes de personal',
   '/notas-especiales': 'Notas especiales',
   '/auth/callback': 'Verificando acceso',
   '/administracion': 'Perfiles y permisos',

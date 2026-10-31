@@ -15,11 +15,13 @@ DATA = {
     "stats": {
         "documents_total": 27,
         "notes_total": 26,
+        "personnel_total": 0,
         "signed_total": 1,
         "pending_total": 1,
         "pending_documents": 0,
         "pending_recoveries": 1,
         "pending_notes": 0,
+        "pending_personnel": 0,
     },
     "category_counts": {
         "memorandum": 1,

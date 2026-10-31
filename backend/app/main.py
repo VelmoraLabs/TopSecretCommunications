@@ -24,6 +24,7 @@ from app.modules.memoranda.router import router as memoranda_router
 from app.modules.note_recovery.router import router as note_recovery_router
 from app.modules.note_recovery.service import cleanup_loop
 from app.modules.notifications.router import router as notifications_router
+from app.modules.personnel_files.router import router as personnel_files_router
 
 
 def create_app(
@@ -63,6 +64,7 @@ def create_app(
     application.include_router(encryption_keys_router)
     application.include_router(note_recovery_router)
     application.include_router(notifications_router)
+    application.include_router(personnel_files_router)
     if enable_local_workflow is None:
         enable_local_workflow = os.getenv("STC_ENABLE_LOCAL_WORKFLOW", "0") == "1"
     if enable_local_workflow:

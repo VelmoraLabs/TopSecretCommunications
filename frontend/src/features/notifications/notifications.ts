@@ -6,7 +6,14 @@ export interface Notification {
   id: string
   category: NotificationCategory
   event_type: string
-  target_kind: 'group' | 'document' | 'note' | 'recovery' | 'keys' | 'account'
+  target_kind:
+    | 'group'
+    | 'document'
+    | 'note'
+    | 'recovery'
+    | 'keys'
+    | 'account'
+    | 'personnel_file'
   target_id: string | null
   related_id: string | null
   title: string
@@ -30,7 +37,9 @@ export const notificationCategories = {
 }
 export const entityId = (value: string | null) =>
   value &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value,
+  )
     ? value
     : null
 
@@ -43,6 +52,8 @@ export function notificationTarget(item: Notification): string {
       return id ? `/grupos?grupo=${id}` : '/grupos'
     case 'document':
       return id ? `/documentos?documento=${id}` : '/documentos'
+    case 'personnel_file':
+      return id ? `/expedientes?expediente=${id}` : '/expedientes'
     case 'note':
       return id ? `/notas-especiales?nota=${id}` : '/notas-especiales'
     case 'recovery':

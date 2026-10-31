@@ -1,0 +1,118 @@
+.personnel-key-status {
+  padding: 14px 16px;
+  border: 1px solid #e2d9ef;
+  border-radius: 12px;
+  background: #faf8fe;
+  font-size: 13px;
+}
+.personnel-key-status p {
+  margin: 0 0 8px;
+}
+.personnel-key-status a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.personnel-detail-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.personnel-detail-title h3 {
+  overflow-wrap: anywhere;
+  font-size: 20px;
+}
+.personnel-metadata {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 0;
+  padding: 18px;
+  background: #faf8fe;
+  border-radius: 12px;
+}
+.personnel-metadata div {
+  min-width: 0;
+}
+.personnel-metadata dt {
+  color: #796b8d;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+.personnel-metadata dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.personnel-participants {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  max-height: 240px;
+  overflow: auto;
+}
+.personnel-participants li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #eee8f5;
+  padding: 13px 0;
+  font-size: 12px;
+}
+.personnel-participants li > div {
+  min-width: 0;
+}
+.personnel-participants small {
+  display: block;
+  color: #796b8d;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+.personnel-participants li > span {
+  color: #796b8d;
+  flex-shrink: 0;
+}
+.personnel-open-form {
+  border-top: 1px solid #eee8f5;
+  padding-top: 20px;
+}
+.personnel-open-form h3,
+.personnel-detail-title + .personnel-metadata + .memo-flow-note strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.personnel-cancel {
+  padding: 14px;
+  border: 1px solid #e2d9ef;
+  border-radius: 10px;
+}
+.personnel-cancel p {
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+.personnel-list-message {
+  padding: 0 24px 24px;
+}
+.personnel-list-message > .button {
+  margin-top: 10px;
+}
+.personnel-card .memo-pagination {
+  padding: 18px 24px;
+  border-top: 1px solid #eee8f5;
+}
+.personnel-card .memo-loading {
+  padding: 8px 24px 24px;
+}
+@media (max-width: 640px) {
+  .personnel-metadata {
+    grid-template-columns: 1fr;
+  }
+  .personnel-detail-title {
+    flex-wrap: wrap;
+  }
+  .personnel-participants li {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
