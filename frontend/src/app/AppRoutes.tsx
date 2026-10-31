@@ -13,6 +13,7 @@ import GroupsPage from '../pages/Groups/GroupsPage'
 import KeysPage from '../pages/Keys/KeysPage'
 import NotificationsPage from '../pages/Notifications/NotificationsPage'
 import PersonnelFilesPage from '../pages/PersonnelFiles/PersonnelFilesPage'
+import DiplomaticNotesPage from '../pages/DiplomaticNotes/DiplomaticNotesPage'
 import {
   RequirePermission,
   RequireSession,
@@ -32,6 +33,10 @@ export default function AppRoutes() {
             <Route path="/notificaciones" element={<NotificationsPage />} />
             <Route path="/documentos" element={<DocumentsPage />} />
             <Route path="/expedientes" element={<PersonnelFilesPage />} />
+            <Route
+              path="/notas-diplomaticas"
+              element={<DiplomaticNotesPage />}
+            />
             <Route path="/claves" element={<KeysPage />} />
             <Route
               path="/notas-especiales"

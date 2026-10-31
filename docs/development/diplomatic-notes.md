@@ -16,9 +16,10 @@ para almacenar primero una nota en claro y cifrarla después.
 El bloque 1 incorporó contratos y un servicio síncrono en memoria. El bloque 2
 incorpora persistencia en Supabase y Storage, con una migración adicional y sus
 pruebas. El bloque 3 expone cinco operaciones mediante una API autenticada,
-registrada también cuando `STC_ENABLE_LOCAL_WORKFLOW=0`. Todavía no hay pantalla,
-avisos ni registros de notas ordinarias en el dashboard. Las pruebas Python no
-necesitan `.env`, conexión a Supabase ni cuentas reales.
+registrada también cuando `STC_ENABLE_LOCAL_WORKFLOW=0`. El bloque 4 incorpora
+la pantalla de creación y recuperación verificada en `/notas-diplomaticas`.
+Los avisos y registros de notas ordinarias en el dashboard quedan para el bloque 5.
+Las pruebas Python no necesitan `.env`, conexión a Supabase ni cuentas reales.
 
 | Documento | Política del servicio |
 | --- | --- |
@@ -153,11 +154,11 @@ incluyen ese intento y exigen el rechazo antes de entregar bytes.
 | 1. Contratos y servicio | Implementado en el primer paquete: firmar, cifrar y recuperar en memoria; rechazar alteraciones y claves ajenas. |
 | 2. Supabase y Storage | Implementado en este segundo paquete: reserva de versión y asignaciones, snapshot de firma confiable, material privado, RLS, carga solo cifrada, publicación y cancelación seguras. |
 | 3. API autenticada | Implementado en el tercer paquete: listado, detalle, creación, recuperación verificada y cancelación. |
-| 4. Frontend | Seleccionar nota/comunicado, destinatarios y privada de firma para crear; privada de cifrado para recuperar; mostrar verificación del emisor. |
+| 4. Frontend | Implementado en el cuarto paquete: seleccionar nota/comunicado, destinatarios y privada de firma para crear; privada de cifrado original para recuperar; confirmar firma e integridad tras la recuperación. |
 | 5. Avisos y resumen | Notificar publicación y dirigir al detalle; contar documentos firmados y cifrados sin duplicarlos con el catálogo anterior. |
 | 6. Integración y entrega | Dos cuentas, claves históricas, permisos, firma y GCM alterados, errores de carga, documentación y revisión del equipo. |
 
-La interfaz futura aprovechará Mis claves de firma y Mis claves de cifrado;
+La interfaz aprovecha Mis claves de firma y Mis claves de cifrado;
 no requiere generar un par nuevo por documento. Moralitos puede seguir como
 Miembro receptor. Roberto necesita su clave de firma y su clave de cifrado
 separadas para emitir; sus claves actuales pueden reutilizarse si están vigentes.
@@ -393,3 +394,118 @@ petición de listado con **Try it out / Execute** debe devolver 401 si no hay un
 sesión Bearer autorizada. Esto comprueba registro y rechazo anónimo, no la conexión
 a SQL ni la creación real. No pegar aquí tokens o privadas para revisar la prueba.
 La prueba real con Roberto y Moralitos se hará desde la interfaz del bloque 4.
+
+
+## Interfaz del bloque 4
+
+La entrada **Notas y comunicados** del menú abre `/notas-diplomaticas`. Es
+independiente de `/notas-especiales` (Shamir) y del catálogo de firmas en
+`/documentos`. Permite búsqueda por título, filtro por tipo, paginación,
+actualización y detalle con URL local `?nota=UUID`; `?tipo=communique` y
+`?tipo=diplomatic_note` conservan el filtro al abrir un detalle.
+
+El lector necesita `documents.read_assigned`. La creación se muestra solamente
+con `documents.create` y `documents.sign`, además de lectura. El servidor vuelve
+a comprobar permisos y asignaciones en cada operación. No se concede acceso por
+ser administrador. El emisor conserva su propia asignación de cifrado y puede
+seleccionarse en el directorio una sola vez.
+
+### Dos privadas con propósitos distintos
+
+| Acción | Respaldo privado que se selecciona | Contraseña |
+| --- | --- | --- |
+| Firmar, cifrar y compartir | Privada **de firma RSA-PSS**, cifrada, en el `.txt` descargado por Mis claves; seleccionar también su clave registrada activa. | La que protege ese archivo de firma. |
+| Verificar firma y descargar | Privada **de cifrado RSA-OAEP** original del destinatario, en `.stckey.json`. | La que protege ese respaldo de cifrado. |
+
+La pantalla consulta las claves de firma de la cuenta y exige una clave de
+cifrado activa del emisor. El directorio de destinatarios contiene perfiles
+activos; la existencia de sus claves de cifrado se comprueba al crear en el
+servidor. No hace falta generar pares nuevos si los actuales están vigentes.
+Cada archivo recibe su AES independiente en el backend.
+
+El navegador valida el tamaño, nombre y contenido Base64 del `.txt` de firma;
+rechaza un JSON de cifrado colocado allí. No interpreta ese Base64 como una
+prueba de propiedad: el servidor abre la privada cifrada y comprueba su relación
+con la pública registrada. Al recuperar, el lector JSON valida perfil, generación
+y huella contra la asignación histórica del detalle antes de transmitir la
+petición. No busca la clave activa para sustituir la original.
+
+El detalle muestra el firmante y la huella registrados. Consultarlo no verifica
+el contenido. **Firma del emisor e integridad verificadas** se muestra únicamente
+tras una respuesta de recuperación que declara `signature-and-integrity` y
+coincide con documento, versión, emisor, clave de firma y huella originales. El
+cliente también comprueba nombre, tipo, tamaño y Base64 del archivo recibido
+antes de iniciar su descarga. La verificación criptográfica real GCM y RSA-PSS
+ocurre en el backend; la interfaz no introduce otra firma ni pide la privada del
+emisor al destinatario.
+
+Las contraseñas se vacían al terminar un intento. Tras una descarga correcta se
+retiran los campos de recuperación; **Actualizar** vuelve a consultar el detalle
+y permite otra descarga. No se guardan contraseñas ni privadas en el estado de
+sesión o en Storage. Como en los bloques anteriores, el servidor procesa
+transitoriamente la privada y el documento; este flujo no ofrece cifrado de
+extremo a extremo frente al propio backend.
+
+Creación y apertura desactivan el reenvío automático por renovación de sesión.
+Ante una creación de resultado incierto (red, timeout o error del servidor), el
+formulario pide cerrar y revisar el listado antes de otra carga. Un error local
+de formato o una respuesta 4xx permite corregir la entrada. Las cargas propias
+incompletas pueden cancelarse con confirmación; las publicadas no se cancelan.
+
+### Instalación y validación
+
+Este ZIP contiene solamente frontend y esta documentación. No añade dependencias,
+no modifica backend y no requiere otra migración. Requiere los tres bloques
+anteriores y la migración de notas ya instalada. Sobre `feature/diplomatic-notes`,
+con el bloque 3 guardado y la carpeta limpia, extraer en la raíz y ejecutar:
+
+```bat
+cd /d "%USERPROFILE%\Desktop\TopSecretCommunications"
+npm --prefix frontend test
+npm --prefix frontend run lint
+npm --prefix frontend run build
+git --no-pager diff --check
+git --no-pager status --short --untracked-files=all
+```
+
+Validación del paquete: **69 pruebas del frontend aprobadas**, incluidas 18 nuevas
+de notas; ESLint y TypeScript/Vite correctos. Los archivos Python y SQL conservan
+exactamente los bytes del bloque 3, validado allí con 176 pruebas de notas y 761
+totales. No se volvió a ejecutar esa batería por este cambio de interfaz.
+
+Las nuevas pruebas ejecutan los helpers reales y los lectores de privadas con el
+transporte HTTP sustituido: ambos tipos, bytes binarios y vacíos, ausencia de
+actor/públicas elegidos por cliente, filtros, límites, credenciales históricas,
+asignaciones, errores sin reenvío y respuestas de recuperación inconsistentes.
+No sustituyen las pruebas criptográficas del backend.
+
+La comprobación adicional con Playwright/Chromium, servidor Vite y datos HTTP
+simulados cubrió creación de un comunicado, respaldo de firma con formato
+equivocado y su corrección, recuperación por emisor y miembro, contraseña
+incorrecta sin descarga, detalle ajeno no disponible, filtro por tipo,
+cancelación confirmada y vistas a 1440 y 390 píxeles sin desbordamiento horizontal.
+Se inspeccionaron capturas del listado, formulario y detalle. Estas comprobaciones
+no escribieron en Supabase ni usaron cuentas o claves reales.
+
+### Prueba manual con Roberto y Moralitos
+
+1. Mantener backend y frontend activos y abrir dos sesiones de navegador separadas.
+   En Roberto, revisar **Mis claves**: conservar su clave de cifrado activa y
+   obtener una privada de firma `.txt` si todavía no tiene una. Moralitos puede
+   seguir como Miembro con su clave de cifrado nueva activa.
+2. En Roberto, abrir **Notas y comunicados**, elegir **Nueva nota o comunicado**,
+   tipo **Nota diplomática**, un archivo de prueba, título y Moralitos como
+   destinatario. Seleccionar la clave de firma registrada y su privada `.txt`,
+   introducir su contraseña y compartir.
+3. Comprobar el detalle y recuperar desde Roberto con su privada **de cifrado**
+   `.stckey.json`. Abrir el archivo descargado y compararlo con el original.
+   El aviso de firma e integridad debe aparecer después de esa recuperación.
+4. En Moralitos, actualizar el listado, abrir la misma nota y recuperar con su
+   privada **nueva** de cifrado. No necesita la privada de firma de Roberto.
+   Repetir con contraseña incorrecta: debe fallar sin descargar; corregir y probar.
+5. Repetir con tipo **Comunicado** y comprobar ambos filtros. Intentar un respaldo
+   de otra cuenta y uno de otra generación: deben rechazarse. Una URL de una nota
+   no asignada debe indicar que el documento no está disponible.
+6. Las notificaciones y los contadores de estas notas todavía no se añaden en
+   este bloque. Se probarán después del bloque 5. Registrar los resultados reales
+   y las capturas antes de guardar el commit del frontend.

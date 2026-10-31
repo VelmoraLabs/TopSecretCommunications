@@ -1,0 +1,44 @@
+.diplomatic-signing-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #ddd3f3;
+  border-radius: 14px;
+  background: #faf8fe;
+}
+.diplomatic-signing-panel h3,
+.diplomatic-signing-panel p {
+  margin: 0;
+}
+.diplomatic-signing-panel a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.diplomatic-type-filter {
+  flex: 0 1 230px;
+}
+.diplomatic-type-filter select,
+.diplomatic-signing-panel select,
+.diplomatic-form > .field select {
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #ddd5eb;
+  border-radius: 12px;
+  background: #fff;
+  color: #342c45;
+  font: inherit;
+}
+.diplomatic-card .documents-toolbar {
+  align-items: end;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .diplomatic-type-filter {
+    flex: 1 1 100%;
+  }
+  .diplomatic-signing-panel {
+    padding: 14px;
+  }
+}
