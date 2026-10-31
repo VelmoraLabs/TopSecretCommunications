@@ -5,7 +5,6 @@ from pydantic import AwareDatetime, Field, model_validator
 
 from app.modules.memoranda.schemas import Category, Contract
 
-
 class DashboardStats(Contract):
     documents_total: int = Field(ge=0)
     notes_total: int = Field(ge=0)
