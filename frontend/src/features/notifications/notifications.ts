@@ -14,6 +14,7 @@ export interface Notification {
     | 'keys'
     | 'account'
     | 'personnel_file'
+    | 'diplomatic_note'
   target_id: string | null
   related_id: string | null
   title: string
@@ -54,6 +55,8 @@ export function notificationTarget(item: Notification): string {
       return id ? `/documentos?documento=${id}` : '/documentos'
     case 'personnel_file':
       return id ? `/expedientes?expediente=${id}` : '/expedientes'
+    case 'diplomatic_note':
+      return id ? `/notas-diplomaticas?nota=${id}` : '/notas-diplomaticas'
     case 'note':
       return id ? `/notas-especiales?nota=${id}` : '/notas-especiales'
     case 'recovery':
