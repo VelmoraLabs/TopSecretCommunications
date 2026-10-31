@@ -124,6 +124,33 @@ class SupabaseGateway:
         except ValueError:
             data = {}
         code = data.get("code") if isinstance(data, dict) else None
+        diplomatic_errors = {
+            "DN403": (
+                403,
+                "diplomatic_permission_denied",
+                "Sin permiso para notas y comunicados.",
+            ),
+            "DN404": (404, "diplomatic_note_not_found", "La nota no está disponible."),
+            "DN409": (
+                409,
+                "diplomatic_conflict",
+                "Cambió la nota, una cuenta o su clave. Actualiza su información.",
+            ),
+            "DN422": (
+                422,
+                "invalid_diplomatic_request",
+                "Revisa los datos de la nota o comunicado.",
+            ),
+            "DN428": (
+                409,
+                "diplomatic_keys_required",
+                "El emisor necesita una clave de firma activa y todos los "
+                "participantes una clave de cifrado activa.",
+            ),
+        }
+        if code in diplomatic_errors:
+            status, error_code, message = diplomatic_errors[code]
+            raise ServiceError(status, error_code, message)
         personnel_errors = {
             "PF403": (
                 403,

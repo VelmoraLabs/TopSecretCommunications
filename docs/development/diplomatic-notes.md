@@ -1,8 +1,8 @@
 # Notas diplomáticas y comunicados: punto 2.8
 
-## Estado y alcance del primer bloque
+## Estado y alcance
 
-Base de este paquete: `bf1957a`, rama `feature/personnel-files`, con expedientes,
+Base del primer paquete: `bf1957a`, rama `feature/personnel-files`, con expedientes,
 avisos y dashboard ya incorporados. El desarrollo nuevo se separa en
 `feature/diplomatic-notes` para conservar el alcance del PR de expedientes.
 
@@ -13,10 +13,11 @@ ni la recuperación de esos documentos. La ruta de creación existente genera
 memorándums y conserva sus bytes originales en Storage privado: no debe usarse
 para almacenar primero una nota en claro y cifrarla después.
 
-Este bloque añade exclusivamente contratos y un servicio síncrono en memoria.
-No añade rutas, tablas, migraciones, botones, avisos ni registros al dashboard.
+El bloque 1 incorporó contratos y un servicio síncrono en memoria. El bloque 2
+incorpora persistencia en Supabase y Storage, con una migración adicional y sus
+pruebas. Todavía no añade rutas, botones, avisos ni registros al dashboard.
 Después de instalarlo, la web y `/docs` conservan su funcionalidad anterior.
-Sus pruebas no necesitan `.env`, conexión a Supabase ni cuentas reales.
+Las pruebas Python no necesitan `.env`, conexión a Supabase ni cuentas reales.
 
 | Documento | Política del servicio |
 | --- | --- |
@@ -38,6 +39,11 @@ del emisor no concede aprobación de un embajador.
 | `backend/app/modules/diplomatic_notes/__init__.py` | Identificación del módulo. |
 | `backend/app/modules/diplomatic_notes/schemas.py` | Petición de creación, snapshot de firma, cabecera, paquete interno y credenciales de apertura. |
 | `backend/app/modules/diplomatic_notes/service.py` | `protect_note`, `open_note`, representación canónica y comprobación de claves. |
+| `backend/app/modules/diplomatic_notes/persistence.py` | Reserva, firma y cifrado en threadpool, publicación, cancelación y recuperación con verificación final. |
+| `backend/tests/diplomatic_notes/test_diplomatic_persistence.py` | Gateway HTTP simulado con criptografía real y errores de carga/entrega. |
+| `supabase/migrations/20261030180000_diplomatic_notes.sql` | Cuatro tablas con RLS, detalle autorizado, snapshots y operaciones exclusivas del servidor. |
+| `supabase/scripts/check_diplomatic_notes_setup.sql` | Trece comprobaciones de solo lectura para después de migrar. |
+| `supabase/tests/diplomatic_notes.sql` | Pruebas de contratos, grants, aislamiento, claves históricas e idempotencia. |
 | `backend/tests/diplomatic_notes/test_diplomatic_service.py` | Pruebas reales de cifrado, firma, aislamiento y rechazo de alteraciones. |
 | `docs/development/diplomatic-notes.md` | Alcance, decisiones e instrucciones de integración. |
 
@@ -53,7 +59,7 @@ original. Ningún endpoint futuro debe aceptar estos snapshots del navegador.
 
 `protect_note(principal, body, recipient_keys, signing_key, *, document_id,
 version_id)` devuelve `ProtectedDiplomaticNote`. Los identificadores de documento
-y versión serán reservados por el servidor antes de firmar; no se toman de la
+y versión se reservan mediante SQL antes de firmar; no se toman de la
 petición pública. El resultado contiene cabecera, firma, nonce, ciphertext y tag.
 
 `open_note(principal, protected, encryption_key, signing_key, body)` devuelve
@@ -78,7 +84,7 @@ cifrada con contraseña. El destinatario no necesita una privada de firma.
 6. Cifrar el archivo original con AES-GCM, usando cabecera y firma como AAD.
    La firma se conserva separada en material privado, no dentro del ciphertext.
    El ciphertext tiene el mismo tamaño que el original y cabe en el límite de
-   5 MiB existente; nonce, tag y firma se persistirán fuera del objeto de Storage.
+   5 MiB existente; nonce, tag y firma se persisten fuera del objeto de Storage.
 7. Para abrir, comprobar perfil, asignación original, versión y claves originales.
    Recuperar AES con la privada RSA-OAEP del destinatario, validar GCM y comprobar
    la firma RSA-PSS del emisor antes de devolver el archivo.
@@ -123,17 +129,18 @@ incluyen ese intento y exigen el rechazo antes de entregar bytes.
   de firma desactivada sigue verificando sus firmas anteriores; no firma notas
   nuevas. No se reemplaza automáticamente ninguna por la clave nueva activa.
 - Un lector no necesita `documents.sign`; un administrador no asignado tampoco
-  puede abrir. La futura capa SQL revalidará participantes activos y permisos de
-  lectura, además de pertenencia y vigencia de las claves, en reserva y publicación.
-- El servicio actual presupone snapshots confiables. No implementa todavía RLS,
-  autenticación HTTP, concurrencia, conciliación de cargas, auditoría ni entrega
-  con revalidación final. Sus pruebas no demuestran esas garantías de integración.
+  puede abrir. SQL revalida participantes activos y permisos de lectura, además
+  de pertenencia y vigencia de las claves, en reserva y publicación.
+- El servicio criptográfico presupone snapshots confiables. El bloque de
+  persistencia los obtiene mediante RPC de servidor, valida su correspondencia,
+  usa RLS para el detalle y revalida el acceso al terminar la recuperación.
+  La autenticación HTTP del módulo se implementará en el bloque 3.
 - No se persisten originales, AES en claro, privadas ni contraseñas en el
   resultado. La operación procesa secretos temporalmente en el backend; no es
   cifrado de extremo a extremo frente al servidor ni garantiza borrado de memoria.
-- El paquete y su cabecera son internos. La persistencia debe separar detalle
-  público autorizado de material privado; no exponer sobres, firma ni ciphertext
-  mediante listados o eventos Realtime.
+- El paquete y su cabecera son internos. La persistencia separa detalle público
+  autorizado de material privado. No expone sobres, firma ni ciphertext mediante
+  listados ni publica estas tablas en Realtime.
 - Crear una nota nueva exige claves de cifrado activas de todos los perfiles
   originales. La rotación no redistribuye ni modifica documentos ya publicados.
 
@@ -141,8 +148,8 @@ incluyen ese intento y exigen el rechazo antes de entregar bytes.
 
 | Bloque | Trabajo pendiente y prueba principal |
 | --- | --- |
-| 1. Contratos y servicio | Este paquete: firmar, cifrar y recuperar en memoria; rechazar alteraciones y claves ajenas. |
-| 2. Supabase y Storage | Reserva de versión y asignaciones, snapshot de firma confiable, material privado, RLS, carga solo cifrada, publicación y cancelación seguras. |
+| 1. Contratos y servicio | Implementado en el primer paquete: firmar, cifrar y recuperar en memoria; rechazar alteraciones y claves ajenas. |
+| 2. Supabase y Storage | Implementado en este segundo paquete: reserva de versión y asignaciones, snapshot de firma confiable, material privado, RLS, carga solo cifrada, publicación y cancelación seguras. |
 | 3. API autenticada | Listado, detalle, creación, recuperación verificada y cancelación; threadpool y comprobación final antes de entregar. |
 | 4. Frontend | Seleccionar nota/comunicado, destinatarios y privada de firma para crear; privada de cifrado para recuperar; mostrar verificación del emisor. |
 | 5. Avisos y resumen | Notificar publicación y dirigir al detalle; contar documentos firmados y cifrados sin duplicarlos con el catálogo anterior. |
@@ -153,11 +160,70 @@ no requiere generar un par nuevo por documento. Moralitos puede seguir como
 Miembro receptor. Roberto necesita su clave de firma y su clave de cifrado
 separadas para emitir; sus claves actuales pueden reutilizarse si están vigentes.
 
+## Persistencia del bloque 2
+
+La migración `20261030180000_diplomatic_notes.sql` se aplica una vez después de
+las once anteriores, incluida la de avisos/dashboard de expedientes. No edita
+migraciones anteriores, las funciones existentes ni el bucket compartido.
+
+| Tabla | Datos |
+| --- | --- |
+| `public.stc_diplomatic_notes` | Identidad, tipo, emisor, clave de firma original, metadatos y estado `staging`, `ready` o `cancelled`. |
+| `public.stc_diplomatic_note_recipients` | Perfiles originales y clave RSA-OAEP original de cada uno, incluido el emisor. |
+| `public.stc_diplomatic_note_audit` | Reserva, publicación, cancelación y entrega autorizada. |
+| `stc_private.diplomatic_note_material` | Cabecera firmada, firma RSA-PSS, nonce, tag y digest del ciphertext. |
+
+El objeto de Storage contiene solo ciphertext en
+`stc-documents/diplomatic-notes/{document_id}/{version_id}/ciphertext`.
+No se envía contenido original, privada ni contraseña a las RPC de Supabase.
+La firma digital no es un secreto, pero se conserva dentro del material privado
+para mantener un único canal autorizado de recuperación y verificación.
+
+Dos RPC de usuario consultan metadatos: `get_diplomatic_note` y
+`list_diplomatic_notes`. El listado filtra por título y tipo, con paginación y
+conteo total autorizado. Cargas incompletas o canceladas solo son visibles para
+su creador. Una nota publicada solo es visible para sus asignados con permiso
+actual. No existe una excepción para administradores ajenos.
+
+Las cinco RPC `server_begin_diplomatic_note`, `server_commit_diplomatic_note`,
+`server_cancel_diplomatic_note`, `server_diplomatic_note_material` y
+`server_complete_diplomatic_download` están reservadas a `service_role`.
+El snapshot de firma procede siempre de su registro original y pertenece al
+emisor. No se acepta una pública de firma enviada por quien descarga.
+La clave de firma desactivada conserva su uso de verificación histórica.
+
+La reserva y publicación usan el mismo bloqueo transaccional que los cambios de
+perfiles y claves existentes. Si cambia una cuenta o se retira una clave durante
+la preparación, no se publica. SQL comprueba forma, identidad, tamaños, Base64
+canónico y coincidencia con la reserva; la comprobación criptográfica de
+RSA-PSS/GCM corresponde al backend, no a PostgreSQL.
+
+El contenido se cifra antes de enviarse a Storage. La publicación del material,
+el estado `ready` y la auditoría comparten transacción. Una repetición idéntica de
+publicación confirmada no duplica el evento; una firma diferente no reemplaza la
+original. El backend no reintenta automáticamente la creación completa con otro
+identificador. Ante una respuesta perdida, primero conciliar el listado.
+
+Una cancelación solo autoriza borrar Storage si SQL devuelve exactamente `true`.
+Si el servidor ya publicó antes de perderse la respuesta, devuelve `false` y el
+objeto se conserva. Si falla la limpieza, permanece privado y puede reintentarse
+por el creador. No hay recolector automático de objetos huérfanos. La transacción
+SQL no abarca Storage y una interrupción abrupta del proceso puede dejar cargas
+pendientes de conciliación.
+
+Para descargar se valida material, asignación y versión, se lee ciphertext,
+se comprueba su digest, se autentica GCM y se verifica RSA-PSS. Una última RPC
+revalida permiso, asignación, estado, versión y digest antes de devolver los bytes.
+La auditoría `downloaded` indica autorización de entrega; no demuestra que el
+navegador terminó de guardar el archivo. La respuesta incorpora emisor, clave y
+huella originales y `verification="signature-and-integrity"`.
+
 ## Instalación local y validación
 
-Con la rama de expedientes limpia en `bf1957a`, crear `feature/diplomatic-notes`
-y extraer el paquete en la raíz del proyecto. No ejecutar SQL para este bloque.
-Los cambios nuevos son cinco archivos; no necesitan instalar dependencias nuevas.
+Guardar primero el bloque 1 en `feature/diplomatic-notes`, con sus cinco archivos.
+Después extraer el segundo paquete en la raíz del proyecto, en la misma rama.
+El segundo paquete cambia ocho archivos respecto al bloque 1; no modifica el
+servicio criptográfico ni sus 82 pruebas iniciales. No requiere dependencias nuevas.
 
 Desde CMD:
 
@@ -171,24 +237,46 @@ python -m ruff format --check .
 python -m mypy
 python -m pytest -q
 cd ..
+git --no-pager diff --check
 git --no-pager status --short --untracked-files=all
 ```
 
 Resultados locales con los requisitos fijados y Python 3.12.14:
 
-- 82 pruebas específicas del módulo y 667 pruebas totales aprobadas.
-- Ruff aprobado; 100 archivos Python con formato correcto.
-- Mypy sin errores en 71 archivos fuente.
-- Solo persiste el warning conocido de FastAPI TestClient sobre httpx.
+- 122 pruebas del módulo: 82 del servicio y 40 de persistencia.
+- 707 pruebas Python totales aprobadas; Ruff aprobado y 102 archivos con formato.
+- Mypy sin errores en 72 archivos fuente. Persiste el warning de FastAPI/httpx.
+- Doce migraciones aplicadas en PostgreSQL/PGlite 0.5.13; 616 comprobaciones SQL
+  aprobadas, incluidas 86 de notas y comunicados y las 530 anteriores.
+- Inventario nuevo: trece filas `true`; los inventarios de expedientes de once y
+  ocho filas conservan su resultado.
+- Ensayo de actualización desde las once migraciones anteriores: conserva todos
+  los registros y funciones previas, incluido un expediente publicado, material
+  privado, claves, avisos y contexto.
+- Dos recorridos de contrato para nota y comunicado: reserva real en SQL local,
+  firma/cifrado reales en Python, publicación/material SQL, recuperación verificada
+  en Python y revalidación final SQL. Son comprobaciones locales con datos
+  sintéticos; no usan el proyecto compartido ni prueban la API HTTP real de Storage.
 - El equipo de Roberto usa Python 3.14.5; debe ejecutar los mismos controles.
-- Sin cambios en frontend, dependencias, configuración ni migraciones. No se
-  modificó el Supabase compartido durante la implementación o las pruebas.
 
-Los casos cubren ambos tipos, bytes binarios y vacíos, serialización JSON,
-emisor y destinatario independientes, claves y propósitos separados, permisos,
-versiones y claves históricas, claves ajenas y contraseña incorrecta, pública o
-huella inconsistente, límite de archivo, alteración de cada componente, y una
-recodificación maliciosa con AES legítima que GCM acepta pero la firma rechaza.
+Después de aprobar las pruebas, en Supabase SQL Editor ejecutar solo el archivo
+completo de la migración nueva. Copiar con UTF-8 desde la raíz en CMD:
+
+```bat
+powershell -NoProfile -Command "Get-Content -LiteralPath 'supabase\migrations\20261030180000_diplomatic_notes.sql' -Raw -Encoding UTF8 | Set-Clipboard"
+```
+
+Después ejecutar el inventario de solo lectura:
+
+```bat
+powershell -NoProfile -Command "Get-Content -LiteralPath 'supabase\scripts\check_diplomatic_notes_setup.sql' -Raw -Encoding UTF8 | Set-Clipboard"
+```
+
+Deben aparecer trece filas con `correcto=true`. No repetir migraciones previas.
+No ejecutar `supabase/tests/diplomatic_notes.sql` en el proyecto compartido: sus
+fixtures exigen una base aislada y vacía y terminan en rollback. Todavía no hay
+pantalla ni rutas HTTP de notas para probar documentos reales desde la web.
+No se modificó el Supabase compartido durante estas comprobaciones locales.
 
 ## Git y revisión
 
@@ -199,5 +287,5 @@ No abrir otro PR general hacia `develop` sin revisar esa base.
 
 Después de que Yael integre expedientes, revisar cómo se hizo el merge y actualizar
 la base de notas conservando solo sus commits nuevos. Si se usó squash, no asumir
-que un fast-forward incorporará la nueva base. El commit del bloque de notas debe
-contener únicamente los cinco archivos de esta entrega.
+que un fast-forward incorporará la nueva base. Guardar cada bloque en un commit separado: cinco archivos del servicio y ocho
+archivos de persistencia. No mezclar estos cambios con el PR #16 de expedientes.

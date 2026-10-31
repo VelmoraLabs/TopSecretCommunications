@@ -12,11 +12,13 @@ from app.modules.documents.schemas import (
     FileInfo,
 )
 from app.modules.documents.service import decode_base64
-from app.modules.encryption_keys.schemas import PrivateKeyInput
+from app.modules.encryption_keys.schemas import EncryptionKey, PrivateKeyInput
 from app.modules.memoranda.schemas import CreateMemo
 from app.modules.personnel_files.schemas import (
     MAX_RECIPIENTS,
     CreatePersonnelFile,
+    PersonnelFile,
+    PersonnelParticipant,
     RecipientEnvelope,
 )
 
@@ -116,3 +118,82 @@ class OpenDiplomaticNote(PrivateKeyInput):
 
     version_id: UUID = Field(strict=False)
     key_id: UUID = Field(strict=False)
+
+
+class DiplomaticNote(PersonnelFile):
+    kind: NoteKind
+    signing_key_id: UUID = Field(strict=False)
+
+
+class DiplomaticSigner(Contract):
+    profile_id: UUID = Field(strict=False)
+    display_name: str
+    key_id: UUID = Field(strict=False)
+    fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    is_active: StrictBool
+
+
+class DiplomaticDetail(Contract):
+    file: DiplomaticNote
+    participants: tuple[PersonnelParticipant, ...] = Field(
+        min_length=1, max_length=MAX_RECIPIENTS + 1, strict=False
+    )
+    signer: DiplomaticSigner
+
+    @model_validator(mode="after")
+    def consistent_identity(self) -> Self:
+        people = {item.profile_id for item in self.participants}
+        if (
+            len(people) != len(self.participants)
+            or self.file.created_by not in people
+            or self.signer.profile_id != self.file.created_by
+            or self.signer.key_id != self.file.signing_key_id
+        ):
+            raise ValueError("Detalle y firmante incompatibles.")
+        return self
+
+
+class DiplomaticPage(Contract):
+    items: tuple[DiplomaticNote, ...] = Field(max_length=100, strict=False)
+    total: int = Field(ge=0)
+    limit: int = Field(ge=1, le=100)
+    offset: int = Field(ge=0, le=100000)
+
+
+class DiplomaticReservation(Contract):
+    detail: DiplomaticDetail
+    keys: tuple[EncryptionKey, ...] = Field(
+        min_length=1, max_length=MAX_RECIPIENTS + 1, strict=False
+    )
+    signing_key: RegisteredSigningKey
+
+
+class DiplomaticMaterial(Contract):
+    detail: DiplomaticDetail
+    header: DiplomaticHeader
+    signing_key: RegisteredSigningKey
+    signature_base64: str = Field(min_length=344, max_length=344, repr=False)
+    nonce_base64: str = Field(min_length=16, max_length=16)
+    tag_base64: str = Field(min_length=24, max_length=24, repr=False)
+    ciphertext_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def valid_authenticators(self) -> Self:
+        if (
+            len(decode_base64(self.signature_base64)) != 256
+            or len(decode_base64(self.nonce_base64)) != 12
+            or len(decode_base64(self.tag_base64)) != 16
+        ):
+            raise ValueError("Autenticadores de longitud inválida.")
+        return self
+
+
+class DiplomaticDownload(FileInfo):
+    size: int = Field(ge=0, le=MAX_FILE_SIZE)
+    document_id: UUID = Field(strict=False)
+    version_id: UUID = Field(strict=False)
+    issuer_id: UUID = Field(strict=False)
+    signing_key_id: UUID = Field(strict=False)
+    signing_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    verification: Literal["signature-and-integrity"] = "signature-and-integrity"
+    content_base64: str = Field(max_length=MAX_CONTENT_BASE64, repr=False)
