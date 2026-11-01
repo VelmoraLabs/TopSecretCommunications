@@ -50,9 +50,11 @@ En las notas especiales, el acceso conjunto requiere la participación de todos 
 
 La implementación incluye Shamir, AES-256-GCM, protección y recuperación de notas especiales, login con Google mediante Supabase Auth y PKCE, sesión persistente y renovable, verificación del JWT en FastAPI y administración de perfiles con permisos vigentes en PostgreSQL. El frontend conserva la identidad visual; Dashboard y Documentos consultan memorándums reales con destinatarios, firmas y archivos en Storage privado. Incluye grupos e integrantes con permisos propios. Los memorándums separan borrador privado, firma del emisor, aprobación institucional opcional y envío a destinatarios finales. Consulta la [integración RSA-PSS](docs/development/memoranda-signatures.md).
 
-Las notas especiales de grupo ya conservan sus participantes originales y guardan únicamente el archivo cifrado en Storage privado. Antes de compartirlas se confirma un resguardo portable de los fragmentos. Consulta la [guía de notas de grupo](docs/development/group-notes-storage.md).
+Las notas especiales de grupo conservan sus participantes originales y guardan únicamente el archivo cifrado en Storage privado. El flujo actual conserva un fragmento cifrado por destinatario y permite la recuperación mediante aportaciones autorizadas entre cuentas. El resguardo portable corresponde al flujo anterior. Consulta la [guía de notas de grupo](docs/development/group-notes-storage.md).
 
 RSA-PSS está integrado para memorándums. Las notas especiales de grupo integran AES-GCM, Shamir n de n, sobres RSA-OAEP por destinatario y recuperación autorizada entre cuentas. El flujo portable anterior conserva su recuperación manual separada. Consultar la [integración de autenticación](docs/development/authentication.md) y la [base de permisos](supabase/README.md).
+
+Los [expedientes de personal](docs/development/personnel-files.md) y las [notas diplomáticas y comunicados](docs/development/diplomatic-notes-integration.md) tienen API, persistencia privada, interfaz y contexto de Dashboard/notificaciones. Cada uno tiene su sección; los conteos de Documentos corresponden al catálogo de firmas, no al total de todos los módulos. Los acuerdos comerciales siguen pendientes de definir e implementar.
 
 ## Arquitectura y organización del código
 

@@ -7,91 +7,67 @@ import {
   ShieldCheck,
   UsersRound,
 } from 'lucide-react'
+import { Link } from 'react-router'
+import { useAuth } from '../../features/auth/auth'
+import { documentWorkflows } from '../../features/documents/documentWorkflows'
 import PublicHeader from '../../components/layout/PublicHeader'
 import Brand from '../../components/layout/Brand'
 import { ButtonLink } from '../../components/ui/Button'
 import { categories } from '../../features/documents/documentPresentation'
 import './landing.css'
 
-function ProductPreview() {
+function WorkflowOverview() {
   return (
     <div className="product-preview">
       <div className="preview-top">
         <span className="preview-logo">
-          <ShieldCheck size={17} />
-          Top Secret
+          <ShieldCheck size={17} /> Top Secret
         </span>
-        <span className="preview-demo">VISTA DE EJEMPLO</span>
-        <span className="preview-avatar">UE</span>
+        <span className="preview-scope">FUNCIONES DISPONIBLES</span>
       </div>
       <div className="preview-body">
         <div className="preview-heading">
           <div>
-            <span>TU ESPACIO DOCUMENTAL</span>
-            <h2>Todo bajo control.</h2>
-          </div>
-          <span className="preview-check">
-            <Check size={18} />
-          </span>
-        </div>
-        <div className="preview-metrics">
-          <div>
-            <span>Documentos</span>
-            <strong>
-              06<small>en tu espacio</small>
-            </strong>
-          </div>
-          <div>
-            <span>Categorías</span>
-            <strong>
-              04<small>formas de protección</small>
-            </strong>
+            <span>DEL ARCHIVO A SUS DESTINATARIOS</span>
+            <h2>Elige cómo compartir.</h2>
           </div>
         </div>
-        <p className="preview-label">DOCUMENTOS RECIENTES</p>
-        {[
-          {
-            icon: FileCheck2,
-            title: 'Memorándum de coordinación',
-            label: 'Firma digital',
-            tone: 'green',
-          },
-          {
-            icon: LockKeyhole,
-            title: 'Acuerdo de cooperación bilateral',
-            label: 'Cifrado',
-            tone: 'blue',
-          },
-          {
-            icon: UsersRound,
-            title: 'Nota de sesión reservada',
-            label: 'Acceso conjunto',
-            tone: 'purple',
-          },
-        ].map(({ icon: Icon, title, label, tone }) => (
-          <div className="preview-document" key={title}>
-            <span
-              className={`preview-document-icon preview-document-icon--${tone}`}
+        <p className="workflow-summary">
+          Firma, cifrado y recuperación según el tipo de documento.
+        </p>
+        {documentWorkflows.map((workflow) => {
+          const category = categories[workflow.category]
+          const Icon = category.icon
+          return (
+            <Link
+              className="preview-document"
+              key={workflow.category}
+              to={workflow.destination}
             >
-              <Icon size={18} />
-            </span>
-            <div>
-              <strong>{title}</strong>
-              <small>{label}</small>
-            </div>
-            <ArrowUpRight size={16} />
-          </div>
-        ))}
+              <span
+                className={`preview-document-icon preview-document-icon--${category.tone}`}
+              >
+                <Icon size={18} />
+              </span>
+              <div>
+                <strong>{workflow.title}</strong>
+                <small>{workflow.protection}</small>
+              </div>
+              <ArrowUpRight size={16} />
+            </Link>
+          )
+        })}
       </div>
       <div className="preview-bottom">
-        <span className="preview-dot" />
-        Una protección para cada documento
-        <LockKeyhole size={14} />
+        <LockKeyhole size={14} /> El acceso requiere una cuenta autorizada
       </div>
     </div>
   )
 }
 export default function LandingPage() {
+  const signedIn = useAuth().status === 'ready'
+  const destination = signedIn ? '/dashboard' : '/login'
+  const accessLabel = signedIn ? 'Abrir mi espacio' : 'Iniciar sesión'
   return (
     <div className="landing-page">
       <a className="skip-link" href="#landing-content">
@@ -119,12 +95,12 @@ export default function LandingPage() {
                 acceso desde un solo espacio.
               </p>
               <div className="hero-actions">
-                <ButtonLink to="/dashboard" variant="light">
-                  Explorar plataforma <ArrowRight size={18} />
+                <ButtonLink to={destination} variant="light">
+                  {accessLabel} <ArrowRight size={18} />
                 </ButtonLink>
-                <ButtonLink to="/login" variant="ghost">
-                  Ir al acceso <ArrowUpRight size={18} />
-                </ButtonLink>
+                <a className="button button--ghost" href="#proteccion">
+                  Conocer las funciones <ArrowRight size={18} />
+                </a>
               </div>
               <div className="hero-principles">
                 <span>
@@ -146,7 +122,7 @@ export default function LandingPage() {
                 <span />
                 DISEÑADO PARA LO QUE IMPORTA
               </div>
-              <ProductPreview />
+              <WorkflowOverview />
               <div className="hero-floating-note">
                 <span>
                   <LockKeyhole size={18} />
@@ -176,25 +152,17 @@ export default function LandingPage() {
               </h2>
             </div>
             <p>
-              Cada comunicación tiene una responsabilidad.
+              Cada comunicación tiene una responsabilidad.{' '}
               <br />
               La plataforma organiza su protección desde el origen.
             </p>
           </div>
           <div className="protection-grid">
-            {Object.entries(categories).map(([key, category], index) => {
+            {documentWorkflows.map((workflow, index) => {
+              const category = categories[workflow.category]
               const Icon = category.icon
-              const descriptions: Record<string, string> = {
-                memorandum:
-                  'Comunicaciones institucionales con una firma digital para verificar su origen.',
-                expediente:
-                  'Información de personal protegida para sus destinatarios designados.',
-                nota: 'Comunicaciones diplomáticas con firma digital y contenido cifrado.',
-                especial:
-                  'Información que requiere la participación conjunta para habilitar su acceso.',
-              }
               return (
-                <article className="protection-card" key={key}>
+                <article className="protection-card" key={workflow.category}>
                   <div className="protection-card-top">
                     <span
                       className={`document-icon document-icon--${category.tone}`}
@@ -203,24 +171,30 @@ export default function LandingPage() {
                     </span>
                     <span>0{index + 1}</span>
                   </div>
-                  <h3>{category.label}</h3>
-                  <p>{descriptions[key]}</p>
-                  <span className="protection-caption">
-                    {category.protection}
+                  <h3>{workflow.title}</h3>
+                  <p>{workflow.description}</p>
+                  <Link
+                    className="protection-caption"
+                    to={workflow.destination}
+                  >
+                    {workflow.protection}
                     <ArrowUpRight size={16} />
-                  </span>
+                  </Link>
                 </article>
               )
             })}
           </div>
           <div className="landing-invitation">
             <div>
-              <p className="eyebrow">PRIMER VISTAZO</p>
-              <h2>Conoce tu espacio de trabajo.</h2>
-              <p>Explora las pantallas con documentos de ejemplo.</p>
+              <p className="eyebrow">TU CUENTA, TU ESPACIO</p>
+              <h2>Continúa con tus documentos.</h2>
+              <p>
+                Consulta tus archivos asignados, revisa pendientes y administra
+                tus llaves.
+              </p>
             </div>
-            <ButtonLink to="/dashboard">
-              Ver dashboard <ArrowRight size={18} />
+            <ButtonLink to={destination}>
+              {accessLabel} <ArrowRight size={18} />
             </ButtonLink>
           </div>
         </section>

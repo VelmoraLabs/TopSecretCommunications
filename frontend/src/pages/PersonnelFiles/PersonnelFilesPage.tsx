@@ -116,15 +116,15 @@ function PersonnelFilesWorkspace() {
           <FileLock2 size={30} />
         </span>
         <div>
-          <p className="eyebrow">AES-256-GCM + RSA-OAEP</p>
+          <p className="eyebrow">CIFRADO PARA DESTINATARIOS DESIGNADOS</p>
           <h2>Un documento, un acceso para cada persona.</h2>
           <p>
             La aplicación protege el archivo y entrega a cada destinatario
-            su propia forma de abrirlo. Prepara y activa tu clave de cifrado
-            en Mis claves antes de recibir expedientes nuevos.
+            su propia forma de abrirlo. Prepara y activa tu llave de cifrado
+            en Mis llaves antes de recibir expedientes nuevos.
           </p>
           <ButtonLink to="/claves" variant="ghost">
-            Revisar Mis claves
+            Revisar Mis llaves
           </ButtonLink>
         </div>
       </section>
@@ -259,7 +259,9 @@ function PersonnelFilesWorkspace() {
             <p>
               {query
                 ? 'Prueba otro título o limpia la búsqueda.'
-                : 'Crea uno o espera a que te asignen un expediente. Las cargas incompletas solo son visibles para su creador.'}
+                : auth.hasPermission('documents.create')
+                  ? 'Crea uno o espera a que te asignen un expediente. Las cargas incompletas solo son visibles para su creador.'
+                  : 'Aquí aparecerán los expedientes asignados a tu cuenta. Prepara tu llave de cifrado en Mis llaves para recibir archivos nuevos.'}
             </p>
           </div>
         )}
@@ -275,7 +277,7 @@ function PersonnelFilesWorkspace() {
       </Card>
       <p className="documents-help">
         El acceso requiere asignación explícita, incluso para
-        administradores. Conserva la clave privada original y su contraseña
+        administradores. Conserva la llave privada original y su contraseña
         para los expedientes históricos.
       </p>
       {creating && (

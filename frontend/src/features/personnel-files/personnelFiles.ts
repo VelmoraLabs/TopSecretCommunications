@@ -75,7 +75,7 @@ export const cancelPersonnelFile = (id: string) =>
     method: 'POST',
   })
 
-/** Las identidades son asignaciones; claves, actor e IDs los resuelve el servidor. */
+/** Las identidades son asignaciones; llaves, actor e IDs los resuelve el servidor. */
 export async function createPersonnelFile(
   title: string,
   file: File,
@@ -106,7 +106,7 @@ export async function createPersonnelFile(
   })
 }
 
-/** Comprueba el respaldo original, incluso si su clave ya se retiró para altas nuevas. */
+/** Comprueba el respaldo original, incluso si su llave ya se retiró para altas nuevas. */
 export async function openPersonnelFile(
   detail: PersonnelDetail,
   profileId: string,

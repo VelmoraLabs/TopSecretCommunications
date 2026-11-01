@@ -1,9 +1,9 @@
-"""Preparación y apertura en memoria; todavía sin rutas ni escritura en Supabase.
+"""Preparación y apertura en memoria, coordinadas por la capa de persistencia.
 
 Principal, claves y paquete deben proceder del servidor, no de un JSON público.
-La integración SQL deberá resolver destinatarios activos y autorizados, reservar
-la versión y volver a comprobar acceso antes de publicar o entregar el archivo.
-Estas funciones síncronas se ejecutarán en un threadpool desde esa integración.
+La integración SQL resuelve destinatarios activos y autorizados, reserva la
+versión y vuelve a comprobar acceso antes de publicar o entregar el archivo.
+La capa de persistencia ejecuta estas funciones síncronas en un threadpool.
 """
 
 import base64

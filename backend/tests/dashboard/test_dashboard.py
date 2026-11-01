@@ -140,3 +140,19 @@ def test_database_rechecks_current_permission(material):
         response = client.get("/api/v1/dashboard", headers=HEADERS)
         assert response.status_code == 403
         assert response.json()["detail"]["code"] == "dashboard_permission_denied"
+
+
+def test_invalid_summary_logs_field_without_private_values(material, caplog):
+    data = deepcopy(DATA)
+    data["updated_at"] = "private-invalid-value"
+    data["recent"][0]["title"] = "Private document title"
+    with dashboard_client(material, data=data) as (client, _):
+        response = client.get("/api/v1/dashboard", headers=HEADERS)
+        assert response.status_code == 503
+        assert response.json()["detail"]["code"] == "invalid_document_response"
+        assert "updated_at" not in response.text
+    assert "operation=stc_dashboard model=Dashboard" in caplog.text
+    assert "updated_at" in caplog.text
+    assert "private-invalid-value" not in caplog.text
+    assert "Private document title" not in caplog.text
+    assert HEADERS["Authorization"] not in caplog.text

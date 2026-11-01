@@ -119,7 +119,7 @@ export function recoveryKey(
   if (operation === 'recover') return detail.requester_key
   const person = original.find((p) => p.profile_id === actor)
   if (!person?.encryption_key_id || !person.encryption_fingerprint)
-    throw new Error('No tienes una clave asignada a esta nota.')
+    throw new Error('No tienes una llave asignada a esta nota.')
   return {
     id: person.encryption_key_id,
     profile_id: person.profile_id,

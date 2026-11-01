@@ -2,4 +2,5 @@ fastapi
 uvicorn
 cryptography
 httpx
+certifi>=2026.10.19
 python-dotenv

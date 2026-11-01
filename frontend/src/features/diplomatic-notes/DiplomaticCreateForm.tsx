@@ -145,14 +145,14 @@ export default function DiplomaticCreateForm({
       ? 'Selecciona al menos un destinatario.'
       : '',
     key: keyLoading
-      ? 'Espera la consulta de tu clave.'
+      ? 'Espera la consulta de tu llave.'
       : keyError ||
-        (!hasKey ? 'Activa tu clave de cifrado en Mis claves.' : ''),
+        (!hasKey ? 'Activa tu llave de cifrado en Mis llaves.' : ''),
     signingKey: signingLoading
-      ? 'Espera la consulta de tus claves de firma.'
+      ? 'Espera la consulta de tus llaves de firma.'
       : signingError ||
         (!signingKey
-          ? 'Prepara una clave de firma activa en Mis claves.'
+          ? 'Prepara una llave de firma activa en Mis llaves.'
           : ''),
     private: signingFileError(privateFile),
     password: passwordError(password),
@@ -233,14 +233,14 @@ export default function DiplomaticCreateForm({
         >
           <p>
             {keyLoading
-              ? 'Consultando tu clave de cifrado…'
+              ? 'Consultando tu llave de cifrado…'
               : keyError ||
                 (hasKey
-                  ? 'Tu cuenta tiene una clave de cifrado activa.'
-                  : 'Necesitas preparar y activar tu clave de cifrado antes de crear un documento.')}
+                  ? 'Tu cuenta tiene una llave de cifrado activa.'
+                  : 'Necesitas preparar y activar tu llave de cifrado antes de crear un documento.')}
           </p>
           {!hasKey && !keyLoading && (
-            <Link to="/claves">Abrir Mis claves</Link>
+            <Link to="/claves">Abrir Mis llaves</Link>
           )}
           <Button
             variant="ghost"
@@ -318,7 +318,7 @@ export default function DiplomaticCreateForm({
           </p>
           <label className="field">
             <span className="field-label">
-              Mi clave de firma registrada
+              Mi llave de firma registrada
             </span>
             <select
               id={validation.id('signingKey')}
@@ -331,8 +331,8 @@ export default function DiplomaticCreateForm({
             >
               <option value="">
                 {signingLoading
-                  ? 'Consultando claves…'
-                  : 'Selecciona tu clave de firma'}
+                  ? 'Consultando llaves…'
+                  : 'Selecciona tu llave de firma'}
               </option>
               {signingKeys.map((key) => (
                 <option value={key.id} key={key.id}>
@@ -348,12 +348,12 @@ export default function DiplomaticCreateForm({
           {signingError && <DocumentMessage text={signingError} />}
           {!signingLoading && !signingKeys.length && (
             <Link to="/claves">
-              Preparar mi clave de firma en Mis claves
+              Preparar mi llave de firma en Mis llaves
             </Link>
           )}
           {signingKey && (
             <details className="flow-details">
-              <summary>Identificar mi clave de firma</summary>
+              <summary>Identificar mi llave de firma</summary>
               <p className="memo-fingerprint">{signingKey.fingerprint}</p>
             </details>
           )}
@@ -399,10 +399,10 @@ export default function DiplomaticCreateForm({
           Destinatarios · {recipients.length} de 255
         </h3>
         <p className="memo-note">
-          Cada destinatario debe tener una cuenta vinculada y una clave de
+          Cada destinatario debe tener una cuenta vinculada y una llave de
           cifrado activa. La aplicación comprueba esas condiciones al
           guardar; este directorio muestra perfiles activos, no confirma su
-          clave.
+          llave.
         </p>
         <div className="memo-selected">
           {recipients.map((person) => (
@@ -506,8 +506,8 @@ export default function DiplomaticCreateForm({
           <p className="memo-note">
             Cierra esta ventana y actualiza el listado antes de intentar
             otra carga. Si el documento ya aparece disponible, no lo vuelvas
-            a crear. Si faltan claves activas, pide a los destinatarios que
-            las activen en Mis claves.
+            a crear. Si faltan llaves activas, pide a los destinatarios que
+            las activen en Mis llaves.
           </p>
         )}
         <div className="memo-actions">

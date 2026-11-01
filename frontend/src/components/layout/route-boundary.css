@@ -1,0 +1,11 @@
+.route-feedback {
+  min-height: 12rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  color: var(--text);
+  text-align: center;
+}

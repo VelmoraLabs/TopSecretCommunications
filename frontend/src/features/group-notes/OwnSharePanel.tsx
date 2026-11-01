@@ -49,7 +49,7 @@ export default function OwnSharePanel({
         aportación; no necesitas descargarlo ni volver a subirlo.
       </p>
       <p className="memo-note">
-        Esta copia es un respaldo cifrado. No reemplaza tu clave privada y no
+        Esta copia es un respaldo cifrado. No reemplaza tu llave privada y no
         reconstruye por sí sola el documento.
       </p>
       <Button variant="outline" disabled={busy} onClick={() => void download()}>
@@ -58,7 +58,7 @@ export default function OwnSharePanel({
       </Button>
       {error && <DocumentMessage text={error} />}
       <p className="memo-note">
-        Identificador de la clave original: {assigned.encryption_key_id}
+        Identificador de la llave original: {assigned.encryption_key_id}
       </p>
       <p className="memo-fingerprint">{assigned.encryption_fingerprint}</p>
     </details>

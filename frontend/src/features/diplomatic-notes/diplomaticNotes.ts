@@ -99,7 +99,7 @@ export const cancelDiplomaticNote = (id: string) =>
 
 export function signingFileError(file: File | null): string {
   if (!file) return 'Selecciona tu privada de firma cifrada (.txt).'
-  if (!file.size) return 'El archivo de la clave de firma está vacío.'
+  if (!file.size) return 'El archivo de la llave de firma está vacío.'
   if (file.size > 16384) return 'La privada de firma supera los 16 KiB.'
   return ''
 }
@@ -147,7 +147,7 @@ export async function createDiplomaticNote(
   )
     throw new Error('Selecciona entre 1 y 255 destinatarios distintos.')
   if (!signingKey.is_active || !entityId(signingKey.id))
-    throw new Error('Selecciona una clave de firma activa de tu cuenta.')
+    throw new Error('Selecciona una llave de firma activa de tu cuenta.')
   const privateKey = await readSigningPrivateFile(privateFile)
   return apiRequest<DiplomaticDetail>(
     endpoint,

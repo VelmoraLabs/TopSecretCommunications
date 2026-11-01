@@ -1,10 +1,11 @@
 """Orquesta identidad, Storage y primitivas puras; no confía en firmas del cliente."""
 
 import base64
+import logging
 from typing import Any
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from app.core.errors import ServiceError
@@ -26,6 +27,8 @@ from app.modules.memoranda.schemas import (
     Verification,
 )
 
+logger = logging.getLogger(__name__)
+
 
 async def read[Result: BaseModel](
     gateway: SupabaseGateway,
@@ -40,6 +43,26 @@ async def read[Result: BaseModel](
     try:
         return result.model_validate(response.json())
     except ValueError as exc:
+        # Registrar solo rutas/tipos; nunca el contenido, JWT, claves ni inputs.
+        if isinstance(exc, ValidationError):
+            problems = [
+                (error["loc"], error["type"])
+                for error in exc.errors(
+                    include_url=False, include_context=False, include_input=False
+                )[:20]
+            ]
+            logger.warning(
+                "Invalid RPC response: operation=%s model=%s errors=%s",
+                operation,
+                result.__name__,
+                problems,
+            )
+        else:
+            logger.warning(
+                "Invalid JSON RPC response: operation=%s model=%s",
+                operation,
+                result.__name__,
+            )
         raise ServiceError(
             503,
             "invalid_document_response",

@@ -270,7 +270,7 @@ export function MemoCreateForm({
         onSubmit={(event) => void submit(event)}
       >
         <p className="memo-note">
-          Tú serás el emisor y firmarás el documento con tu propia clave. Los
+          Tú serás el emisor y firmarás el documento con tu propia llave. Los
           destinatarios finales tendrán acceso únicamente después de que lo
           envíes.
         </p>
@@ -475,18 +475,18 @@ export function MemoSignForm({
   const [fileError, setFileError] = useState('')
   const validation = useFormValidation({
     key: loading
-      ? 'Espera a que se consulten tus claves.'
+      ? 'Espera a que se consulten tus llaves.'
       : !keyId
-        ? 'Genera una clave activa en Mis claves de firma.'
+        ? 'Genera una llave activa en Mis llaves de firma.'
         : '',
     file:
       fileError ||
       (!file
-        ? 'Selecciona tu archivo de clave privada cifrada (.txt).'
+        ? 'Selecciona tu archivo de llave privada cifrada (.txt).'
         : file.size > 16384
-          ? 'La clave supera los 16 KiB. Selecciona el archivo privado descargado.'
+          ? 'La llave supera los 16 KiB. Selecciona el archivo privado descargado.'
           : file.size === 0
-            ? 'El archivo de clave está vacío. Selecciona tu clave privada.'
+            ? 'El archivo de llave está vacío. Selecciona tu llave privada.'
             : ''),
     password: passwordError(password) || credentialError,
   })
@@ -497,7 +497,7 @@ export function MemoSignForm({
     setError('')
     try {
       if (file.size > 16384)
-        throw new Error('El archivo de clave supera el tamaño permitido.')
+        throw new Error('El archivo de llave supera el tamaño permitido.')
       const privateKey = (await file.text()).trim()
       if (
         !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
@@ -506,7 +506,7 @@ export function MemoSignForm({
         !privateKey
       ) {
         setFileError(
-          'El archivo no contiene Base64 válido. Selecciona la clave privada cifrada descargada, sin modificarla.',
+          'El archivo no contiene Base64 válido. Selecciona la llave privada cifrada descargada, sin modificarla.',
         )
         return
       }
@@ -522,7 +522,7 @@ export function MemoSignForm({
     } catch (error) {
       if (error instanceof ApiError && error.code === 'invalid_signing_key') {
         setCredentialError(
-          'No se pudo abrir la clave: revisa la contraseña y comprueba que el archivo privado corresponde a la clave registrada.',
+          'No se pudo abrir la llave: revisa la contraseña y comprueba que el archivo privado corresponde a la llave registrada.',
         )
         window.setTimeout(
           () =>
@@ -563,20 +563,20 @@ export function MemoSignForm({
             : 'Tu firma identifica la emisión de esta versión; guardar o firmar no la entrega a los destinatarios finales.'}
         </p>
         {loading ? (
-          <p className="memo-loading">Consultando claves…</p>
+          <p className="memo-loading">Consultando llaves…</p>
         ) : keys.length === 0 ? (
           <p
             id={validation.id('key')}
             tabIndex={-1}
             className="memo-note validation-target"
           >
-            Primero genera tus claves en{' '}
-            <Link to="/claves">Mis claves de firma</Link>.
+            Primero genera tus llaves en{' '}
+            <Link to="/claves">Mis llaves de firma</Link>.
           </p>
         ) : (
           <>
             <label className="field">
-              <span className="field-label">Tu clave registrada</span>
+              <span className="field-label">Tu llave registrada</span>
               <select
                 id={validation.id('key')}
                 className="memo-select"
@@ -596,7 +596,7 @@ export function MemoSignForm({
             </label>
             <label className="field">
               <span className="field-label">
-                Archivo de clave privada en Base64
+                Archivo de llave privada en Base64
               </span>
               <input
                 id={validation.id('file')}
@@ -623,7 +623,7 @@ export function MemoSignForm({
                 error={
                   fileError ||
                   (file && file.size > 16384
-                    ? 'La clave supera los 16 KiB. Selecciona el archivo privado descargado.'
+                    ? 'La llave supera los 16 KiB. Selecciona el archivo privado descargado.'
                     : validation.field('file').error)
                 }
               />
@@ -631,8 +631,8 @@ export function MemoSignForm({
             <TextField
               {...validation.field('password')}
               error={credentialError || validation.field('password').error}
-              hint="Usa la contraseña original de esta clave (de 12 a 256 caracteres)."
-              label="Contraseña de la clave privada"
+              hint="Usa la contraseña original de esta llave (de 12 a 256 caracteres)."
+              label="Contraseña de la llave privada"
               type="password"
               value={password}
               minLength={12}
@@ -647,7 +647,7 @@ export function MemoSignForm({
               }}
             />
             <p className="memo-note">
-              La clave privada se utiliza para esta firma y no se almacena en la
+              La llave privada se utiliza para esta firma y no se almacena en la
               plataforma.
             </p>
           </>

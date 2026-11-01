@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Grid2X2, List, Plus, RefreshCw, Search } from 'lucide-react'
-import { Navigate, useSearchParams } from 'react-router'
+import {
+  FileSignature,
+  Grid2X2,
+  List,
+  Plus,
+  RefreshCw,
+  Search,
+} from 'lucide-react'
+import { Link, Navigate, useSearchParams } from 'react-router'
 import PageHeader from '../../components/ui/PageHeader'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -8,6 +15,7 @@ import TextField from '../../components/ui/TextField'
 import { Button, ButtonLink } from '../../components/ui/Button'
 import { useAuth } from '../../features/auth/auth'
 import { categories } from '../../features/documents/documentPresentation'
+import { showAgreementCategory } from '../../features/documents/documentWorkflows'
 import type {
   DocumentCategory,
   DocumentRecord,
@@ -105,7 +113,7 @@ function DocumentWorkspace() {
       <PageHeader
         eyebrow="ESPACIO DE TRABAJO"
         title="Documentos"
-        description="Consulta el listado documental de firmas. Los expedientes cifrados tienen su propia sección."
+        description="Consulta tus memorándums y el catálogo de firmas. Abre las demás secciones para consultar sus archivos."
         action={
           <div className="memo-actions">
             <ButtonLink to="/expedientes" variant="outline">
@@ -122,7 +130,7 @@ function DocumentWorkspace() {
       />
       <section className="memo-intro">
         <span>
-          <Badge tone="purple">RSA-PSS</Badge>
+          <FileSignature size={30} aria-hidden="true" />
         </span>
         <div>
           <p className="eyebrow">DOCUMENTOS CON DESTINATARIOS PROPIOS</p>
@@ -185,7 +193,7 @@ function DocumentWorkspace() {
         <div
           className="category-filters"
           role="group"
-          aria-label="Filtrar por categoría"
+          aria-label="Catálogo de firmas y otras secciones"
         >
           <button
             type="button"
@@ -198,7 +206,7 @@ function DocumentWorkspace() {
               setOffset(0)
             }}
           >
-            Todos
+            Catálogo de firmas
             <span>
               {page
                 ? Object.values(page.category_counts).reduce(
@@ -208,33 +216,76 @@ function DocumentWorkspace() {
                 : '—'}
             </span>
           </button>
-          {Object.entries(categories).map(([key, item]) => (
-            <button
-              type="button"
-              key={key}
-              aria-pressed={category === key}
-              className={category === key ? 'is-active' : ''}
-              onClick={() => {
-                const next = new URLSearchParams(params)
-                next.set('tipo', key)
-                setParams(next)
-                setOffset(0)
-              }}
-            >
-              {item.shortLabel}
-              <span>
-                {key === 'expediente'
-                  ? 'Abrir'
-                  : (page?.category_counts[key as DocumentCategory] ?? '—')}
-              </span>
-            </button>
-          ))}
+          {Object.entries(categories).map(([key, item]) => {
+            if (
+              key === 'acuerdo' &&
+              !showAgreementCategory(page?.category_counts.acuerdo, category)
+            ) return null
+            const destination =
+              key === 'expediente'
+                ? '/expedientes'
+                : key === 'nota'
+                  ? '/notas-diplomaticas'
+                  : key === 'especial'
+                    ? '/notas-especiales'
+                    : null
+            if (destination)
+              return (
+                <Link key={key} to={destination}>
+                  {key === 'nota' ? 'Notas y comunicados' : item.shortLabel}
+                  <span>Abrir</span>
+                </Link>
+              )
+            return (
+              <button
+                type="button"
+                key={key}
+                aria-pressed={category === key}
+                className={category === key ? 'is-active' : ''}
+                onClick={() => {
+                  const next = new URLSearchParams(params)
+                  next.set('tipo', key)
+                  setParams(next)
+                  setOffset(0)
+                }}
+              >
+                {key === 'acuerdo'
+                  ? 'Acuerdos del catálogo anterior'
+                  : item.shortLabel}
+                <span>
+                  {page?.category_counts[key as DocumentCategory] ?? '—'}
+                </span>
+              </button>
+            )
+          })}
+          {(['nota', 'especial'] as const).map((key) =>
+            page?.category_counts[key] ? (
+              <Link
+                key={`legacy-${key}`}
+                to={`/documentos?tipo=${key}`}
+                aria-current={category === key ? 'page' : undefined}
+              >
+                {key === 'nota'
+                  ? 'Notas del catálogo anterior'
+                  : 'Documentos especiales anteriores'}
+                <span>{page.category_counts[key]}</span>
+              </Link>
+            ) : null,
+          )}
         </div>
+        {category === 'acuerdo' && (
+          <p className="memo-note">
+            Consulta de registros del catálogo anterior. Los acuerdos comerciales
+            no tienen un flujo de creación o aprobación propio en la plataforma.
+          </p>
+        )}
         <div className="documents-result-bar">
           <p role="status">
             {loading
               ? 'Consultando documentos…'
-              : `${page?.total ?? 0} documentos encontrados`}
+              : error
+                ? 'Listado no disponible'
+                : `${page?.total ?? 0} ${page?.total === 1 ? 'documento encontrado' : 'documentos encontrados'}`}
             {pending && <Badge tone="amber">Pendientes de completar</Badge>}
           </p>
           {(query || category !== 'all' || pending) && (
@@ -257,9 +308,13 @@ function DocumentWorkspace() {
           <div className="memo-empty">
             <h2>No hay documentos en esta vista</h2>
             <p>
-              {category !== 'all' && category !== 'memorandum'
-                ? 'Esta categoría está contemplada en el proyecto. Su flujo se integrará en la siguiente etapa.'
-                : 'Crea un memorándum o espera a que te asignen uno. También puedes ajustar los filtros.'}
+              {category === 'nota' || category === 'especial'
+                ? 'No hay registros de esta categoría en el catálogo anterior. Abre su sección para consultar los archivos actuales.'
+                : category === 'acuerdo'
+                  ? 'No hay acuerdos en el catálogo anterior para estos filtros. La plataforma no ofrece un flujo de creación de acuerdos comerciales.'
+                  : auth.hasPermission('documents.create')
+                    ? 'Crea un memorándum o espera a que te asignen uno. También puedes ajustar los filtros.'
+                    : 'Aquí aparecerán los documentos asignados a tu cuenta. También puedes ajustar los filtros.'}
             </p>
           </div>
         )}
@@ -271,10 +326,10 @@ function DocumentWorkspace() {
         />
       </Card>
       <p className="documents-help">
-        Los expedientes se consultan en su sección y no se cuentan en este
-        listado de firmas. Archivo original, versiones y firmas conservan su
-        asociación. Las categorías aplican protecciones distintas; el acceso
-        conjunto se reserva a las notas especiales.
+        Los expedientes, las notas y comunicados y las notas especiales se
+        consultan en sus propias secciones y no se suman a este catálogo de
+        firmas. El Dashboard reúne los conteos de todas las secciones. Los
+        documentos del catálogo anterior conservan sus versiones y firmas.
       </p>
       {creating && (
         <MemoCreateForm

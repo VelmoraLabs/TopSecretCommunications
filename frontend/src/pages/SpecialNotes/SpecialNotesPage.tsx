@@ -211,14 +211,15 @@ export default function SpecialNotesPage() {
         </div>
         <div>
           <p className="eyebrow">CADA PARTICIPACIÓN CUENTA</p>
-          <h2>Un documento. Una clave compartida.</h2>
+          <h2>Un documento. Una llave compartida.</h2>
           <p>
-            El archivo se cifra y su clave se divide con Shamir. Los fragmentos
-            permiten reconstruirla al reunir el umbral.
+            {tab === 'group'
+              ? 'Cada integrante recibe un fragmento protegido. Para recuperar el archivo, una persona solicita el acceso y todos los participantes originales autorizan su aportación.'
+              : 'Cifra un archivo y guarda su paquete y fragmentos por separado. Reúne todos los fragmentos para recuperar el original; este flujo no los distribuye entre cuentas.'}
           </p>
         </div>
         <span className="notes-intro-tag">
-          <ShieldCheck size={17} /> AES-GCM + Shamir
+          <ShieldCheck size={17} /> Participación de todos
         </span>
       </section>
       <div
@@ -362,7 +363,7 @@ export default function SpecialNotesPage() {
                           <strong>Participación de todo el grupo</strong>
                           <p>
                             Esta nota requiere {count} de {count} fragmentos
-                            para reconstruir su clave.
+                            para reconstruir su llave.
                           </p>
                         </div>
                       </div>
@@ -381,7 +382,7 @@ export default function SpecialNotesPage() {
                         ) : (
                           <ShieldCheck size={18} />
                         )}
-                        {busy ? 'Protegiendo…' : 'Proteger y dividir clave'}
+                        {busy ? 'Protegiendo…' : 'Proteger y dividir llave'}
                       </Button>
                     </div>
                   </form>
@@ -598,7 +599,7 @@ export default function SpecialNotesPage() {
               <span className="notes-help-icon">
                 <ShieldCheck size={25} />
               </span>
-              <h2>La clave está en la participación.</h2>
+              <h2>Tu participación abre el documento.</h2>
               <ol>
                 <li>
                   <strong>Cifrar</strong>
@@ -606,11 +607,11 @@ export default function SpecialNotesPage() {
                 </li>
                 <li>
                   <strong>Dividir</strong>
-                  <span>Shamir genera los fragmentos de su clave.</span>
+                  <span>Shamir genera los fragmentos de su llave.</span>
                 </li>
                 <li>
                   <strong>Reunir</strong>
-                  <span>El umbral permite reconstruir la clave.</span>
+                  <span>El umbral permite reconstruir la llave.</span>
                 </li>
                 <li>
                   <strong>Verificar</strong>
@@ -625,10 +626,10 @@ export default function SpecialNotesPage() {
               <p>
                 Flujo portable con archivos reales y sesión autenticada.
                 Conserva tus descargas: los resultados se mantienen mientras
-                esta página está abierta. La entrega individual de fragmentos y
-                la recuperación conjunta entre cuentas se incorporarán en la
-                siguiente etapa. Las notas de grupo ya permiten guardar el
-                paquete cifrado y conservar sus participantes originales.
+                esta página está abierta. Para la custodia individual de
+                fragmentos y la recuperación conjunta entre cuentas, utiliza
+                Notas de grupo. Allí se conserva el paquete cifrado y sus
+                participantes originales.
               </p>
             </div>
           </aside>

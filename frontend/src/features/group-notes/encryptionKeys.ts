@@ -66,18 +66,18 @@ export async function readPrivateKey(
 ): Promise<PrivateKeyFile> {
   if (file.size > 32 * 1024)
     throw new Error(
-      'La clave supera los 32 KiB. Selecciona el archivo de cifrado correcto.',
+      'La llave supera los 32 KiB. Selecciona el archivo de cifrado correcto.',
     )
   let value: unknown
   try {
     value = JSON.parse(await file.text()) as unknown
   } catch {
     throw new Error(
-      'Selecciona el archivo .stckey.json de tu clave de cifrado.',
+      'Selecciona el archivo .stckey.json de tu llave de cifrado.',
     )
   }
   if (!value || typeof value !== 'object' || Array.isArray(value))
-    throw new Error('El archivo de clave no es válido.')
+    throw new Error('El archivo de llave no es válido.')
   const data = value as Record<string, unknown>
   if (
     data.format !== 'stc-encryption-private-key' ||
@@ -85,7 +85,7 @@ export async function readPrivateKey(
     data.purpose !== 'group-note-share-custody'
   )
     throw new Error(
-      'Selecciona una clave de cifrado, no una clave de firma.',
+      'Selecciona una llave de cifrado, no una llave de firma.',
     )
   if (
     data.profile_id !== expected.profile_id ||
@@ -93,7 +93,7 @@ export async function readPrivateKey(
     data.fingerprint !== expected.fingerprint
   )
     throw new Error(
-      'Esta clave pertenece a otro perfil o a otra generación. Selecciona la clave indicada.',
+      'Esta llave pertenece a otro perfil o a otra generación. Selecciona la llave indicada.',
     )
   if (
     typeof data.private_base64 !== 'string' ||
@@ -101,6 +101,6 @@ export async function readPrivateKey(
     data.private_base64.length > 16384 ||
     !/^[A-Za-z0-9+/]+={0,2}$/.test(data.private_base64)
   )
-    throw new Error('El contenido de la clave cifrada no es válido.')
+    throw new Error('El contenido de la llave cifrada no es válido.')
   return data as unknown as PrivateKeyFile
 }

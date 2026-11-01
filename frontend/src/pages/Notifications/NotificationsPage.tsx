@@ -92,7 +92,7 @@ export default function NotificationsPage() {
                 setLoading(true)
               }}
             >
-              <option value="all">Todo el sistema</option>
+              <option value="all">Todas las categorías</option>
               {Object.entries(notificationCategories).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}

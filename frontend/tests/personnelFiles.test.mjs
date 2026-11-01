@@ -199,7 +199,7 @@ test('no se confunde una clave de firma con el respaldo de cifrado histórico', 
       privateFile({ ...key, purpose: 'signing' }),
       password,
     ),
-    /clave de firma/,
+    /llave de firma/,
   )
   await assert.rejects(
     api.openPersonnelFile(

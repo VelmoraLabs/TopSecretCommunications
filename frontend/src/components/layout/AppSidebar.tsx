@@ -49,7 +49,7 @@ export default function AppSidebar({
                 },
               ]
             : []),
-          { to: '/claves', label: 'Mis claves', icon: KeyRound },
+          { to: '/claves', label: 'Mis llaves', icon: KeyRound },
           ...(auth.hasPermission('groups.read')
             ? [
                 {

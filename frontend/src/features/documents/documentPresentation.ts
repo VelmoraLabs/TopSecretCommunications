@@ -24,7 +24,7 @@ export const categories: Record<
     shortLabel: 'Acuerdos comerciales',
     icon: Handshake,
     tone: 'blue',
-    protection: 'Firma y cifrado según su política',
+    protection: 'Registro del catálogo anterior',
   },
   memorandum: {
     label: 'Memorándum',
