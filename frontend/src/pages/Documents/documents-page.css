@@ -77,7 +77,7 @@
   padding: 0 24px 21px;
   border-bottom: 1px solid #eee8f5;
 }
-.category-filters button {
+.category-filters :is(button, a) {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -88,8 +88,9 @@
   font-size: 10px;
   font-weight: 550;
   min-height: 36px;
+  text-decoration: none;
 }
-.category-filters button span {
+.category-filters :is(button, a) span {
   font-size: 9px;
   min-width: 18px;
   height: 18px;
@@ -100,15 +101,15 @@
   background: #f2edf7;
   color: #9580a9;
 }
-.category-filters button.is-active {
+.category-filters :is(button.is-active, a[aria-current='page']) {
   background: #eee7fa;
   color: var(--primary);
 }
-.category-filters button.is-active span {
+.category-filters :is(button.is-active, a[aria-current='page']) span {
   background: #ded0f3;
   color: var(--primary);
 }
-.category-filters button:hover {
+.category-filters :is(button, a):hover {
   background: #f5f0fb;
 }
 .documents-result-bar {
@@ -157,7 +158,7 @@
     padding: 0 13px 16px;
     gap: 4px;
   }
-  .category-filters button {
+  .category-filters :is(button, a) {
     font-size: 9px;
     padding: 7px 9px;
     gap: 6px;

@@ -23,7 +23,7 @@ test('claves de otro perfil, generación y huella no se confunden',async()=>{
 })
 test('una clave de firma, JSON malformado o formato distinto da un error útil',async()=>{
  await assert.rejects(readPrivateKey(new File(['QUJDRA=='],'firma.txt'),key),/stckey/)
- await assert.rejects(readPrivateKey(file({...privateKeyData(generated),purpose:'signing'}),key),/clave de firma/)
+ await assert.rejects(readPrivateKey(file({...privateKeyData(generated),purpose:'signing'}),key),/llave de firma/)
  await assert.rejects(readPrivateKey(file(null),key),/no es válido/)
 })
 test('archivos excesivos y contenidos privados Base64 inválidos se rechazan',async()=>{

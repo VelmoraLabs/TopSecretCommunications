@@ -109,7 +109,7 @@ export default function GroupNotesPanel({
         <p>
           <strong>Un fragmento por integrante.</strong> La plataforma conserva
           cada fragmento cifrado para su destinatario. Cada persona autoriza su
-          aportación con su clave privada; no necesita subir un archivo de
+          aportación con su llave privada; no necesita subir un archivo de
           fragmento.
         </p>
       </div>
@@ -353,7 +353,7 @@ function CreateForm({
         onSubmit={(e) => void submit(e)}
       >
         <p className="memo-note">
-          El archivo se cifra con AES-256-GCM y su clave se divide con Shamir.
+          El archivo se cifra con AES-256-GCM y su llave se divide con Shamir.
           Se requiere un fragmento por cada integrante original, incluyendo tu
           cuenta.
         </p>
@@ -479,8 +479,8 @@ function CreateForm({
                       {!person.is_active
                         ? 'Perfil desactivado'
                         : !person.encryption_ready
-                          ? 'Falta clave de cifrado'
-                          : 'Clave de cifrado activa'}
+                          ? 'Falta llave de cifrado'
+                          : 'Llave de cifrado activa'}
                     </Badge>
                   </li>
                 ))}
@@ -496,7 +496,7 @@ function CreateForm({
           <Info size={17} />
           Cada integrante recibirá su propio fragmento cifrado. Nadie recibirá
           un resguardo con todos los fragmentos. Antes de crear, cada persona
-          debe activar su clave en Mis claves.
+          debe activar su llave en Mis llaves.
         </p>
         <FormFeedback issues={validation.issues} busy={busy} />
         {error && <DocumentMessage text={error} />}

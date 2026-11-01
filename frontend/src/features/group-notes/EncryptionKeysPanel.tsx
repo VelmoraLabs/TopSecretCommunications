@@ -69,7 +69,7 @@ export default function EncryptionKeysPanel() {
     <section className="group-notes-panel encryption-keys-panel">
       <div className="group-notes-heading">
         <div>
-          <p className="eyebrow">CLAVES PERSONALES DE CIFRADO</p>
+          <p className="eyebrow">LLAVES PERSONALES DE CIFRADO</p>
           <h2>Protección de expedientes y fragmentos</h2>
           <p>
             Prepárala una vez para recibir expedientes y aportar fragmentos
@@ -87,7 +87,7 @@ export default function EncryptionKeysPanel() {
             }}
           >
             <RefreshCw size={16} />
-            Actualizar claves
+            Actualizar llaves
           </Button>
           <Button
             onClick={() => setSetup('new')}
@@ -97,7 +97,7 @@ export default function EncryptionKeysPanel() {
             }
           >
             <Plus size={17} />
-            Preparar clave de protección
+            Preparar llave de protección
           </Button>
         </div>
       </div>
@@ -105,8 +105,8 @@ export default function EncryptionKeysPanel() {
         <ShieldCheck size={20} />
         <p>
           Guarda el archivo privado cifrado y su contraseña por separado. La
-          plataforma conserva únicamente la clave pública. Si pierdes una
-          clave privada, no podrás abrir los expedientes ni fragmentos
+          plataforma conserva únicamente la llave pública. Si pierdes una
+          llave privada, no podrás abrir los expedientes ni fragmentos
           protegidos con ella.
         </p>
       </div>
@@ -123,13 +123,13 @@ export default function EncryptionKeysPanel() {
       )}
       <Card className="memo-key-directory">
         {loading ? (
-          <p role="status">Consultando claves de cifrado…</p>
+          <p role="status">Consultando llaves de cifrado…</p>
         ) : !keys.length ? (
           <div className="memo-empty">
             <KeyRound size={32} />
-            <h3>Prepara tu clave para recibir archivos cifrados</h3>
+            <h3>Prepara tu llave para recibir archivos cifrados</h3>
             <p>
-              Prepara tu clave privada y guarda su archivo. La activación
+              Prepara tu llave privada y guarda su archivo. La activación
               comprueba una sola vez que puedes abrir la copia guardada.
             </p>
           </div>
@@ -155,7 +155,7 @@ export default function EncryptionKeysPanel() {
                 {new Date(key.created_at).toLocaleDateString('es-MX')}
               </p>
               <details className="flow-details">
-                <summary>Huella y clave pública</summary>
+                <summary>Huella y llave pública</summary>
                 <p className="memo-fingerprint">{key.fingerprint}</p>
                 <div className="memo-actions memo-actions--start">
                   <Button
@@ -175,12 +175,12 @@ export default function EncryptionKeysPanel() {
               <div className="memo-actions memo-actions--start">
                 {key.state === 'pending' && (
                   <Button onClick={() => setSetup(key)}>
-                    Activar clave de protección
+                    Activar llave de protección
                   </Button>
                 )}
                 {key.state !== 'retired' && (
                   <Button variant="ghost" onClick={() => setRetiring(key)}>
-                    Retirar clave de protección
+                    Retirar llave de protección
                   </Button>
                 )}
               </div>
@@ -189,7 +189,7 @@ export default function EncryptionKeysPanel() {
         )}
       </Card>
       <p className="memo-note">
-        Solo una clave activa por perfil. Activar otra retira la anterior
+        Solo una llave activa por perfil. Activar otra retira la anterior
         para expedientes y notas nuevos; conserva todos tus archivos
         privados para los anteriores. Retirarla no revoca los accesos que ya
         recibiste.
@@ -202,7 +202,7 @@ export default function EncryptionKeysPanel() {
           onActivated={() => {
             setSetup(null)
             setNotice(
-              'Clave activada. Ya puedes recibir expedientes y fragmentos nuevos.',
+              'Llave activada. Ya puedes recibir expedientes y fragmentos nuevos.',
             )
             setRevision((n) => n + 1)
           }}
@@ -212,7 +212,7 @@ export default function EncryptionKeysPanel() {
         <Modal
           open
           busy={busy}
-          title="Retirar clave de protección"
+          title="Retirar llave de protección"
           onClose={() => setRetiring(null)}
         >
           <div className="memo-form">
@@ -222,7 +222,7 @@ export default function EncryptionKeysPanel() {
             </p>
             <p>
               Los expedientes y fragmentos anteriores conservarán esta
-              clave. Guarda su archivo privado y contraseña; generar otra no
+              llave. Guarda su archivo privado y contraseña; generar otra no
               los reemplaza.
             </p>
             {error && <DocumentMessage text={error} />}
@@ -232,7 +232,7 @@ export default function EncryptionKeysPanel() {
                 disabled={busy}
                 onClick={() => setRetiring(null)}
               >
-                Conservar clave
+                Conservar llave
               </Button>
               <Button
                 disabled={busy}
@@ -244,7 +244,7 @@ export default function EncryptionKeysPanel() {
                       setRetiring(null)
                       setRevision((n) => n + 1)
                       setNotice(
-                        'Clave retirada para archivos nuevos. Conserva su respaldo histórico.',
+                        'Llave retirada para archivos nuevos. Conserva su respaldo histórico.',
                       )
                     })
                     .catch((error) => setError(errorMessage(error)))
@@ -276,7 +276,7 @@ function KeySetup({
     null,
   )
   const key = generated?.key ?? initial
-  const [label, setLabel] = useState('Mi clave de cifrado'),
+  const [label, setLabel] = useState('Mi llave de cifrado'),
     [password, setPassword] = useState(''),
     [confirmation, setConfirmation] = useState('')
   const [privateFile, setPrivateFile] = useState<PrivateKeyFile | null>(
@@ -292,7 +292,7 @@ function KeySetup({
   const validation = useFormValidation({
     label: key
       ? ''
-      : textError(label, 'un nombre para tu clave de cifrado', 80),
+      : textError(label, 'un nombre para tu llave de cifrado', 80),
     password: passwordIssue || passwordError(password),
     confirmation: key
       ? ''
@@ -304,12 +304,12 @@ function KeySetup({
     file: key
       ? fileError ||
         (!privateFile
-          ? 'Selecciona el archivo privado de esta clave de cifrado.'
+          ? 'Selecciona el archivo privado de esta llave de cifrado.'
           : '')
       : '',
     backup:
       generated && !downloaded
-        ? 'Descarga y guarda tu clave privada antes de activarla.'
+        ? 'Descarga y guarda tu llave privada antes de activarla.'
         : '',
   })
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -353,8 +353,8 @@ function KeySetup({
       busy={busy || reading}
       title={
         key
-          ? 'Guardar y activar clave de protección'
-          : 'Preparar clave de protección'
+          ? 'Guardar y activar llave de protección'
+          : 'Preparar llave de protección'
       }
       onClose={onClose}
     >
@@ -367,12 +367,12 @@ function KeySetup({
         {!key ? (
           <>
             <p>
-              Esta clave se utiliza para abrir expedientes y fragmentos de
-              notas especiales. Es independiente de tus claves de firma.
+              Esta llave se utiliza para abrir expedientes y fragmentos de
+              notas especiales. Es independiente de tus llaves de firma.
             </p>
             <TextField
               {...validation.field('label')}
-              label="Nombre de la clave de protección"
+              label="Nombre de la llave de protección"
               maxLength={80}
               value={label}
               disabled={busy}
@@ -381,7 +381,7 @@ function KeySetup({
             <TextField
               {...validation.field('password')}
               error={passwordIssue || validation.field('password').error}
-              label="Contraseña de la clave privada"
+              label="Contraseña de la llave privada"
               type="password"
               autoComplete="new-password"
               value={password}
@@ -404,7 +404,7 @@ function KeySetup({
         ) : (
           <>
             <p>
-              Clave: <strong>{key.label}</strong>
+              Llave: <strong>{key.label}</strong>
             </p>
             <p className="memo-fingerprint">{key.fingerprint}</p>
             {generated && (
@@ -425,7 +425,7 @@ function KeySetup({
                   }}
                 >
                   <Download size={17} />
-                  Guardar mi clave privada
+                  Guardar mi llave privada
                 </Button>
                 <p className="memo-note">
                   Comprueba que el archivo existe y selecciónalo abajo. La
@@ -435,7 +435,7 @@ function KeySetup({
             )}
             <label className="field">
               <span className="field-label">
-                Mi clave privada (.stckey.json)
+                Mi llave privada (.stckey.json)
               </span>
               <input
                 id={validation.id('file')}
@@ -487,7 +487,7 @@ function KeySetup({
             <TextField
               {...validation.field('password')}
               error={passwordIssue || validation.field('password').error}
-              label="Contraseña de la clave privada"
+              label="Contraseña de la llave privada"
               type="password"
               autoComplete="current-password"
               value={password}
@@ -499,7 +499,7 @@ function KeySetup({
             />
             <p className="info-note">
               Activar comprueba que puedes abrir el archivo. Si tienes otra
-              clave activa, se retirará para archivos nuevos; conserva
+              llave activa, se retirará para archivos nuevos; conserva
               también su respaldo.
             </p>
           </>
@@ -522,7 +522,7 @@ function KeySetup({
               ? 'Procesando…'
               : key
                 ? 'Comprobar archivo y activar'
-                : 'Preparar clave de protección'}
+                : 'Preparar llave de protección'}
           </Button>
         </div>
       </form>

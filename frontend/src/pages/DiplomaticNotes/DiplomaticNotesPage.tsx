@@ -128,16 +128,16 @@ function DiplomaticNotesWorkspace() {
           <FileLock2 size={30} />
         </span>
         <div>
-          <p className="eyebrow">Firma RSA-PSS · cifrado AES-GCM</p>
+          <p className="eyebrow">FIRMA DEL EMISOR Y ACCESO INDIVIDUAL</p>
           <h2>Tu firma, su acceso. Una comunicación protegida.</h2>
           <p>
-            Para emitir, necesitas una clave de firma y una de cifrado. Para
-            recibir, prepara tu clave de cifrado. Al recuperar, la
+            Para emitir, necesitas una llave de firma y una de cifrado. Para
+            recibir, prepara tu llave de cifrado. Al recuperar, la
             aplicación comprueba la firma del emisor y la integridad del
             documento.
           </p>
           <ButtonLink to="/claves" variant="ghost">
-            Revisar Mis claves
+            Revisar Mis llaves
           </ButtonLink>
         </div>
       </section>
@@ -292,7 +292,9 @@ function DiplomaticNotesWorkspace() {
             <p>
               {query || kind !== 'all'
                 ? 'Prueba otro título o selecciona todos los tipos.'
-                : 'Crea uno o espera a que te asignen un documento. Las cargas incompletas solo son visibles para su creador.'}
+                : auth.hasPermission('documents.create') && auth.hasPermission('documents.sign')
+                  ? 'Crea uno o espera a que te asignen un documento. Las cargas incompletas solo son visibles para su creador.'
+                  : 'Aquí aparecerán las notas y los comunicados asignados a tu cuenta. Prepara tu llave de cifrado en Mis llaves para recibir archivos nuevos.'}
             </p>
           </div>
         )}
@@ -308,7 +310,7 @@ function DiplomaticNotesWorkspace() {
       </Card>
       <p className="documents-help">
         El acceso requiere asignación explícita, incluso para
-        administradores. Conserva la clave privada original y su contraseña
+        administradores. Conserva la llave privada original y su contraseña
         para las notas y los comunicados históricos.
       </p>
       {creating && (

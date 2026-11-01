@@ -2,7 +2,7 @@
 
 La transacción SQL no abarca Storage. Una carga incompleta se cancela y se
 intenta retirar su objeto; un resultado de publicación perdido nunca autoriza
-a borrar un expediente listo. La API HTTP se incorporará en el siguiente paso.
+a borrar un expediente listo. El router HTTP delega aquí las operaciones.
 """
 
 import base64

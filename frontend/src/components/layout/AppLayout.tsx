@@ -7,6 +7,7 @@ import Badge from '../ui/Badge'
 import { roleNames, useAuth } from '../../features/auth/auth'
 import NotificationProvider from '../../features/notifications/NotificationProvider'
 import NotificationBell from '../../features/notifications/NotificationBell'
+import RouteBoundary from './RouteBoundary'
 
 export default function AppLayout() {
   const auth = useAuth()
@@ -89,7 +90,7 @@ function AppFrame() {
                 : pathname === '/grupos'
                   ? 'Grupos e integrantes'
                   : pathname === '/claves'
-                    ? 'Mis claves'
+                    ? 'Mis llaves'
                     : pathname === '/expedientes'
                       ? 'Expedientes de personal'
                       : pathname === '/notas-diplomaticas'
@@ -170,12 +171,14 @@ function AppFrame() {
       </dialog>
       <main id="main-content" tabIndex={-1} className="app-main">
         <div className="app-main-inner">
+        <RouteBoundary key={pathname}>
           <Outlet />
+        </RouteBoundary>
           <footer className="app-footer">
             <span>Top Secret Communications</span>
             <span>
               {isSpecialNotes
-                ? 'Archivos reales · sesión autenticada.'
+                ? 'Archivos de grupo y recuperación colaborativa.'
                 : pathname === '/administracion'
                   ? 'Perfiles y permisos de tu oficina.'
                   : pathname === '/grupos'

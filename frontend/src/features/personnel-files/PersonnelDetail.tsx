@@ -67,9 +67,9 @@ export default function PersonnelDetail({
   )
   const validation = useFormValidation({
     file: !file
-      ? 'Selecciona el archivo privado de la clave indicada.'
+      ? 'Selecciona el archivo privado de la llave indicada.'
       : file.size > 32 * 1024
-        ? 'El archivo de clave supera los 32 KiB.'
+        ? 'El archivo de llave supera los 32 KiB.'
         : '',
     password: passwordError(password),
   })
@@ -176,7 +176,7 @@ export default function PersonnelDetail({
                   <ShieldCheck size={17} /> Apertura individual
                 </strong>
                 <p>
-                  El archivo se cifra una vez y la clave AES se protege para
+                  El archivo se cifra una vez y la llave AES se protege para
                   cada persona. No necesitas aportaciones de otros
                   destinatarios.
                 </p>
@@ -216,24 +216,24 @@ export default function PersonnelDetail({
                     <KeyRound size={18} /> Recuperar mi documento
                   </h3>
                   <p className="memo-note">
-                    Selecciona la clave privada de cifrado original
-                    (.stckey.json), no una clave de firma. Aunque hayas
-                    activado una clave nueva, este expediente conserva la
+                    Selecciona la llave privada de cifrado original
+                    (.stckey.json), no una llave de firma. Aunque hayas
+                    activado una llave nueva, este expediente conserva la
                     anterior.
                   </p>
                   <details className="flow-details">
-                    <summary>Identificar mi clave original</summary>
+                    <summary>Identificar mi llave original</summary>
                     <p className="memo-note">
                       Archivo habitual: {assigned.key_id}.stckey.json
                     </p>
                     <p className="memo-fingerprint">
                       {assigned.fingerprint}
                     </p>
-                    <Link to="/claves">Consultar Mis claves</Link>
+                    <Link to="/claves">Consultar Mis llaves</Link>
                   </details>
                   <label className="field">
                     <span className="field-label">
-                      Mi clave privada de cifrado
+                      Mi llave privada de cifrado
                     </span>
                     <input
                       ref={input}
@@ -258,7 +258,7 @@ export default function PersonnelDetail({
                   </label>
                   <TextField
                     {...validation.field('password')}
-                    label="Contraseña de la clave privada"
+                    label="Contraseña de la llave privada"
                     type="password"
                     autoComplete="off"
                     required

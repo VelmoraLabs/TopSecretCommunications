@@ -118,7 +118,7 @@ export function groupProblem(group: NoteGroup | null): string {
     return 'El grupo contiene perfiles desactivados. Revisa sus integrantes antes de continuar.'
   const missing = group.members.filter((person) => !person.encryption_ready)
   if (missing.length)
-    return `Falta activar la clave de cifrado de: ${missing.map((person) => person.display_name).join(', ')}. Cada persona debe hacerlo desde Mis claves.`
+    return `Falta activar la llave de cifrado de: ${missing.map((person) => person.display_name).join(', ')}. Cada persona debe hacerlo desde Mis llaves.`
   return ''
 }
 export interface NoteBackup {

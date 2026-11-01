@@ -334,7 +334,7 @@
   font-size: 10px;
   margin-top: 20px;
 }
-.dashboard-example-note {
+.dashboard-scope-note {
   display: flex;
   align-items: flex-start;
   gap: 7px;
@@ -342,7 +342,7 @@
   font-size: 10px;
   padding: 0 5px;
 }
-.dashboard-example-note svg {
+.dashboard-scope-note svg {
   margin-top: 2px;
 }
 @media (max-width: 1350px) {
@@ -352,7 +352,7 @@
   .dashboard-secondary {
     grid-template-columns: 1fr 1fr;
   }
-  .dashboard-example-note {
+  .dashboard-scope-note {
     grid-column: 1/-1;
   }
   .recent-documents .document-date {

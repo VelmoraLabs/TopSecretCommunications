@@ -1,10 +1,11 @@
 import { getSupabase } from './supabase'
+import { keyTerminology } from './keyTerminology'
 
 export class ApiError extends Error {
   status: number
   code: string
   constructor(status: number, code: string, message: string) {
-    super(message)
+    super(keyTerminology(message))
     this.name = 'ApiError'
     this.status = status
     this.code = code

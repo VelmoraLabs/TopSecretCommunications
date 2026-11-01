@@ -7,6 +7,10 @@ import {
   notificationTime,
 } from './notifications'
 import type { Notification } from './notifications'
+import {
+  keyNotificationTitle,
+  keyTerminology,
+} from '../../lib/keyTerminology'
 
 export default function NotificationList({
   items,
@@ -36,8 +40,16 @@ export default function NotificationList({
                 {notificationCategories[item.category]}
                 {!item.read_at && ' · Sin leer'}
               </small>
-              <strong>{item.title}</strong>
-              <span>{item.body}</span>
+              <strong>
+                {item.target_kind === 'keys'
+                  ? keyNotificationTitle(item.title)
+                  : item.title}
+              </strong>
+              <span>
+                {item.target_kind === 'keys'
+                  ? keyTerminology(item.body)
+                  : item.body}
+              </span>
               <time dateTime={item.created_at}>
                 {notificationTime(item.created_at)}
               </time>

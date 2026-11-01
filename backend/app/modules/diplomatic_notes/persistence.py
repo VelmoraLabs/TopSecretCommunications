@@ -2,7 +2,7 @@
 
 Una respuesta perdida nunca permite borrar un documento ya publicado. La
 entrega revalida acceso en SQL después de comprobar GCM y firma en memoria.
-Este bloque no expone todavía rutas HTTP.
+El router HTTP delega aquí las operaciones de publicación y entrega.
 """
 
 import base64

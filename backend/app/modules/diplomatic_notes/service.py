@@ -1,8 +1,8 @@
-"""Firma, cifrado y apertura en memoria; todavía sin HTTP, SQL ni Storage.
+"""Firma, cifrado y apertura en memoria, separadas de HTTP, SQL y Storage.
 
-El servidor debe obtener Principal y snapshots de claves desde autorización y
+El servidor obtiene Principal y snapshots de claves desde autorización y
 persistencia. Este servicio no convierte un paquete aportado por el cliente en
-un documento confiable. La entrega futura revalidará permisos y versión en SQL.
+un documento confiable. La capa de persistencia revalida permisos y versión en SQL.
 """
 
 import base64

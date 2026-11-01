@@ -98,9 +98,9 @@ export default function PersonnelCreateForm({
       ? 'Selecciona al menos un destinatario.'
       : '',
     key: keyLoading
-      ? 'Espera la consulta de tu clave.'
+      ? 'Espera la consulta de tu llave.'
       : keyError ||
-        (!hasKey ? 'Activa tu clave de cifrado en Mis claves.' : ''),
+        (!hasKey ? 'Activa tu llave de cifrado en Mis llaves.' : ''),
   })
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -141,7 +141,7 @@ export default function PersonnelCreateForm({
           <strong>Acceso individual para cada destinatario</strong>
           <p>
             Tú conservas acceso automáticamente. Cada persona podrá
-            recuperar el archivo con su propia clave privada de cifrado, sin
+            recuperar el archivo con su propia llave privada de cifrado, sin
             reunir al resto.
           </p>
         </div>
@@ -152,14 +152,14 @@ export default function PersonnelCreateForm({
         >
           <p>
             {keyLoading
-              ? 'Consultando tu clave de cifrado…'
+              ? 'Consultando tu llave de cifrado…'
               : keyError ||
                 (hasKey
-                  ? 'Tu cuenta tiene una clave de cifrado activa.'
-                  : 'Necesitas preparar y activar tu clave de cifrado antes de crear un expediente.')}
+                  ? 'Tu cuenta tiene una llave de cifrado activa.'
+                  : 'Necesitas preparar y activar tu llave de cifrado antes de crear un expediente.')}
           </p>
           {!hasKey && !keyLoading && (
-            <Link to="/claves">Abrir Mis claves</Link>
+            <Link to="/claves">Abrir Mis llaves</Link>
           )}
           <Button
             variant="ghost"
@@ -218,10 +218,10 @@ export default function PersonnelCreateForm({
           Destinatarios · {recipients.length} de 255
         </h3>
         <p className="memo-note">
-          Cada destinatario debe tener una cuenta vinculada y una clave de
+          Cada destinatario debe tener una cuenta vinculada y una llave de
           cifrado activa. La aplicación comprueba esas condiciones al
           guardar; este directorio muestra perfiles activos, no confirma su
-          clave.
+          llave.
         </p>
         <div className="memo-selected">
           {recipients.map((person) => (
@@ -325,8 +325,8 @@ export default function PersonnelCreateForm({
           <p className="memo-note">
             Cierra esta ventana y actualiza el listado antes de intentar
             otra carga. Si el expediente ya aparece disponible, no lo
-            vuelvas a crear. Si faltan claves activas, pide a los
-            destinatarios que las activen en Mis claves.
+            vuelvas a crear. Si faltan llaves activas, pide a los
+            destinatarios que las activen en Mis llaves.
           </p>
         )}
         <div className="memo-actions">

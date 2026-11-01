@@ -287,3 +287,25 @@ notificaciones. Los selectores de claves conservan el nombre del archivo válido
 Guía: [Dashboard y contexto](../docs/development/dashboard-and-notification-context.md).
 
 Migración nueva: `20261026180000_dashboard_notification_context.sql`, después de las ocho anteriores.
+
+## Expedientes y comunicaciones protegidas
+
+Las cuatro migraciones siguientes completan los módulos de expedientes, notas
+diplomáticas y comunicados. Aplicarlas en este orden después de las nueve anteriores:
+
+1. `20261030000000_personnel_files.sql`
+2. `20261030120000_personnel_notifications_dashboard.sql`
+3. `20261030180000_diplomatic_notes.sql`
+4. `20261031000000_diplomatic_notifications_dashboard.sql`
+
+La instalación actual consta de 13 migraciones. En una base existente, comprobar
+qué migraciones ya se aplicaron y ejecutar únicamente las pendientes, una vez.
+No reemplazar manualmente `stc_dashboard()` por una versión anterior: los módulos
+comparten ese contrato y sus contadores.
+
+Las guías de [expedientes de personal](../docs/development/personnel-files.md) y
+[notas y comunicados](../docs/development/diplomatic-notes-integration.md) detallan
+la instalación, los permisos y las comprobaciones de solo lectura. Los fixtures
+de `tests/` requieren una base aislada y no se ejecutan sobre el proyecto real.
+Publicar backend y frontend compatibles con las migraciones instaladas y
+comprobar Dashboard después de integrar cambios de cualquiera de estos módulos.

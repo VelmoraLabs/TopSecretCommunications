@@ -26,7 +26,7 @@ test('aportar usa clave histórica y recuperar usa la clave fijada en la solicit
  const old=[{profile_id:'usuario',encryption_key_id:'anterior',encryption_fingerprint:'huella-anterior'}]
  assert.equal(recoveryKey(detail,old,'usuario','contribute').id,'anterior')
  assert.equal(recoveryKey(detail,old,'usuario','recover').id,'nueva')
- assert.throws(()=>recoveryKey(detail,old,'ajeno','contribute'),/No tienes una clave/)
+ assert.throws(()=>recoveryKey(detail,old,'ajeno','contribute'),/No tienes una llave/)
 })
 test('rechazar y cancelar se dirigen a la solicitud elegida',async()=>{
  assert.equal((await closeRecovery('solicitud','reject')).path,'/api/v1/note-recoveries/solicitud/reject')

@@ -18,6 +18,7 @@ import PageHeader from '../../components/ui/PageHeader'
 import { Button } from '../../components/ui/Button'
 import { errorMessage } from '../../features/documents/memoranda'
 import { DocumentMessage } from '../../features/documents/DocumentForms'
+import { showAgreementCategory } from '../../features/documents/documentWorkflows'
 import { categories } from '../../features/documents/documentPresentation'
 import { useNotifications } from '../../features/notifications/notificationContext'
 import {
@@ -194,6 +195,10 @@ export default function DashboardPage() {
             </div>
             <div className="category-shortcuts">
               {Object.entries(categories).map(([key, category]) => {
+                if (
+                  key === 'acuerdo' &&
+                  !showAgreementCategory(page?.category_counts.acuerdo, 'all')
+                ) return null
                 const Icon = category.icon,
                   special = key === 'especial',
                   personnel = key === 'expediente',
@@ -230,7 +235,9 @@ export default function DashboardPage() {
                       <strong>
                         {diplomatic
                           ? 'Notas y comunicados'
-                          : category.shortLabel}
+                          : key === 'acuerdo'
+                            ? 'Acuerdos del catálogo anterior'
+                            : category.shortLabel}
                       </strong>
                       <span>
                         {count ?? '—'}{' '}
@@ -352,7 +359,7 @@ export default function DashboardPage() {
               Abrir notas especiales <ArrowRight size={16} />
             </Link>
           </section>
-          <p className="dashboard-example-note">
+          <p className="dashboard-scope-note">
             <Info size={15} />
             <span>
               Los totales respetan tus permisos. Notas y comunicados

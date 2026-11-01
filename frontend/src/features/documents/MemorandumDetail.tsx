@@ -301,7 +301,7 @@ export default function MemorandumDetail({
                             'es-MX',
                           )}
                           {!signature.key_is_active &&
-                            ' · Clave retirada para nuevas firmas'}
+                            ' · Llave retirada para nuevas firmas'}
                         </small>
                         <details className="flow-details">
                           <summary>Datos técnicos de esta firma</summary>
@@ -321,13 +321,13 @@ export default function MemorandumDetail({
                             variant="ghost"
                             onClick={() =>
                               saveFile(
-                                `clave-publica-${signature.fingerprint.slice(0, 12)}.txt`,
+                                `llave-publica-${signature.fingerprint.slice(0, 12)}.txt`,
                                 signature.public_base64 + '\n',
                               )
                             }
                           >
                             <Download size={15} />
-                            Clave pública utilizada
+                            Llave pública utilizada
                           </Button>
                         </details>
                       </div>

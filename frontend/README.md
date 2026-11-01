@@ -17,7 +17,7 @@ npm ci
 En `frontend/.env.local` coloca `VITE_SUPABASE_URL` y
 `VITE_SUPABASE_PUBLISHABLE_KEY` del mismo proyecto configurado en FastAPI.
 Las variables `VITE_` son públicas: no colocar secretos OAuth, secret keys,
-service_role, contraseñas ni claves criptográficas.
+service_role, contraseñas ni llaves criptográficas.
 
 La base de datos debe tener aplicada la [configuración de acceso](../supabase/README.md)
 y Google debe estar habilitado. Consultar la
@@ -48,7 +48,7 @@ Reiniciar Vite después de modificar variables de entorno.
 | `/documentos` | Catálogo real, destinatarios, firma y verificación de memorándums. |
 | `/notas-especiales` | Cifrado y recuperación reales, con sesión y permisos. |
 | `/administracion` | Perfiles, roles, alta y edición reales. Requiere `profiles.manage`. |
-| `/claves` | Claves de firma propias, generación/exportación y retirada. |
+| `/claves` | Llaves de firma propias, generación/exportación y retirada. |
 | `/grupos` | Grupos e integrantes reales, responsables, archivo y permisos por grupo. Requiere `groups.read`. |
 | Otras | Página 404. |
 
@@ -82,13 +82,13 @@ API. La BD impide retirar el acceso al último administrador activo vinculado.
 Desactivar una persona conserva su historial. El rol general no concede acceso
 automático a documentos o fragmentos de otros grupos.
 
-## Memorándums y claves
+## Memorándums y llaves
 
-Dashboard y Documentos consumen FastAPI. Los memorándums tienen emisor autenticado, destinatarios propios y aprobación opcional del Embajador. Se guardan como borradores privados, se firman y se entregan solo mediante el envío explícito; no exigen grupos. Se almacenan versiones inmutables, firmas Base64 y claves públicas por perfil. La clave privada se descarga cifrada en un archivo separado y se usa únicamente durante la firma; no se conserva en el navegador ni en la base de datos.
+Dashboard y Documentos consumen FastAPI. Los memorándums tienen emisor autenticado, destinatarios propios y aprobación opcional del Embajador. Se guardan como borradores privados, se firman y se entregan solo mediante el envío explícito; no exigen grupos. Se almacenan versiones inmutables, firmas Base64 y llaves públicas por perfil. La llave privada se descarga cifrada en un archivo separado y se usa únicamente durante la firma; no se conserva en el navegador ni en la base de datos.
 
-La verificación puede utilizar el archivo almacenado o una copia seleccionada. Los otros tipos documentales muestran el catálogo real vacío hasta incorporar sus flujos; no se crean ejemplos automáticamente.
+La verificación puede utilizar el archivo almacenado o una copia seleccionada. Los expedientes, las notas y comunicados y las notas especiales tienen módulos propios. El catálogo conserva sus registros anteriores; los acuerdos solo se muestran como filtro cuando hay registros o se abre su enlace directo. No hay un flujo de creación de acuerdos comerciales ni documentos de ejemplo en la interfaz. La landing describe las cuatro funciones disponibles y sus enlaces requieren acceso autorizado.
 
-Consulta [configuración y prueba de RSA-PSS](../docs/development/memoranda-signatures.md), incluida la nueva migración y la clave exclusiva del backend.
+Consulta [configuración y prueba de RSA-PSS](../docs/development/memoranda-signatures.md), incluida la nueva migración y la llave exclusiva del backend.
 
 ## Notas especiales
 
@@ -148,15 +148,15 @@ nuevas dependencias. FastAPI conserva la validación y autorización definitivas
 
 `/notas-especiales` abre el archivo de grupo, con búsqueda, selección de grupo,
 previsualización de participantes y persistencia cifrada. Las notas nuevas
-requieren claves activas y guardan un sobre cifrado por integrante antes de
+requieren llaves activas y guardan un sobre cifrado por integrante antes de
 compartirse. Las notas portables anteriores conservan confirmación de resguardo
 e importación de su copia manual. Las notas y sus participantes persisten tras
 recargar; los fragmentos en claro no se guardan en el servidor.
 Consulta [la guía de esta etapa](../docs/development/group-notes-storage.md).
 
-## Claves de cifrado y fragmentos propios
+## Llaves de cifrado y fragmentos propios
 
-`/claves` muestra claves de cifrado y de firma por separado. Los componentes
+`/claves` muestra llaves de cifrado y de firma por separado. Los componentes
 `EncryptionKeysPanel` y `OwnSharePanel` viven en `features/group-notes`, reutilizan
 las validaciones y estilos existentes y no guardan privadas/contraseñas en caché
 ni almacenamiento persistente del navegador. Las notas nuevas usan entrega
@@ -168,19 +168,37 @@ individual; los resguardos anteriores siguen importándose. Consulta
 El detalle de notas con custodia individual incorpora `RecoveryPanel`, contratos
 en `recoveries.ts` y actualizaciones en `useRecoveryUpdates.ts`. Cada persona
 autoriza explícitamente su aportación. La descarga solo se ofrece al solicitante
-cuando están todas; la UI distingue clave histórica del fragmento y clave fijada
+cuando están todas; la UI distingue llave histórica del fragmento y llave fijada
 en la solicitud. No se guardan privadas ni contraseñas en el navegador.
 
 ## Notificaciones generales y recorrido simplificado
 
 Centro de avisos persistentes por destinatario, enlaces directos a las operaciones,
 recuperación con fragmentos cifrados de la base de datos y verificación de firmas
-antes de descargar. Conserva las claves y documentos existentes.
+antes de descargar. Conserva las llaves y documentos existentes.
 
 Guía: [Notificaciones y flujo](../docs/development/notifications-and-workflow.md).
 
 ## Dashboard y avisos específicos
 
 Resumen autorizado de documentos/notas, tareas propias y contexto histórico de
-notificaciones. Los selectores de claves conservan el nombre del archivo válido.
+notificaciones. Los selectores de llaves conservan el nombre del archivo válido.
 Guía: [Dashboard y contexto](../docs/development/dashboard-and-notification-context.md).
+
+## Dependencias de desarrollo y carga de pantallas
+
+Las páginas se importan con `React.lazy` y muestran un estado de carga mediante
+`Suspense`. El layout conserva su menú mientras se descarga cada sección. Si
+falla una descarga, se ofrece recargar la página. No se cambia la autorización
+de las rutas ni la configuración de Supabase.
+
+Se fija temporalmente `minimatch` en `11.0.1` para sus tres consumidores de lint:
+`eslint`, `@eslint/config-array` y `@typescript-eslint/typescript-estree`. La
+[alerta GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249)
+afecta a versiones anteriores. Los overrides tienen alcance específico, y las
+pruebas verifican que TS/TSX sigan analizándose y que `dist` permanezca excluido.
+Revisar estos overrides cuando los consumidores adopten una versión corregida.
+
+Comprobar cambios de dependencias con `npm ci`, `npm run lint`, `npm test`,
+`npm run build`, `npm audit` y `npm audit --omit=dev`. No usar `npm audit fix
+--force` como sustituto de revisar compatibilidad.

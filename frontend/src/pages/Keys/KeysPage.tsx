@@ -76,14 +76,14 @@ export default function KeysPage() {
   return (
     <>
       <PageHeader
-        eyebrow="CLAVES PERSONALES"
-        title="Mis claves"
-        description="Prepara tus claves personales una vez y utilízalas según la operación."
+        eyebrow="LLAVES PERSONALES"
+        title="Mis llaves"
+        description="Prepara tus llaves personales una vez y utilízalas según la operación."
         action={
           auth.hasPermission('documents.sign') && (
             <Button onClick={() => setCreating(true)}>
               <Plus size={17} />
-              Generar claves de firma
+              Generar llaves de firma
             </Button>
           )
         }
@@ -107,7 +107,7 @@ export default function KeysPage() {
         <div>
           <strong>Cifrar cada documento</strong>
           <p>
-            La aplicación genera una clave AES nueva por archivo. En
+            La aplicación genera una llave AES nueva por archivo. En
             expedientes, notas y comunicados la protege para cada
             destinatario con RSA-OAEP; en las notas especiales la divide con
             Shamir.
@@ -123,15 +123,15 @@ export default function KeysPage() {
           <p className="eyebrow">TU FIRMA, BAJO TU CUSTODIA</p>
           <h2>Una identidad verificable.</h2>
           <p>
-            La clave pública identifica tus firmas. La privada se descarga
+            La llave pública identifica tus firmas. La privada se descarga
             cifrada y permanece bajo tu custodia.
           </p>
         </div>
       </section>
       {!auth.hasPermission('documents.sign') && (
         <p className="memo-note">
-          Tu rol actual permite consultar tus claves anteriores, pero no
-          generar nuevas claves de firma.
+          Tu rol actual permite consultar tus llaves anteriores, pero no
+          generar nuevas llaves de firma.
         </p>
       )}
       {error && <DocumentMessage text={error} />}
@@ -139,12 +139,12 @@ export default function KeysPage() {
         {loading ? (
           <p className="memo-loading">
             <LoaderCircle className="access-spinner" size={18} />
-            Consultando claves…
+            Consultando llaves…
           </p>
         ) : keys.length === 0 ? (
           <div className="memo-empty">
             <KeyRound size={35} />
-            <h2>Todavía no tienes claves registradas</h2>
+            <h2>Todavía no tienes llaves registradas</h2>
             <p>
               Cuando tengas permiso de firma, genera un par para comenzar.
             </p>
@@ -163,14 +163,14 @@ export default function KeysPage() {
                 {new Date(key.created_at).toLocaleDateString('es-MX')}
               </p>
               <details className="flow-details">
-                <summary>Huella y clave pública de firma</summary>
+                <summary>Huella y llave pública de firma</summary>
                 <p className="memo-fingerprint">{key.fingerprint}</p>
                 <div className="memo-actions memo-actions--start">
                   <Button
                     variant="outline"
                     onClick={() =>
                       saveFile(
-                        `clave-publica-${key.fingerprint.slice(0, 12)}.txt`,
+                        `llave-publica-${key.fingerprint.slice(0, 12)}.txt`,
                         key.public_base64 + '\n',
                       )
                     }
@@ -183,7 +183,7 @@ export default function KeysPage() {
               <div className="memo-actions memo-actions--start">
                 {key.is_active && (
                   <Button variant="ghost" onClick={() => setRetiring(key)}>
-                    Retirar clave
+                    Retirar llave
                   </Button>
                 )}
               </div>
@@ -193,8 +193,8 @@ export default function KeysPage() {
       </Card>
       <p className="memo-note">
         <ShieldCheck size={18} />
-        Retirar una clave impide nuevas firmas con ella. Las firmas
-        anteriores conservan su clave pública y pueden seguir verificándose.
+        Retirar una llave impide nuevas firmas con ella. Las firmas
+        anteriores conservan su llave pública y pueden seguir verificándose.
       </p>
       {creating && (
         <KeyForm
@@ -206,7 +206,7 @@ export default function KeysPage() {
         <Modal
           open
           busy={busy}
-          title="Retirar clave de firma"
+          title="Retirar llave de firma"
           onClose={() => {
             if (!busy) setRetiring(null)
           }}
@@ -216,7 +216,7 @@ export default function KeysPage() {
             firmas?
           </p>
           <p className="memo-note">
-            Las firmas ya registradas y su clave pública se conservarán.
+            Las firmas ya registradas y su llave pública se conservarán.
           </p>
           <div className="memo-actions">
             <Button
@@ -227,7 +227,7 @@ export default function KeysPage() {
               Cancelar
             </Button>
             <Button disabled={busy} onClick={() => void retire()}>
-              {busy ? 'Retirando…' : 'Retirar clave'}
+              {busy ? 'Retirando…' : 'Retirar llave'}
             </Button>
           </div>
         </Modal>
@@ -243,16 +243,16 @@ function KeyForm({
   onClose: () => void
   onCreated: () => void
 }) {
-  const [label, setLabel] = useState('Mi clave de firma'),
-    [privateName, setPrivateName] = useState('clave-privada.txt'),
-    [publicName, setPublicName] = useState('clave-publica.txt')
+  const [label, setLabel] = useState('Mi llave de firma'),
+    [privateName, setPrivateName] = useState('llave-privada.txt'),
+    [publicName, setPublicName] = useState('llave-publica.txt')
   const [password, setPassword] = useState(''),
     [confirmation, setConfirmation] = useState(''),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('')
   const [generated, setGenerated] = useState<GeneratedKey | null>(null)
   const validation = useFormValidation({
-    label: textError(label, 'un nombre para identificar la clave', 80),
+    label: textError(label, 'un nombre para identificar la llave', 80),
     privateName: filenameError(privateName),
     publicName:
       filenameError(publicName) ||
@@ -262,7 +262,7 @@ function KeyForm({
         : ''),
     password: passwordError(password),
     confirmation: !confirmation
-      ? 'Confirma la contraseña de la clave privada.'
+      ? 'Confirma la contraseña de la llave privada.'
       : confirmation !== password
         ? 'Las contraseñas no coinciden. Vuelve a escribir la confirmación.'
         : '',
@@ -296,7 +296,7 @@ function KeyForm({
       open
       busy={busy}
       title={
-        generated ? 'Guarda tus claves de firma' : 'Generar claves RSA-PSS'
+        generated ? 'Guarda tus llaves de firma' : 'Generar llaves RSA-PSS'
       }
       onClose={() => {
         if (!busy) onClose()
@@ -306,10 +306,10 @@ function KeyForm({
         <div className="memo-form">
           <DocumentMessage
             success
-            text="Tu clave pública quedó vinculada a tu perfil."
+            text="Tu llave pública quedó vinculada a tu perfil."
           />
           <p className="memo-note">
-            Guarda tu clave privada cifrada: la necesitarás para firmar. La
+            Guarda tu llave privada cifrada: la necesitarás para firmar. La
             pública ya está registrada y su descarga es opcional. La
             plataforma no conserva la privada ni su contraseña.
           </p>
@@ -352,7 +352,7 @@ function KeyForm({
         >
           <TextField
             {...validation.field('label')}
-            label="Nombre para identificar la clave"
+            label="Nombre para identificar la llave"
             value={label}
             required
             maxLength={80}
@@ -382,7 +382,7 @@ function KeyForm({
           </details>
           <TextField
             {...validation.field('password')}
-            label="Contraseña de la clave privada"
+            label="Contraseña de la llave privada"
             type="password"
             autoComplete="new-password"
             required
@@ -412,7 +412,7 @@ function KeyForm({
               Cancelar
             </Button>
             <Button type="submit" disabled={busy || !validation.valid}>
-              {busy ? 'Generando claves…' : 'Generar y preparar descarga'}
+              {busy ? 'Generando llaves…' : 'Generar y preparar descarga'}
             </Button>
           </div>
         </form>

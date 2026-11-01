@@ -123,7 +123,7 @@ export default function RecoveryPanel({
       </div>
       <p className="memo-note">
         Tu fragmento está almacenado cifrado. Al aportar, la aplicación lo
-        obtiene y lo abre con tu clave privada: no necesitas subir el archivo de
+        obtiene y lo abre con tu llave privada: no necesitas subir el archivo de
         fragmento. Se requieren las aportaciones de todos; solo el solicitante
         recibe el documento.
       </p>
@@ -638,7 +638,7 @@ function PrivateOperation({
   const validation = useFormValidation({
     file:
       fileError ||
-      (!privateFile ? 'Selecciona la clave privada de cifrado indicada.' : ''),
+      (!privateFile ? 'Selecciona la llave privada de cifrado indicada.' : ''),
     password: passwordIssue || passwordError(password),
     consent:
       operation === 'contribute' && !consent
@@ -668,7 +668,7 @@ function PrivateOperation({
         error.code === 'invalid_encryption_private_key'
       )
         setPasswordIssue(
-          'No se pudo abrir la clave. Revisa su contraseña y el archivo.',
+          'No se pudo abrir la llave. Revisa su contraseña y el archivo.',
         )
       onRefresh()
     } finally {
@@ -689,20 +689,20 @@ function PrivateOperation({
       </h4>
       <p className="memo-note">
         {operation === 'contribute'
-          ? 'Tu fragmento se obtiene de la base de datos. Usa la clave privada con la que fue protegido para autorizar su apertura, aunque ya esté retirada.'
-          : 'Las aportaciones están protegidas para tu cuenta. Usa la clave privada que estaba activa al crear esta solicitud para abrirlas y reconstruir la clave del documento.'}
+          ? 'Tu fragmento se obtiene de la base de datos. Usa la llave privada con la que fue protegido para autorizar su apertura, aunque ya esté retirada.'
+          : 'Las aportaciones están protegidas para tu cuenta. Usa la llave privada que estaba activa al crear esta solicitud para abrirlas y reconstruir la llave del documento.'}
       </p>
       <p className="memo-note">
-        Archivo esperado: {expected.id}.stckey.json. No selecciones una clave de
+        Archivo esperado: {expected.id}.stckey.json. No selecciones una llave de
         firma ni un fragmento.
       </p>
       <details className="flow-details">
-        <summary>Huella de la clave requerida</summary>
+        <summary>Huella de la llave requerida</summary>
         <p className="memo-fingerprint">{expected.fingerprint}</p>
       </details>
       <label className="field">
         <span className="field-label">
-          Clave privada para{' '}
+          Llave privada para{' '}
           {operation === 'contribute' ? 'aportar' : 'recuperar'} (.stckey.json)
         </span>
         <input
@@ -746,13 +746,13 @@ function PrivateOperation({
       {privateFile && (
         <p className="memo-note selected-key-file" role="status">
           Archivo seleccionado: <strong>{privateFilename}</strong>. Formato
-          revisado; la clave se comprobará al continuar.
+          revisado; la llave se comprobará al continuar.
         </p>
       )}
       <TextField
         {...validation.field('password')}
         error={passwordIssue || validation.field('password').error}
-        label="Contraseña de tu clave privada"
+        label="Contraseña de tu llave privada"
         type="password"
         autoComplete="current-password"
         value={password}
