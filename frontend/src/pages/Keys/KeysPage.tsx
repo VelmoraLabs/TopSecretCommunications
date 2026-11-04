@@ -27,6 +27,10 @@ import type {
   GeneratedKey,
   SigningKey,
 } from '../../features/documents/memoranda'
+import {
+  signingPrivateFilename,
+  signingPrivateKeyData,
+} from '../../features/documents/signingKeys'
 import FormFeedback from '../../components/ui/FormFeedback'
 import { useFormValidation } from '../../lib/useFormValidation'
 import {
@@ -243,8 +247,8 @@ function KeyForm({
   onClose: () => void
   onCreated: () => void
 }) {
+  const auth = useAuth()
   const [label, setLabel] = useState('Mi llave de firma'),
-    [privateName, setPrivateName] = useState('llave-privada.txt'),
     [publicName, setPublicName] = useState('llave-publica.txt')
   const [password, setPassword] = useState(''),
     [confirmation, setConfirmation] = useState(''),
@@ -253,11 +257,9 @@ function KeyForm({
   const [generated, setGenerated] = useState<GeneratedKey | null>(null)
   const validation = useFormValidation({
     label: textError(label, 'un nombre para identificar la llave', 80),
-    privateName: filenameError(privateName),
     publicName:
       filenameError(publicName) ||
-      (privateName.trim().toLocaleLowerCase() ===
-      publicName.trim().toLocaleLowerCase()
+      (publicName.trim().toLocaleLowerCase() === 'llave-firma.stckey.json'
         ? 'Usa nombres distintos para los archivos público y privado.'
         : ''),
     password: passwordError(password),
@@ -278,7 +280,8 @@ function KeyForm({
       const result = await generateKey({
         label: label.trim(),
         password,
-        private_filename: privateName.trim(),
+        // La API solicita un nombre antes de generar el ID. La descarga usa el ID devuelto.
+        private_filename: 'llave-firma.stckey.json',
         public_filename: publicName.trim(),
       })
       setPassword('')
@@ -309,7 +312,8 @@ function KeyForm({
             text="Tu llave pública quedó vinculada a tu perfil."
           />
           <p className="memo-note">
-            Guarda tu llave privada cifrada: la necesitarás para firmar. La
+            Guarda tu respaldo JSON de firma: contiene tu llave privada
+            cifrada y los identificadores de tu perfil y llave. La
             pública ya está registrada y su descarga es opcional. La
             plataforma no conserva la privada ni su contraseña.
           </p>
@@ -317,13 +321,18 @@ function KeyForm({
             <Button
               onClick={() =>
                 saveFile(
-                  generated.private_filename,
-                  generated.private_base64 + '\n',
+                  signingPrivateFilename(generated.key.id),
+                  JSON.stringify(
+                    signingPrivateKeyData(generated, auth.access!.profile.id),
+                    null,
+                    2,
+                  ) + '\n',
+                  'application/json',
                 )
               }
             >
               <Download size={17} />
-              Descargar privada cifrada
+              Descargar privada cifrada (.stckey.json)
             </Button>
             <Button
               variant="outline"
@@ -359,17 +368,12 @@ function KeyForm({
             disabled={busy}
             onChange={(event) => setLabel(event.target.value)}
           />
+          <p className="memo-note">
+            El respaldo privado se descarga como firma-&lt;id&gt;.stckey.json
+            para identificar la llave. Los respaldos anteriores siguen funcionando.
+          </p>
           <details className="flow-details">
-            <summary>Personalizar nombres de archivos (opcional)</summary>
-            <TextField
-              {...validation.field('privateName')}
-              label="Nombre del archivo privado"
-              value={privateName}
-              required
-              maxLength={180}
-              disabled={busy}
-              onChange={(event) => setPrivateName(event.target.value)}
-            />
+            <summary>Personalizar nombre del archivo público (opcional)</summary>
             <TextField
               {...validation.field('publicName')}
               label="Nombre del archivo público"

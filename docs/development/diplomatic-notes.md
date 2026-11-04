@@ -414,7 +414,7 @@ seleccionarse en el directorio una sola vez.
 
 | Acción | Respaldo privado que se selecciona | Contraseña |
 | --- | --- | --- |
-| Firmar, cifrar y compartir | Privada **de firma RSA-PSS**, cifrada, en el `.txt` descargado por Mis claves; seleccionar también su clave registrada activa. | La que protege ese archivo de firma. |
+| Firmar, cifrar y compartir | Respaldo **de firma RSA-PSS** `.stckey.json` descargado por Mis llaves; también se acepta el `.txt` anterior. Seleccionar su llave registrada activa. | La que protege ese archivo de firma. |
 | Verificar firma y descargar | Privada **de cifrado RSA-OAEP** original del destinatario, en `.stckey.json`. | La que protege ese respaldo de cifrado. |
 
 La pantalla consulta las claves de firma de la cuenta y exige una clave de
@@ -423,8 +423,10 @@ activos; la existencia de sus claves de cifrado se comprueba al crear en el
 servidor. No hace falta generar pares nuevos si los actuales están vigentes.
 Cada archivo recibe su AES independiente en el backend.
 
-El navegador valida el tamaño, nombre y contenido Base64 del `.txt` de firma;
-rechaza un JSON de cifrado colocado allí. No interpreta ese Base64 como una
+El navegador valida el tamaño y contenido Base64 del respaldo de firma. En el
+JSON comprueba además formato, versión, propósito, perfil, identificador y huella;
+rechaza un respaldo de cifrado colocado allí. Los `.txt` anteriores siguen
+aceptados. No interpreta esos metadatos ni el Base64 como una
 prueba de propiedad: el servidor abre la privada cifrada y comprueba su relación
 con la pública registrada. Al recuperar, el lector JSON valida perfil, generación
 y huella contra la asignación histórica del detalle antes de transmitir la
@@ -491,11 +493,11 @@ no escribieron en Supabase ni usaron cuentas o claves reales.
 
 1. Mantener backend y frontend activos y abrir dos sesiones de navegador separadas.
    En Roberto, revisar **Mis claves**: conservar su clave de cifrado activa y
-   obtener una privada de firma `.txt` si todavía no tiene una. Moralitos puede
+   obtener una privada de firma `.stckey.json` si todavía no tiene una. Moralitos puede
    seguir como Miembro con su clave de cifrado nueva activa.
 2. En Roberto, abrir **Notas y comunicados**, elegir **Nueva nota o comunicado**,
    tipo **Nota diplomática**, un archivo de prueba, título y Moralitos como
-   destinatario. Seleccionar la clave de firma registrada y su privada `.txt`,
+   destinatario. Seleccionar la llave de firma registrada y su respaldo `.stckey.json` (o `.txt` anterior),
    introducir su contraseña y compartir.
 3. Comprobar el detalle y recuperar desde Roberto con su privada **de cifrado**
    `.stckey.json`. Abrir el archivo descargado y compararlo con el original.

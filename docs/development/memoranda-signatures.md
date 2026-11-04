@@ -67,7 +67,7 @@ Una firma histórica sigue siendo verificable si su clave se retira o cambia el 
 
 ## Recorrido de prueba
 
-1. Como Administrador, Personal autorizado o Embajador, abrir **Mis claves de firma**, elegir etiqueta, contraseña y nombres `.txt` distintos y descargar pública y privada cifrada por separado. Guardar la privada antes de cerrar el resultado: no se conserva ni se puede descargar después.
+1. Como Administrador, Personal autorizado o Embajador, abrir **Mis llaves**, elegir etiqueta y contraseña. Descargar la privada cifrada como `firma-<id>.stckey.json`; la pública puede descargarse por separado en `.txt` y su nombre es personalizable. Guardar la privada antes de cerrar el resultado: no se conserva ni se puede descargar después. Para firmar y aprobar también se aceptan las privadas `.txt` anteriores.
 2. Crear un memorándum con al menos un destinatario final. Sin aprobación institucional, guardar, revisar el original, firmar emisión y pulsar **Enviar a destinatarios** → confirmar.
 3. Desde la cuenta destinataria, comprobar que el documento no era visible antes del envío y que ahora permite descargar/verificar sin firmar. Una cuenta ajena no debe verlo.
 4. Crear otro documento con la casilla **Requiere aprobación institucional del Embajador** y elegir a otra cuenta Embajador. Firmar emisión y solicitar aprobación.
@@ -90,7 +90,7 @@ La aplicación confía en el backend: genera claves y recibe temporalmente la pr
 
 ## Criptografía y formatos conservados
 
-RSA-PSS original no cambia: RSA-2048, exponente 65537, SHA-256, MGF1-SHA-256 y salt de 32 bytes. Se firman los bytes originales sin doble hashing. Pública SPKI DER en Base64; privada PKCS8 DER cifrada con `BestAvailableEncryption`, en Base64. Contraseña entre 12 y 256 caracteres, hasta 1024 bytes UTF-8. Huella pública: SHA-256 del DER público. Firma: 256 bytes representados como Base64.
+RSA-PSS original no cambia: RSA-2048, exponente 65537, SHA-256, MGF1-SHA-256 y salt de 32 bytes. Se firman los bytes originales sin doble hashing. Pública SPKI DER en Base64; privada PKCS8 DER cifrada con `BestAvailableEncryption`, en Base64. El respaldo JSON contiene ese mismo valor en `private_base64`, más formato, versión, propósito `document-signing`, perfil, identificador de llave y huella. El navegador valida esos metadatos y envía únicamente el Base64 cifrado mediante el contrato existente; el backend comprueba su correspondencia criptográfica con la pública registrada. Los `.txt` históricos siguen admitidos y requieren la misma comprobación del backend. No hay migración de BD ni regeneración de llaves. Contraseña entre 12 y 256 caracteres, hasta 1024 bytes UTF-8. Huella pública: SHA-256 del DER público. Firma: 256 bytes representados como Base64.
 
 El JSON de firmas descargado pasa a `format_version=2`, con propósito, emisor, aprobador y estado de entrega. Los metadatos de ese JSON no constituyen un manifiesto firmado independiente: identidad, cargo y política se apoyan en los registros confiables de la plataforma. Un verificador externo debe establecer la confianza en la identidad/autoridad asociada a cada clave; no basta confiar en un nombre escrito dentro del JSON. No se añaden certificados ni distribución externa automática.
 
