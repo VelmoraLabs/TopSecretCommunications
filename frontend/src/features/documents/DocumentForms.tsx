@@ -33,6 +33,11 @@ import {
   textError,
 } from '../../lib/validation'
 import { ApiError } from '../../lib/api'
+import {
+  readSigningPrivateFile,
+  signingFileError,
+  SIGNING_BACKUP_MAX_SIZE,
+} from './signingKeys'
 
 export function DocumentMessage({
   text,
@@ -446,6 +451,7 @@ export function MemoSignForm({
   onClose: () => void
   onSaved: (document: DocumentDetail) => void
 }) {
+  const auth = useAuth()
   const [keys, setKeys] = useState<SigningKey[]>([]),
     [keyId, setKeyId] = useState('')
   const [password, setPassword] = useState(''),
@@ -479,15 +485,7 @@ export function MemoSignForm({
       : !keyId
         ? 'Genera una llave activa en Mis llaves de firma.'
         : '',
-    file:
-      fileError ||
-      (!file
-        ? 'Selecciona tu archivo de llave privada cifrada (.txt).'
-        : file.size > 16384
-          ? 'La llave supera los 16 KiB. Selecciona el archivo privado descargado.'
-          : file.size === 0
-            ? 'El archivo de llave está vacío. Selecciona tu llave privada.'
-            : ''),
+    file: fileError || signingFileError(file),
     password: passwordError(password) || credentialError,
   })
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -496,18 +494,16 @@ export function MemoSignForm({
     setBusy(true)
     setError('')
     try {
-      if (file.size > 16384)
-        throw new Error('El archivo de llave supera el tamaño permitido.')
-      const privateKey = (await file.text()).trim()
-      if (
-        !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
-          privateKey,
-        ) ||
-        !privateKey
-      ) {
-        setFileError(
-          'El archivo no contiene Base64 válido. Selecciona la llave privada cifrada descargada, sin modificarla.',
-        )
+      const key = keys.find((item) => item.id === keyId && item.is_active)
+      if (!key) throw new Error('Selecciona una llave de firma activa.')
+      let privateKey: string
+      try {
+        privateKey = await readSigningPrivateFile(file, {
+          ...key,
+          profile_id: auth.access!.profile.id,
+        })
+      } catch (error) {
+        setFileError(errorMessage(error))
         return
       }
       const updated = await signDocument(document.document.id, {
@@ -585,6 +581,8 @@ export function MemoSignForm({
                 onChange={(event) => {
                   setKeyId(event.target.value)
                   setCredentialError('')
+                  setFileError('')
+                  setError('')
                 }}
               >
                 {keys.map((key) => (
@@ -596,7 +594,7 @@ export function MemoSignForm({
             </label>
             <label className="field">
               <span className="field-label">
-                Archivo de llave privada en Base64
+                Respaldo privado de firma (.stckey.json o .txt anterior)
               </span>
               <input
                 id={validation.id('file')}
@@ -604,11 +602,11 @@ export function MemoSignForm({
                 aria-invalid={Boolean(
                   fileError ||
                   validation.field('file').error ||
-                  (file && file.size > 16384),
+                  (file && file.size > SIGNING_BACKUP_MAX_SIZE),
                 )}
                 aria-describedby={`${validation.id('file')}-error`}
                 type="file"
-                accept=".txt,text/plain"
+                accept=".json,.txt,application/json,text/plain"
                 required
                 disabled={busy}
                 onChange={(event) => {
@@ -622,8 +620,8 @@ export function MemoSignForm({
                 id={validation.id('file')}
                 error={
                   fileError ||
-                  (file && file.size > 16384
-                    ? 'La llave supera los 16 KiB. Selecciona el archivo privado descargado.'
+                  (file && file.size > SIGNING_BACKUP_MAX_SIZE
+                    ? 'El respaldo de firma supera los 32 KiB.'
                     : validation.field('file').error)
                 }
               />

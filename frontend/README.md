@@ -202,3 +202,26 @@ Revisar estos overrides cuando los consumidores adopten una versión corregida.
 Comprobar cambios de dependencias con `npm ci`, `npm run lint`, `npm test`,
 `npm run build`, `npm audit` y `npm audit --omit=dev`. No usar `npm audit fix
 --force` como sustituto de revisar compatibilidad.
+
+## Respaldos privados de firma y cifrado
+
+Los nuevos respaldos RSA-PSS se descargan como `firma-<id>.stckey.json` y los de
+RSA-OAEP como `cifrado-<id>.stckey.json`. El identificador es el `key_id` del
+respaldo y se conserva la etiqueta elegida por el usuario dentro de la plataforma.
+Los nombres privados se asignan automáticamente; el nombre de la pública de firma
+puede personalizarse. Los respaldos anteriores siguen funcionando porque la
+importación comprueba su contenido, sin exigir estos nombres.
+Se mantiene un propósito distinto por par: firma (`stc-signing-private-key`,
+`document-signing`) y cifrado (`stc-encryption-private-key`, `group-note-share-custody`).
+Cada respaldo incluye versión, perfil, identificador, huella y `private_base64`.
+Este último conserva el PKCS8 cifrado con contraseña: Base64 solo lo representa,
+no sustituye su cifrado. El JSON no incluye la contraseña.
+
+Memorándums (emisión y aprobación), notas diplomáticas y comunicados aceptan el
+nuevo JSON de firma y los `.txt` anteriores. El lector comprueba identidad y
+propósito del JSON; el backend valida siempre que la privada corresponda a la
+pública registrada. Se envía el Base64 cifrado al mismo contrato de API.
+
+No se requieren migraciones, cambios de variables ni nuevos pares de llaves.
+Conserva los respaldos y contraseñas existentes. La pública de firma puede seguir
+exportándose como `.txt`; no es un respaldo privado.

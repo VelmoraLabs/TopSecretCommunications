@@ -173,7 +173,10 @@ export default function DiplomaticCreateForm({
     try {
       // Validar el respaldo local antes de iniciar una creación sin reenvíos.
       try {
-        await readSigningPrivateFile(privateFile)
+        await readSigningPrivateFile(privateFile, {
+          ...signingKey,
+          profile_id: auth.access!.profile.id,
+        })
       } catch (error) {
         setError(errorMessage(error))
         return
@@ -313,8 +316,9 @@ export default function DiplomaticCreateForm({
         >
           <h3>Firma del emisor</h3>
           <p className="memo-note">
-            Usa tu privada de firma cifrada en .txt. Tu respaldo de cifrado
-            .stckey.json se utiliza al recuperar, no en este paso.
+            Selecciona tu respaldo JSON de firma RSA-PSS. También se aceptan
+            las privadas .txt anteriores. La llave de cifrado RSA-OAEP tiene
+            un propósito distinto y se utiliza para recuperar el documento.
           </p>
           <label className="field">
             <span className="field-label">
@@ -359,12 +363,12 @@ export default function DiplomaticCreateForm({
           )}
           <label className="field">
             <span className="field-label">
-              Mi privada de firma cifrada (.txt)
+              Mi privada de firma cifrada (.stckey.json o .txt anterior)
             </span>
             <input
               id={validation.id('private')}
               type="file"
-              accept=".txt,text/plain"
+              accept=".json,.txt,application/json,text/plain"
               disabled={busy || uncertain}
               onBlur={validation.field('private').onBlur}
               aria-invalid={Boolean(validation.field('private').error)}

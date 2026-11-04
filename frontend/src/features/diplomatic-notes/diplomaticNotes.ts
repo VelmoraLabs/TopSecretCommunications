@@ -6,6 +6,8 @@ import {
 } from '../../lib/validation'
 import { fileBase64 } from '../documents/memoranda'
 import type { SigningKey } from '../documents/memoranda'
+import { readSigningPrivateFile } from '../documents/signingKeys'
+export { readSigningPrivateFile, signingFileError } from '../documents/signingKeys'
 import { readPrivateKey } from '../group-notes/encryptionKeys'
 import { entityId } from '../notifications/notifications'
 import type {
@@ -97,32 +99,6 @@ export const cancelDiplomaticNote = (id: string) =>
     method: 'POST',
   })
 
-export function signingFileError(file: File | null): string {
-  if (!file) return 'Selecciona tu privada de firma cifrada (.txt).'
-  if (!file.size) return 'El archivo de la llave de firma está vacío.'
-  if (file.size > 16384) return 'La privada de firma supera los 16 KiB.'
-  return ''
-}
-export async function readSigningPrivateFile(file: File) {
-  const issue = signingFileError(file)
-  if (issue) throw new Error(issue)
-  const value = (await file.text()).trim()
-  if (
-    !value ||
-    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
-      value,
-    )
-  )
-    throw new Error(
-      'Selecciona la privada de firma en Base64 (.txt), no el respaldo de cifrado .stckey.json.',
-    )
-  try {
-    if (btoa(atob(value)) !== value) throw new Error('Base64 no canónico')
-  } catch {
-    throw new Error('El archivo de firma no contiene Base64 válido.')
-  }
-  return value
-}
 export async function createDiplomaticNote(
   kind: NoteKind,
   title: string,
@@ -148,7 +124,7 @@ export async function createDiplomaticNote(
     throw new Error('Selecciona entre 1 y 255 destinatarios distintos.')
   if (!signingKey.is_active || !entityId(signingKey.id))
     throw new Error('Selecciona una llave de firma activa de tu cuenta.')
-  const privateKey = await readSigningPrivateFile(privateFile)
+  const privateKey = await readSigningPrivateFile(privateFile, signingKey)
   return apiRequest<DiplomaticDetail>(
     endpoint,
     {

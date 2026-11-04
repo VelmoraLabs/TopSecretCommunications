@@ -91,6 +91,15 @@ const signingKey = {
   label: 'Firma',
 }
 const signingFile = () => new File(['  QUJDRA==\n'], 'firma.txt')
+const signingBackup = {
+  format: 'stc-signing-private-key',
+  version: 1,
+  purpose: 'document-signing',
+  profile_id: issuer,
+  key_id: signingId,
+  fingerprint: signingKey.fingerprint,
+  private_base64: 'QUJDRA==',
+}
 const document = new File(
   [Uint8Array.from([0, 255, 128, 65])],
   'prueba.bin',
@@ -223,6 +232,20 @@ test('notas: el emisor puede seleccionarse una vez y el documento vacío conserv
   const body = JSON.parse(calls[0].options.body)
   assert.deepEqual(body.recipients, [{ profile_id: issuer }])
   assert.equal(body.content_base64, '')
+})
+test('notas: JSON de firma y TXT anterior envían el mismo contrato para ambos tipos', async () => {
+  for (const kind of ['diplomatic_note', 'communique']) {
+    capture(detail)
+    await create({ kind })
+    const legacyBody = calls[0].options.body
+    capture(detail)
+    await create({ kind, privateFile: privateFile(signingBackup) })
+    assert.equal(calls[0].options.body, legacyBody)
+    assert.equal(calls.length, 1)
+  }
+  capture()
+  await assert.rejects(create({ privateFile: privateFile({ ...signingBackup, key_id: keyId }) }), /otra llave de firma/)
+  assert.equal(calls.length, 0)
 })
 test('notas: tipo, título, rutas y tamaño inválidos no transmiten contenido', async () => {
   capture()

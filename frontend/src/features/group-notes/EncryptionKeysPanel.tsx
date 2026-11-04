@@ -419,7 +419,7 @@ function KeySetup({
                   onClick={() => {
                     downloadJson(
                       privateKeyData(generated),
-                      `${key.id}.stckey.json`,
+                      `cifrado-${key.id}.stckey.json`,
                     )
                     setDownloaded(true)
                   }}
